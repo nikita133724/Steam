@@ -5,7 +5,6 @@ Created: 2026-02-02
 
 import asyncio
 import logging
-import re
 from typing import Any
 
 try:
@@ -217,7 +216,7 @@ class TelegramAdapter(BaseChannelAdapter):
                 send_kwargs: dict[str, Any] = {
                     "chat_id": real_chat_id,
                     "text": part,
-                    "parse_mode": "MarkdownV2",
+                    "parse_mode": "Markdown",
                 }
                 if topic_id is not None:
                     send_kwargs["message_thread_id"] = topic_id
@@ -292,7 +291,7 @@ class TelegramAdapter(BaseChannelAdapter):
                     chat_id=real_chat_id,
                     message_id=message_id,
                     text=text,
-                    parse_mode="MarkdownV2" if final else None,
+                    parse_mode="Markdown" if final else None,
                 )
                 return
 
@@ -312,7 +311,7 @@ class TelegramAdapter(BaseChannelAdapter):
                 chat_id=real_chat_id,
                 message_id=message_id,
                 text=parts[0],
-                parse_mode="MarkdownV2",
+                parse_mode="Markdown",
             )
             for part in parts[1:]:
                 kwargs: dict[str, Any] = {"chat_id": real_chat_id, "text": part, "parse_mode": None}
@@ -322,46 +321,9 @@ class TelegramAdapter(BaseChannelAdapter):
         except Exception as e:
             logger.warning(f"Failed to update message: {e}")
 
-    @staticmethod
-    def _to_markdown_v2(text: str) -> str:
-        """Best-effort conversion to Telegram MarkdownV2 with escaping.
-
-        Preserves common formatting entities and escapes the rest.
-        """
-        if not text:
-            return ""
-
-        token_patterns = [
-            r"```[\s\S]*?```",          # fenced code blocks
-            r"`[^`\n]+`",                 # inline code
-            r"\[[^\]]+\]\([^)]+\)",  # markdown links
-            r"\*[^*\n]+\*",             # *bold*
-            r"_[^_\n]+_",                 # _italic_
-        ]
-
-        tokens: list[str] = []
-
-        def stash(match: re.Match[str]) -> str:
-            tokens.append(match.group(0))
-            return f"\x00MDTOK{len(tokens)-1}\x00"
-
-        transformed = text
-        for pattern in token_patterns:
-            transformed = re.sub(pattern, stash, transformed)
-
-        transformed = transformed.replace("\\", "\\\\")
-        transformed = re.sub(r"([_*\[\]()~`>#+\-=|{}.!])", r"\\\1", transformed)
-
-        for i, tok in enumerate(tokens):
-            transformed = transformed.replace(f"\x00MDTOK{i}\x00", tok)
-
-        return transformed
-
     async def _send_message_with_fallback(self, **kwargs: Any) -> None:
-        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        """Try Markdown first, then fallback to plain text if parsing fails."""
         base = dict(kwargs)
-        if base.get("parse_mode") == "MarkdownV2":
-            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
         try:
             await self.app.bot.send_message(**base)
         except Exception:
@@ -370,10 +332,8 @@ class TelegramAdapter(BaseChannelAdapter):
             await self.app.bot.send_message(**fallback)
 
     async def _edit_message_with_fallback(self, **kwargs: Any) -> None:
-        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        """Try Markdown first, then fallback to plain text if parsing fails."""
         base = dict(kwargs)
-        if base.get("parse_mode") == "MarkdownV2":
-            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
         try:
             await self.app.bot.edit_message_text(**base)
         except Exception:
@@ -420,7 +380,7 @@ class TelegramAdapter(BaseChannelAdapter):
 
         await update.message.reply_text(
             "🐾 **PocketPaw**\n\nI am listening. Just type to chat!",
-            parse_mode="MarkdownV2",
+            parse_mode="Markdown",
         )
 
     async def _handle_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

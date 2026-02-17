@@ -162,6 +162,7 @@ class OpenInterpreterAgent:
         self._provider_key_indices: dict[str, int] = {}
         self._active_provider_id: str | None = None
         self._request_times: deque[float] = deque()
+        self._active_executor_future: asyncio.Future | None = None
         self._initialize()
 
     def _load_custom_providers(self) -> list[dict]:
@@ -432,6 +433,25 @@ class OpenInterpreterAgent:
         async with self._semaphore:
             self._stop_flag = False
 
+            # If a previous worker thread is still alive, try a soft reset first.
+            if self._active_executor_future and not self._active_executor_future.done():
+                try:
+                    if self._interpreter:
+                        self._interpreter.reset()
+                    await asyncio.wait_for(asyncio.shield(self._active_executor_future), timeout=2.0)
+                except Exception:
+                    pass
+
+                if self._active_executor_future and not self._active_executor_future.done():
+                    yield {
+                        "type": "error",
+                        "content": (
+                            "⚠️ Предыдущая задача Open Interpreter всё ещё выполняется и блокирует новый запуск. "
+                            "Дождитесь завершения или перезапустите backend."
+                        ),
+                    }
+                    return
+
             # Apply system prompt if provided (prefer system_prompt over legacy system_message).
             # Reset each run to avoid prompt growth across turns.
             self._interpreter.system_message = self._base_system_message
@@ -642,28 +662,66 @@ class OpenInterpreterAgent:
                     # Signal completion
                     asyncio.run_coroutine_threadsafe(chunk_queue.put(None), loop)
 
+            executor_future = None
             try:
                 loop = asyncio.get_event_loop()
 
                 # Start the sync function in a thread
                 executor_future = loop.run_in_executor(None, run_sync)
+                self._active_executor_future = executor_future
 
                 # Yield chunks as they arrive
+                idle_timeouts = 0
+                max_idle_timeouts = 10
+                aborted_on_idle_timeout = False
                 while True:
                     try:
                         chunk = await asyncio.wait_for(chunk_queue.get(), timeout=60.0)
                         if chunk is None:  # End signal
                             break
+                        idle_timeouts = 0
                         yield chunk
                     except TimeoutError:
+                        idle_timeouts += 1
+
+                        # If the worker is already done and queue is empty, stop waiting.
+                        if executor_future.done():
+                            break
+
+                        # Avoid endless heartbeat loops when OI gets stuck.
+                        if idle_timeouts >= max_idle_timeouts:
+                            self._stop_flag = True
+                            aborted_on_idle_timeout = True
+                            yield {
+                                "type": "error",
+                                "content": (
+                                    "⚠️ Open Interpreter завис и не вернул ответ вовремя. "
+                                    "Остановил текущий запуск. Проверьте модель/провайдер и повторите запрос."
+                                ),
+                            }
+                            break
+
                         yield {"type": "message", "content": "⏳ Still processing..."}
 
-                # Wait for executor to finish
-                await executor_future
+                # Wait for executor to finish, but do not hang forever if it got stuck.
+                if aborted_on_idle_timeout:
+                    try:
+                        await asyncio.wait_for(executor_future, timeout=3.0)
+                    except TimeoutError:
+                        logger.warning("Open Interpreter worker did not stop after timeout abort")
+                else:
+                    await executor_future
 
             except Exception as e:
                 logger.error(f"Open Interpreter error: {e}")
                 yield {"type": "error", "content": f"❌ Agent error: {str(e)}"}
+            finally:
+                if (
+                    executor_future is not None
+                    and executor_future.done()
+                    and self._active_executor_future is executor_future
+                ):
+                    self._active_executor_future = None
 
     async def stop(self) -> None:
         """Stop the agent execution."""

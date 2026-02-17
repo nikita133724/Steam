@@ -12,8 +12,10 @@ Changes:
 
 import argparse
 import asyncio
+import atexit
 import importlib.util
 import logging
+import os
 import sys
 import webbrowser
 from importlib.metadata import version as get_version
@@ -24,6 +26,63 @@ from pocketpaw.logging_setup import setup_logging
 # Setup beautiful logging with Rich
 setup_logging(level="INFO")
 logger = logging.getLogger(__name__)
+
+
+class _ProcessLock:
+    """Single-instance process lock using ~/.pocketpaw/pocketpaw.lock."""
+
+    def __init__(self) -> None:
+        self._fh = None
+
+    def acquire(self) -> bool:
+        try:
+            import fcntl
+        except Exception:
+            # Non-POSIX fallback: skip locking.
+            return True
+
+        from pocketpaw.config import get_config_dir
+
+        lock_path = get_config_dir() / "pocketpaw.lock"
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        fh = open(lock_path, "a+", encoding="utf-8")
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            fh.seek(0)
+            holder = fh.read().strip() or "unknown"
+            logger.error(
+                "Another PocketPaw process is already running (pid=%s). "
+                "Stop it before starting a new instance.",
+                holder,
+            )
+            fh.close()
+            return False
+
+        fh.seek(0)
+        fh.truncate()
+        fh.write(str(os.getpid()))
+        fh.flush()
+        self._fh = fh
+        return True
+
+    def release(self) -> None:
+        if not self._fh:
+            return
+        try:
+            import fcntl
+
+            self._fh.seek(0)
+            self._fh.truncate()
+            fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
+        except Exception:
+            pass
+        try:
+            self._fh.close()
+        except Exception:
+            pass
+        self._fh = None
+
 
 
 async def run_telegram_mode(settings: Settings) -> None:
@@ -461,6 +520,11 @@ Examples:
     # Fail fast if optional deps are missing for the chosen mode
     _check_extras_installed(args)
 
+    lock = _ProcessLock()
+    if not lock.acquire():
+        raise SystemExit(1)
+    atexit.register(lock.release)
+
     settings = get_settings()
 
     # Resolve host: explicit flag > config > auto-detect
@@ -511,6 +575,8 @@ Examples:
         except RuntimeError:
             # Event loop already closed — best-effort sync cleanup
             pass
+        finally:
+            lock.release()
 
 
 if __name__ == "__main__":
