@@ -260,6 +260,10 @@ class DeepWorkSession:
                     )
                     project.team_agent_ids.append(agent.id)
 
+            # Keep execution resilient even when planner output is malformed
+            # and yields no usable team recommendation.
+            await self._ensure_minimum_team(project, result)
+
             # Auto-assign tasks to agents
             await self._assign_tasks_to_agents(project, result, key_to_id)
 
@@ -528,6 +532,50 @@ class DeepWorkSession:
 
             if best_agent_id:
                 await self.manager.assign_task(task_id, [best_agent_id])
+
+    async def _ensure_minimum_team(self, project: Project, planner_result) -> None:
+        """Guarantee at least one execution-capable agent exists on a project.
+
+        Some provider/model combinations can occasionally return malformed team
+        recommendations. If that slips through parsing and no team members were
+        persisted, create/reuse a generic execution agent so the scheduler has
+        someone to dispatch agent tasks to after approval.
+        """
+        if project.team_agent_ids:
+            return
+
+        has_agent_task = any(t.task_type == "agent" for t in planner_result.tasks)
+        if not has_agent_task:
+            return
+
+        fallback_name = "execution-generalist"
+        existing = await self.manager.get_agent_by_name(fallback_name)
+
+        if existing:
+            project.team_agent_ids.append(existing.id)
+            logger.warning(
+                "No team agents were created for project %s; reusing fallback agent '%s'",
+                project.id,
+                fallback_name,
+            )
+            return
+
+        agent = await self.manager.create_agent(
+            name=fallback_name,
+            role="Execution Generalist",
+            description=(
+                "Fallback execution agent used when planner team assembly "
+                "produces no usable members."
+            ),
+            specialties=["python", "testing", "generalist"],
+            backend="open_interpreter",
+        )
+        project.team_agent_ids.append(agent.id)
+        logger.warning(
+            "No team agents were created for project %s; created fallback agent '%s'",
+            project.id,
+            fallback_name,
+        )
 
 
 def _extract_title(prd_content: str) -> str:

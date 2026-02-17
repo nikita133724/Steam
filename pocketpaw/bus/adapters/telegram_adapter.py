@@ -5,7 +5,6 @@ Created: 2026-02-02
 
 import asyncio
 import logging
-import re
 from typing import Any
 
 try:
@@ -45,6 +44,9 @@ class TelegramAdapter(BaseChannelAdapter):
         self.allowed_user_id = allowed_user_id
         self.app: Application | None = None
         self._last_conflict_log_ts: float = 0.0
+        # Known chat IDs collected from inbound Telegram messages.
+        # Used to route Deep Work broadcast notifications safely.
+        self._known_chat_ids: set[str] = set()
 
     @property
     def channel(self) -> Channel:
@@ -130,12 +132,23 @@ class TelegramAdapter(BaseChannelAdapter):
             return parts[0], int(parts[1])
         return raw_chat_id, None
 
+    def _resolve_target_chat_ids(self, chat_id: str) -> list[str]:
+        """Resolve target chat IDs, expanding synthetic 'broadcast'."""
+        if chat_id and chat_id != "broadcast":
+            return [chat_id]
+        return sorted(self._known_chat_ids)
+
     async def send(self, message: OutboundMessage) -> None:
         """Send message to Telegram."""
         if not self.app:
             return
 
         chat_id = message.chat_id
+
+        target_chat_ids = self._resolve_target_chat_ids(chat_id)
+        if not target_chat_ids:
+            logger.info("Skipping Telegram outbound: no known chat targets for '%s'", chat_id)
+            return
 
         # Basic security check - though AgentLoop should handle it via logic,
         # the adapter enforces the channel pipe.
@@ -161,8 +174,13 @@ class TelegramAdapter(BaseChannelAdapter):
 
             # If a normal/error message arrives while a stream buffer is open,
             # flush first so users receive one complete response instead of fragments.
-            if chat_id in self._buffers and not message.is_stream_chunk and not message.is_stream_end:
-                await self._flush_stream_buffer(chat_id)
+            for target_chat_id in target_chat_ids:
+                if (
+                    target_chat_id in self._buffers
+                    and not message.is_stream_chunk
+                    and not message.is_stream_end
+                ):
+                    await self._flush_stream_buffer(target_chat_id)
 
             if message.is_stream_chunk:
                 # TODO: Implement "Typing..." or smart buffering.
@@ -202,30 +220,42 @@ class TelegramAdapter(BaseChannelAdapter):
                 # Simple Buffer Implementation:
                 # Use a dict `_buffers[chat_id] = {"msg_id": ..., "text": "", "last_update": ...}`
 
-                await self._handle_stream_chunk(message)
+                for target_chat_id in target_chat_ids:
+                    stream_msg = OutboundMessage(
+                        channel=message.channel,
+                        chat_id=target_chat_id,
+                        content=message.content,
+                        media=message.media,
+                        metadata=message.metadata,
+                        is_stream_chunk=message.is_stream_chunk,
+                        is_stream_end=message.is_stream_end,
+                    )
+                    await self._handle_stream_chunk(stream_msg)
                 return
 
             if message.is_stream_end:
                 # Flush buffer
-                await self._flush_stream_buffer(message.chat_id)
+                for target_chat_id in target_chat_ids:
+                    await self._flush_stream_buffer(target_chat_id)
                 return
 
             # Normal message (not stream)
-            real_chat_id, topic_id = self._parse_chat_id(chat_id)
             converted = convert_markdown(message.content, self.channel)
-            for part in self._split_message(converted):
-                send_kwargs: dict[str, Any] = {
-                    "chat_id": real_chat_id,
-                    "text": part,
-                    "parse_mode": "MarkdownV2",
-                }
-                if topic_id is not None:
-                    send_kwargs["message_thread_id"] = topic_id
-                await self._send_message_with_fallback(**send_kwargs)
+            for target_chat_id in target_chat_ids:
+                real_chat_id, topic_id = self._parse_chat_id(target_chat_id)
+                for part in self._split_message(converted):
+                    send_kwargs: dict[str, Any] = {
+                        "chat_id": real_chat_id,
+                        "text": part,
+                        "parse_mode": "Markdown",
+                    }
+                    if topic_id is not None:
+                        send_kwargs["message_thread_id"] = topic_id
+                    await self._send_message_with_fallback(**send_kwargs)
 
         except Exception as e:
-            if chat_id in self._buffers:
-                self._buffers.pop(chat_id, None)
+            for target_chat_id in target_chat_ids:
+                self._buffers.pop(target_chat_id, None)
             logger.error(f"Failed to send telegram message: {e}")
 
     # --- buffering logic ---
@@ -292,7 +322,7 @@ class TelegramAdapter(BaseChannelAdapter):
                     chat_id=real_chat_id,
                     message_id=message_id,
                     text=text,
-                    parse_mode="MarkdownV2" if final else None,
+                    parse_mode="Markdown" if final else None,
                 )
                 return
 
@@ -312,7 +342,7 @@ class TelegramAdapter(BaseChannelAdapter):
                 chat_id=real_chat_id,
                 message_id=message_id,
                 text=parts[0],
-                parse_mode="MarkdownV2",
+                parse_mode="Markdown",
             )
             for part in parts[1:]:
                 kwargs: dict[str, Any] = {"chat_id": real_chat_id, "text": part, "parse_mode": None}
@@ -322,46 +352,9 @@ class TelegramAdapter(BaseChannelAdapter):
         except Exception as e:
             logger.warning(f"Failed to update message: {e}")
 
-    @staticmethod
-    def _to_markdown_v2(text: str) -> str:
-        """Best-effort conversion to Telegram MarkdownV2 with escaping.
-
-        Preserves common formatting entities and escapes the rest.
-        """
-        if not text:
-            return ""
-
-        token_patterns = [
-            r"```[\s\S]*?```",          # fenced code blocks
-            r"`[^`\n]+`",                 # inline code
-            r"\[[^\]]+\]\([^)]+\)",  # markdown links
-            r"\*[^*\n]+\*",             # *bold*
-            r"_[^_\n]+_",                 # _italic_
-        ]
-
-        tokens: list[str] = []
-
-        def stash(match: re.Match[str]) -> str:
-            tokens.append(match.group(0))
-            return f"\x00MDTOK{len(tokens)-1}\x00"
-
-        transformed = text
-        for pattern in token_patterns:
-            transformed = re.sub(pattern, stash, transformed)
-
-        transformed = transformed.replace("\\", "\\\\")
-        transformed = re.sub(r"([_*\[\]()~`>#+\-=|{}.!])", r"\\\1", transformed)
-
-        for i, tok in enumerate(tokens):
-            transformed = transformed.replace(f"\x00MDTOK{i}\x00", tok)
-
-        return transformed
-
     async def _send_message_with_fallback(self, **kwargs: Any) -> None:
-        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        """Try Markdown first, then fallback to plain text if parsing fails."""
         base = dict(kwargs)
-        if base.get("parse_mode") == "MarkdownV2":
-            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
         try:
             await self.app.bot.send_message(**base)
         except Exception:
@@ -370,10 +363,8 @@ class TelegramAdapter(BaseChannelAdapter):
             await self.app.bot.send_message(**fallback)
 
     async def _edit_message_with_fallback(self, **kwargs: Any) -> None:
-        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        """Try Markdown first, then fallback to plain text if parsing fails."""
         base = dict(kwargs)
-        if base.get("parse_mode") == "MarkdownV2":
-            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
         try:
             await self.app.bot.edit_message_text(**base)
         except Exception:
@@ -420,7 +411,7 @@ class TelegramAdapter(BaseChannelAdapter):
 
         await update.message.reply_text(
             "🐾 **PocketPaw**\n\nI am listening. Just type to chat!",
-            parse_mode="MarkdownV2",
+            parse_mode="Markdown",
         )
 
     async def _handle_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -439,6 +430,7 @@ class TelegramAdapter(BaseChannelAdapter):
         base_chat_id = str(update.effective_chat.id)
         topic_id = getattr(update.message, "message_thread_id", None)
         chat_id = f"{base_chat_id}:topic:{topic_id}" if topic_id else base_chat_id
+        self._known_chat_ids.add(chat_id)
 
         msg = InboundMessage(
             channel=Channel.TELEGRAM,
@@ -510,6 +502,7 @@ class TelegramAdapter(BaseChannelAdapter):
         base_chat_id = str(update.effective_chat.id)
         topic_id = getattr(tg_msg, "message_thread_id", None)
         chat_id = f"{base_chat_id}:topic:{topic_id}" if topic_id else base_chat_id
+        self._known_chat_ids.add(chat_id)
 
         msg = InboundMessage(
             channel=Channel.TELEGRAM,

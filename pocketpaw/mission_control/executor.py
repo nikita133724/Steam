@@ -48,7 +48,7 @@ MAX_ERROR_MESSAGE_LENGTH = 200  # Truncate error messages
 from pocketpaw.agents.router import AgentRouter
 from pocketpaw.bus.events import SystemEvent
 from pocketpaw.bus.queue import get_message_bus
-from pocketpaw.config import Settings, get_settings
+from pocketpaw.config import get_settings
 from pocketpaw.mission_control.manager import get_mission_control_manager
 from pocketpaw.mission_control.models import (
     Activity,
@@ -163,16 +163,13 @@ class MCTaskExecutor:
         # tasks run headlessly (no terminal for interactive prompts).
         # The PreToolUse hook still blocks dangerous commands.
         base_settings = get_settings()
-        agent_settings = Settings(
-            agent_backend=agent.backend,
-            anthropic_api_key=base_settings.anthropic_api_key,
-            anthropic_model=base_settings.anthropic_model,
-            openai_api_key=base_settings.openai_api_key,
-            openai_model=base_settings.openai_model,
-            ollama_host=base_settings.ollama_host,
-            ollama_model=base_settings.ollama_model,
-            llm_provider=base_settings.llm_provider,
-            bypass_permissions=True,
+        # Preserve ALL runtime model/provider settings (including Open Interpreter
+        # custom provider registry) when overriding backend for this specific agent.
+        agent_settings = base_settings.model_copy(
+            update={
+                "agent_backend": agent.backend,
+                "bypass_permissions": True,
+            }
         )
 
         # Create dedicated router for this task
