@@ -111,6 +111,112 @@ x-transition.opacity
                     </small>
                 </div>
 
+                <!-- Open Interpreter Provider -->
+                <div class="flex flex-col gap-1.5" x-show="settings.agentBackend === 'open_interpreter'">
+                    <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Open Interpreter Provider</label>
+                    <div class="relative">
+                    <select
+                        x-model="settings.openInterpreterProvider"
+                        @change="saveSettings()"
+                        class="w-full appearance-none bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all"
+                    >
+                    <option value="auto">Auto</option>
+                    <option value="ollama">Ollama</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="groq">Groq</option>
+                    <option value="registry_auto">Custom Registry (Round-robin/Failover)</option>
+                    </select>
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </div>
+                    </div>
+                    <small class="text-white/50 text-[11px]" x-show="settings.openInterpreterProvider === 'groq'">
+                        Groq uses OpenAI-compatible endpoint: <code>https://api.groq.com/openai/v1/chat/completions</code>
+                    </small>
+                </div>
+
+                <!-- Open Interpreter Custom Registry (advanced) -->
+                <div class="flex flex-col gap-1.5" x-show="settings.agentBackend === 'open_interpreter' && settings.openInterpreterProvider === 'registry_auto'">
+                    <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Registry Routing Mode</label>
+                    <div class="relative">
+                    <select
+                        x-model="settings.openInterpreterRegistryMode"
+                        @change="saveSettings()"
+                        class="w-full appearance-none bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all"
+                    >
+                    <option value="selected">Use first enabled provider</option>
+                    <option value="round_robin">Round-robin providers</option>
+                    <option value="failover">Failover on errors</option>
+                    </select>
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </div>
+                    </div>
+                    <small class="text-white/50 text-[11px]">Controls switching strategy between your custom providers.</small>
+                </div>
+
+                <div class="flex flex-col gap-1.5" x-show="settings.agentBackend === 'open_interpreter' && settings.openInterpreterProvider === 'registry_auto'">
+                    <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Custom Provider Registry (JSON)</label>
+                    <textarea
+                        x-model="settings.openInterpreterProviderRegistry"
+                        @change="saveSettings()"
+                        rows="7"
+                        placeholder='[{"id":"grok-a","api_base":"https://api.groq.com/openai/v1","model":"llama-3.1-8b-instant","api_keys":["gsk_1","gsk_2"],"enabled":true}]'
+                        class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2 px-3 text-[12px] text-white font-mono focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all placeholder-white/40"
+                    ></textarea>
+                    <small class="text-white/50 text-[11px]">Fields: id, api_base, model, api_keys/api_key, enabled. Provider is auto-detected from endpoint (or optional).</small>
+                </div>
+
+                <!-- Open Interpreter Groq Model -->
+                <div class="flex flex-col gap-1.5" x-show="settings.agentBackend === 'open_interpreter' && (settings.openInterpreterProvider === 'groq' || settings.openInterpreterProvider === 'auto')">
+                    <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Open Interpreter Model (Groq)</label>
+                    <input
+                        type="text"
+                        x-model="settings.openInterpreterModel"
+                        @change="saveSettings()"
+                        placeholder="llama-3.1-8b-instant"
+                        class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all"
+                    />
+                </div>
+
+                <!-- Open Interpreter Context Tuning -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3" x-show="settings.agentBackend === 'open_interpreter'">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">OI History Messages</label>
+                        <input type="number" min="1" max="20" x-model.number="settings.openInterpreterHistoryMessages" @change="saveSettings()"
+                            class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">OI Chars Per Message</label>
+                        <input type="number" min="40" max="1000" x-model.number="settings.openInterpreterHistoryChars" @change="saveSettings()"
+                            class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">OI Max Tokens</label>
+                        <input type="number" min="256" max="65536" x-model.number="settings.openInterpreterMaxTokens" @change="saveSettings()"
+                            class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">OI Req/Min</label>
+                        <input type="number" min="0" max="10000" x-model.number="settings.openInterpreterRequestsPerMinute" @change="saveSettings()"
+                            class="w-full bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2.5 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all" />
+                    </div>
+                </div>
+
+                <!-- Groq API Key Pool (Open Interpreter) -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Groq API Key Pool (one per line)</label>
+                    </div>
+                    <div class="flex gap-2">
+                    <textarea x-model="apiKeys.groq_pool" rows="3" :placeholder="settings.groqApiKeys || 'gsk_key_1\ngsk_key_2\ngsk_key_3'"
+                        class="flex-1 bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all placeholder-white/40"></textarea>
+                    <button class="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-3.5 py-2 rounded-[8px] text-[12px] font-semibold transition-all active:scale-95" @click="saveApiKey('groq_pool')">Save</button>
+                    </div>
+                    <small class="text-white/50 text-[11px]">Rotation is automatic between keys for Open Interpreter + Groq.</small>
+                </div>
+
                 <!-- Ollama Host -->
                 <div class="flex flex-col gap-1.5" x-show="settings.llmProvider === 'ollama'">
                     <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Ollama Host</label>
@@ -219,6 +325,40 @@ x-transition.opacity
                     <button class="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-3.5 py-2 rounded-[8px] text-[12px] font-semibold transition-all active:scale-95" @click="saveApiKey('openai')">Save</button>
                     </div>
                 </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">OpenAI Key Pool (rotation)</label>
+                    </div>
+                    <div class="flex gap-2 items-start">
+                        <textarea x-model="apiKeys.openai_pool" rows="3" :placeholder="settings.openaiApiKeys || 'sk-key-1
+sk-key-2
+sk-key-3'"
+                            class="flex-1 bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2 px-3 text-[12px] text-white font-mono focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all placeholder-white/40"></textarea>
+                        <button class="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-3.5 py-2 rounded-[8px] text-[12px] font-semibold transition-all active:scale-95" @click="saveApiKey('openai_pool')">Save</button>
+                    </div>
+                </div>
+
+                <!-- Groq API Key (Open Interpreter) -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[12px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">Groq API Key (Open Interpreter)</label>
+                        <div class="flex items-center gap-2">
+                            <a href="https://console.groq.com/keys" target="_blank" rel="noopener" class="api-key-help">
+                                <i data-lucide="external-link" class="w-3 h-3"></i> Get Key
+                            </a>
+                            <span x-show="hasGroqKey" class="text-[11px] font-medium text-[var(--success-color)] flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> Saved
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                    <input type="password" x-model="apiKeys.groq" :placeholder="hasGroqKey ? '••••••••••••••••' : 'gsk_...'"
+                        class="flex-1 bg-black/30 border border-[var(--glass-border)] rounded-[10px] py-2 px-3 text-[13px] text-white focus:outline-none focus:border-[var(--accent-color)] focus:bg-black/40 transition-all placeholder-white/40" />
+                    <button class="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-3.5 py-2 rounded-[8px] text-[12px] font-semibold transition-all active:scale-95" @click="saveApiKey('groq')">Save</button>
+                    </div>
+                </div>
+
 
                 <hr class="border-t border-[var(--glass-border)] opacity-30 my-1" />
                 <h4 class="text-[12px] font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Search Providers</h4>

@@ -46,6 +46,9 @@ def _check_plaintext_api_keys() -> tuple[bool, str, bool]:
     key_fields = [
         "anthropic_api_key",
         "openai_api_key",
+        "openai_api_keys",
+        "groq_api_key",
+        "groq_api_keys",
         "tavily_api_key",
         "brave_search_api_key",
         "google_api_key",

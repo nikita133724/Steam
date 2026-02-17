@@ -28,7 +28,10 @@ SECRET_FIELDS: frozenset[str] = frozenset(
     {
         "telegram_bot_token",
         "openai_api_key",
+        "openai_api_keys",
         "anthropic_api_key",
+        "groq_api_key",
+        "groq_api_keys",
         "discord_bot_token",
         "slack_bot_token",
         "slack_app_token",

@@ -9,6 +9,7 @@ import litellm
 import openai
 
 from .render_message import render_message
+from ..terminal_interface.utils.display_markdown_message import display_markdown_message
 
 
 def respond(interpreter):

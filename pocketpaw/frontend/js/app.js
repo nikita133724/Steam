@@ -66,6 +66,16 @@ function app() {
             ollamaHost: 'http://localhost:11434',
             ollamaModel: 'llama3.2',
             anthropicModel: 'claude-sonnet-4-5-20250929',
+            openInterpreterProvider: 'auto',
+            openInterpreterModel: 'llama-3.1-8b-instant',
+            openInterpreterHistoryMessages: 4,
+            openInterpreterHistoryChars: 120,
+            openInterpreterMaxTokens: 2090,
+            openInterpreterRequestsPerMinute: 0,
+            openInterpreterRegistryMode: 'selected',
+            openInterpreterProviderRegistry: '',
+            openaiApiKeys: '',
+            groqApiKeys: '',
             bypassPermissions: false,
             webSearchProvider: 'tavily',
             urlExtractProvider: 'auto',
@@ -97,6 +107,9 @@ function app() {
         apiKeys: {
             anthropic: '',
             openai: '',
+            openai_pool: '',
+            groq: '',
+            groq_pool: '',
             tavily: '',
             brave: '',
             parallel: '',
@@ -108,6 +121,7 @@ function app() {
         },
         hasAnthropicKey: false,
         hasOpenaiKey: false,
+        hasGroqKey: false,
         hasTavilyKey: false,
         hasBraveKey: false,
         hasParallelKey: false,
@@ -385,6 +399,9 @@ function app() {
             // Data-driven settings sync: map server keys to local settings
             const SETTINGS_MAP = [
                 'agentBackend', 'llmProvider', 'ollamaHost', 'ollamaModel', 'anthropicModel',
+                'openInterpreterProvider', 'openInterpreterModel',
+                'openInterpreterHistoryMessages', 'openInterpreterHistoryChars', 'openInterpreterMaxTokens', 'openInterpreterRequestsPerMinute',
+                'openInterpreterRegistryMode', 'openInterpreterProviderRegistry', 'openaiApiKeys', 'groqApiKeys',
                 'bypassPermissions', 'webSearchProvider', 'urlExtractProvider',
                 'injectionScanEnabled', 'injectionScanLlm', 'toolProfile',
                 'planMode', 'planModeTools', 'smartRoutingEnabled',
@@ -401,7 +418,7 @@ function app() {
 
             // API key availability flags
             const KEY_FLAGS = {
-                hasAnthropicKey: false, hasOpenaiKey: false,
+                hasAnthropicKey: false, hasOpenaiKey: false, hasGroqKey: false,
                 hasTavilyKey: false, hasBraveKey: false,
                 hasParallelKey: false, hasElevenlabsKey: false,
                 hasGoogleOAuthId: false, hasGoogleOAuthSecret: false,
@@ -501,6 +518,9 @@ function app() {
             const keyMap = {
                 'anthropic': 'hasAnthropicKey',
                 'openai': 'hasOpenaiKey',
+                'openai_pool': 'hasOpenaiKey',
+                'groq': 'hasGroqKey',
+                'groq_pool': 'hasGroqKey',
                 'tavily': 'hasTavilyKey',
                 'brave': 'hasBraveKey',
                 'parallel': 'hasParallelKey',

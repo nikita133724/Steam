@@ -59,9 +59,14 @@ body {
   background-color: var(--bg-color);
   background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 70%); /* Subtle depth */
   color: var(--text-primary);
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   display: flex;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   -webkit-font-smoothing: antialiased;
 }
 

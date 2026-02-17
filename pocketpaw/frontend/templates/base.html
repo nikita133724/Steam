@@ -55,22 +55,19 @@
         }
       }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
+    <script src="/static/js/vendor/unocss-runtime.js?v={{ v }}"></script>
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/static/js/vendor/lucide.min.js?v={{ v }}"></script>
 
     <!-- Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="/static/js/vendor/marked.min.js?v={{ v }}"></script>
+    <script src="/static/js/vendor/purify.min.js?v={{ v }}"></script>
 
     <!-- QR code generation (WhatsApp pairing) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="/static/js/vendor/qrcode.min.js?v={{ v }}"></script>
 
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"
-    ></script>
+    <script defer src="/static/js/vendor/alpine.min.js?v={{ v }}"></script>
   </head>
   <body x-data="{ ...app(), sidebarOpen: false }" x-init="init()" class="flex h-screen overflow-hidden bg-[var(--bg-color)] text-[var(--text-primary)]">
 
@@ -111,7 +108,7 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col relative bg-[radial-gradient(circle_at_50%_30%,#1c1c1e_0%,#000000_100%)] overflow-hidden w-full">
       <!-- Top Bar -->
-      <header class="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-4 md:px-8 py-4 bg-gradient-to-b from-black/40 to-transparent pointer-events-none">
+      <header class="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-4 md:px-8 py-4 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" style="padding-top: max(1rem, env(safe-area-inset-top));">
         
         <!-- Left: Mobile Toggle & View Switcher -->
         <div class="flex items-center gap-3 pointer-events-auto">

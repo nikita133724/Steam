@@ -5,10 +5,12 @@ Created: 2026-02-02
 
 import asyncio
 import logging
+import re
 from typing import Any
 
 try:
     from telegram import Update
+    from telegram.error import Conflict
     from telegram.ext import (
         Application,
         CommandHandler,
@@ -31,6 +33,7 @@ from pocketpaw.bus import (
 from pocketpaw.bus.format import convert_markdown
 
 logger = logging.getLogger(__name__)
+TELEGRAM_MSG_LIMIT = 4000
 
 
 class TelegramAdapter(BaseChannelAdapter):
@@ -41,6 +44,7 @@ class TelegramAdapter(BaseChannelAdapter):
         self.token = token
         self.allowed_user_id = allowed_user_id
         self.app: Application | None = None
+        self._last_conflict_log_ts: float = 0.0
 
     @property
     def channel(self) -> Channel:
@@ -75,8 +79,14 @@ class TelegramAdapter(BaseChannelAdapter):
         await self.app.initialize()
         await self.app.start()
 
+        # Stop endless conflict spam if another instance already polls this bot token
+        self.app.add_error_handler(self._handle_polling_error)
+
         # Start polling (non-blocking)
-        await self.app.updater.start_polling(drop_pending_updates=True)
+        await self.app.updater.start_polling(
+            drop_pending_updates=True,
+            error_callback=self._polling_error_callback,
+        )
 
         # Set bot menu commands for autocomplete in Telegram UI
         try:
@@ -149,6 +159,11 @@ class TelegramAdapter(BaseChannelAdapter):
             # Strategy: Accumulate tokens and edit message every 1-2 seconds.
             pass  # placeholder comment
 
+            # If a normal/error message arrives while a stream buffer is open,
+            # flush first so users receive one complete response instead of fragments.
+            if chat_id in self._buffers and not message.is_stream_chunk and not message.is_stream_end:
+                await self._flush_stream_buffer(chat_id)
+
             if message.is_stream_chunk:
                 # TODO: Implement "Typing..." or smart buffering.
                 # For now, just print to console? No, user needs to see it.
@@ -197,21 +212,42 @@ class TelegramAdapter(BaseChannelAdapter):
 
             # Normal message (not stream)
             real_chat_id, topic_id = self._parse_chat_id(chat_id)
-            send_kwargs: dict[str, Any] = {
-                "chat_id": real_chat_id,
-                "text": convert_markdown(message.content, self.channel),
-                "parse_mode": "Markdown",
-            }
-            if topic_id is not None:
-                send_kwargs["message_thread_id"] = topic_id
-            await self.app.bot.send_message(**send_kwargs)
+            converted = convert_markdown(message.content, self.channel)
+            for part in self._split_message(converted):
+                send_kwargs: dict[str, Any] = {
+                    "chat_id": real_chat_id,
+                    "text": part,
+                    "parse_mode": "MarkdownV2",
+                }
+                if topic_id is not None:
+                    send_kwargs["message_thread_id"] = topic_id
+                await self._send_message_with_fallback(**send_kwargs)
 
         except Exception as e:
+            if chat_id in self._buffers:
+                self._buffers.pop(chat_id, None)
             logger.error(f"Failed to send telegram message: {e}")
 
     # --- buffering logic ---
 
     _buffers: dict[str, Any] = {}
+
+    @staticmethod
+    def _split_message(text: str, limit: int = TELEGRAM_MSG_LIMIT) -> list[str]:
+        """Split long text into Telegram-safe chunks."""
+        if not text:
+            return [""]
+        chunks: list[str] = []
+        remaining = text
+        while len(remaining) > limit:
+            split_at = remaining.rfind("\n", 0, limit)
+            if split_at <= 0:
+                split_at = limit
+            chunks.append(remaining[:split_at])
+            remaining = remaining[split_at:].lstrip("\n")
+        if remaining:
+            chunks.append(remaining)
+        return chunks
 
     async def _handle_stream_chunk(self, message: OutboundMessage) -> None:
         chat_id = message.chat_id
@@ -236,29 +272,138 @@ class TelegramAdapter(BaseChannelAdapter):
         now = asyncio.get_event_loop().time()
         buf = self._buffers[chat_id]
         if now - buf["last_update"] > 1.5:  # Update every 1.5s
-            await self._update_message(chat_id, buf["message_id"], buf["text"])
+            await self._update_message(chat_id, buf["message_id"], buf["text"], final=False)
             buf["last_update"] = now
 
     async def _flush_stream_buffer(self, chat_id: str) -> None:
         if chat_id in self._buffers:
             buf = self._buffers[chat_id]
             text = convert_markdown(buf["text"], self.channel)
-            await self._update_message(chat_id, buf["message_id"], text)
+            await self._update_message(chat_id, buf["message_id"], text, final=True)
             del self._buffers[chat_id]
 
-    async def _update_message(self, chat_id: str, message_id: int, text: str) -> None:
+    async def _update_message(self, chat_id: str, message_id: int, text: str, *, final: bool) -> None:
         try:
             if not text.strip():
                 return
-            real_chat_id, _topic_id = self._parse_chat_id(chat_id)
-            await self.app.bot.edit_message_text(
+            real_chat_id, topic_id = self._parse_chat_id(chat_id)
+            if len(text) <= TELEGRAM_MSG_LIMIT:
+                await self._edit_message_with_fallback(
+                    chat_id=real_chat_id,
+                    message_id=message_id,
+                    text=text,
+                    parse_mode="MarkdownV2" if final else None,
+                )
+                return
+
+            if not final:
+                # During streaming keep only one editable message to avoid fragmented output spam.
+                preview = text[: TELEGRAM_MSG_LIMIT - 1] + "…"
+                await self._edit_message_with_fallback(
+                    chat_id=real_chat_id,
+                    message_id=message_id,
+                    text=preview,
+                    parse_mode=None,
+                )
+                return
+
+            parts = self._split_message(text)
+            await self._edit_message_with_fallback(
                 chat_id=real_chat_id,
                 message_id=message_id,
-                text=text,
-                parse_mode=None,  # Markdown can break easily with partial streams
+                text=parts[0],
+                parse_mode="MarkdownV2",
             )
+            for part in parts[1:]:
+                kwargs: dict[str, Any] = {"chat_id": real_chat_id, "text": part, "parse_mode": None}
+                if topic_id is not None:
+                    kwargs["message_thread_id"] = topic_id
+                await self._send_message_with_fallback(**kwargs)
         except Exception as e:
             logger.warning(f"Failed to update message: {e}")
+
+    @staticmethod
+    def _to_markdown_v2(text: str) -> str:
+        """Best-effort conversion to Telegram MarkdownV2 with escaping.
+
+        Preserves common formatting entities and escapes the rest.
+        """
+        if not text:
+            return ""
+
+        token_patterns = [
+            r"```[\s\S]*?```",          # fenced code blocks
+            r"`[^`\n]+`",                 # inline code
+            r"\[[^\]]+\]\([^)]+\)",  # markdown links
+            r"\*[^*\n]+\*",             # *bold*
+            r"_[^_\n]+_",                 # _italic_
+        ]
+
+        tokens: list[str] = []
+
+        def stash(match: re.Match[str]) -> str:
+            tokens.append(match.group(0))
+            return f"\x00MDTOK{len(tokens)-1}\x00"
+
+        transformed = text
+        for pattern in token_patterns:
+            transformed = re.sub(pattern, stash, transformed)
+
+        transformed = transformed.replace("\\", "\\\\")
+        transformed = re.sub(r"([_*\[\]()~`>#+\-=|{}.!])", r"\\\1", transformed)
+
+        for i, tok in enumerate(tokens):
+            transformed = transformed.replace(f"\x00MDTOK{i}\x00", tok)
+
+        return transformed
+
+    async def _send_message_with_fallback(self, **kwargs: Any) -> None:
+        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        base = dict(kwargs)
+        if base.get("parse_mode") == "MarkdownV2":
+            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
+        try:
+            await self.app.bot.send_message(**base)
+        except Exception:
+            fallback = dict(kwargs)
+            fallback["parse_mode"] = None
+            await self.app.bot.send_message(**fallback)
+
+    async def _edit_message_with_fallback(self, **kwargs: Any) -> None:
+        """Try MarkdownV2 first, then fallback to plain text if parsing fails."""
+        base = dict(kwargs)
+        if base.get("parse_mode") == "MarkdownV2":
+            base["text"] = self._to_markdown_v2(str(base.get("text", "")))
+        try:
+            await self.app.bot.edit_message_text(**base)
+        except Exception:
+            fallback = dict(kwargs)
+            fallback["parse_mode"] = None
+            await self.app.bot.edit_message_text(**fallback)
+
+    def _log_conflict_once(self) -> None:
+        """Log telegram polling conflicts with cooldown to avoid log storms."""
+        now = asyncio.get_event_loop().time()
+        if now - self._last_conflict_log_ts >= 60:
+            logger.error(
+                "Telegram Conflict: another bot instance is polling this token. "
+                "This instance will keep retrying; stop duplicate bot processes if conflict persists."
+            )
+            self._last_conflict_log_ts = now
+
+    def _polling_error_callback(self, error: Exception) -> None:
+        """Callback for polling-loop errors (called by PTB updater)."""
+        if isinstance(error, Conflict):
+            self._log_conflict_once()
+            return
+        logger.error("Telegram polling error: %s", error)
+
+    async def _handle_polling_error(self, _update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Application-level error handler to catch polling conflicts too."""
+        err = context.error
+        if isinstance(err, Conflict):
+            self._log_conflict_once()
+            return
 
     # --- Handlers ---
 
@@ -275,7 +420,7 @@ class TelegramAdapter(BaseChannelAdapter):
 
         await update.message.reply_text(
             "🐾 **PocketPaw**\n\nI am listening. Just type to chat!",
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
         )
 
     async def _handle_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

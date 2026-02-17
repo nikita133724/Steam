@@ -105,11 +105,62 @@ class Settings(BaseSettings):
     ollama_host: str = Field(default="http://localhost:11434", description="Ollama API host")
     ollama_model: str = Field(default="llama3.2", description="Ollama model to use")
     openai_api_key: str | None = Field(default=None, description="OpenAI API key")
+    openai_api_keys: str = Field(
+        default="",
+        description="Optional OpenAI API key pool (newline/comma separated) for key rotation",
+    )
     openai_model: str = Field(default="gpt-4o", description="OpenAI model to use")
     anthropic_api_key: str | None = Field(default=None, description="Anthropic API key")
     anthropic_model: str = Field(
         default="claude-sonnet-4-5-20250929", description="Anthropic model to use"
     )
+    # Open Interpreter-specific LLM settings
+    open_interpreter_provider: str = Field(
+        default="auto",
+        description=(
+            "Provider used only when agent_backend=open_interpreter: "
+            "'auto', 'ollama', 'openai', 'anthropic', or 'groq'"
+        ),
+    )
+    open_interpreter_model: str = Field(
+        default="llama-3.1-8b-instant",
+        description="Model used by Open Interpreter when provider=groq",
+    )
+    groq_api_key: str | None = Field(default=None, description="Groq API key")
+    groq_api_keys: str = Field(
+        default="",
+        description="Optional Groq API key pool (newline/comma separated) for key rotation",
+    )
+    open_interpreter_history_messages: int = Field(
+        default=4,
+        description="Max recent messages included in Open Interpreter context summary",
+    )
+    open_interpreter_history_chars: int = Field(
+        default=120,
+        description="Max chars per message in Open Interpreter context summary",
+    )
+    open_interpreter_max_tokens: int = Field(
+        default=2090,
+        description="Max output tokens per Open Interpreter completion (applies to all OI providers/models)",
+    )
+    open_interpreter_requests_per_minute: int = Field(
+        default=0,
+        description="Optional Open Interpreter request-rate limit per minute (0 disables limiter)",
+    )
+    open_interpreter_registry_mode: str = Field(
+        default="selected",
+        description=(
+            "Open Interpreter routing mode: 'selected', 'round_robin', or 'failover'"
+        ),
+    )
+    open_interpreter_provider_registry: str = Field(
+        default="",
+        description=(
+            "JSON array for custom Open Interpreter providers "
+            "(id, api_base, model, api_keys/api_key, enabled; provider optional auto-detect)"
+        ),
+    )
+    ui_language: str = Field(default="en", description="Dashboard UI language: 'en' or 'ru'")
 
     # Memory Backend
     memory_backend: str = Field(
@@ -448,9 +499,20 @@ class Settings(BaseSettings):
             "ollama_host": self.ollama_host,
             "ollama_model": self.ollama_model,
             "openai_api_key": self.openai_api_key or existing.get("openai_api_key"),
+            "openai_api_keys": self.openai_api_keys or existing.get("openai_api_keys", ""),
             "openai_model": self.openai_model,
             "anthropic_api_key": self.anthropic_api_key or existing.get("anthropic_api_key"),
             "anthropic_model": self.anthropic_model,
+            "open_interpreter_provider": self.open_interpreter_provider,
+            "open_interpreter_model": self.open_interpreter_model,
+            "groq_api_key": self.groq_api_key or existing.get("groq_api_key"),
+            "groq_api_keys": self.groq_api_keys or existing.get("groq_api_keys", ""),
+            "open_interpreter_history_messages": self.open_interpreter_history_messages,
+            "open_interpreter_history_chars": self.open_interpreter_history_chars,
+            "open_interpreter_requests_per_minute": self.open_interpreter_requests_per_minute,
+            "open_interpreter_registry_mode": self.open_interpreter_registry_mode,
+            "open_interpreter_provider_registry": self.open_interpreter_provider_registry,
+            "ui_language": self.ui_language,
             # Discord
             "discord_bot_token": (self.discord_bot_token or existing.get("discord_bot_token")),
             "discord_allowed_guild_ids": self.discord_allowed_guild_ids,

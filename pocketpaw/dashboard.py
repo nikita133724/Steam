@@ -2236,6 +2236,40 @@ async def websocket_endpoint(
                         settings.ollama_model = data["ollama_model"]
                     if data.get("anthropic_model"):
                         settings.anthropic_model = data.get("anthropic_model")
+                    if data.get("open_interpreter_provider"):
+                        settings.open_interpreter_provider = data["open_interpreter_provider"]
+                    if "openai_api_keys" in data:
+                        settings.openai_api_keys = str(data.get("openai_api_keys", ""))
+                    if data.get("open_interpreter_model"):
+                        settings.open_interpreter_model = data["open_interpreter_model"]
+                    if "groq_api_keys" in data:
+                        settings.groq_api_keys = str(data.get("groq_api_keys", ""))
+                    if data.get("open_interpreter_registry_mode"):
+                        settings.open_interpreter_registry_mode = data[
+                            "open_interpreter_registry_mode"
+                        ]
+                    if "open_interpreter_provider_registry" in data:
+                        settings.open_interpreter_provider_registry = str(
+                            data.get("open_interpreter_provider_registry", "")
+                        )
+                    if data.get("ui_language"):
+                        settings.ui_language = data["ui_language"]
+                    if data.get("open_interpreter_history_messages"):
+                        settings.open_interpreter_history_messages = int(
+                            data["open_interpreter_history_messages"]
+                        )
+                    if data.get("open_interpreter_history_chars"):
+                        settings.open_interpreter_history_chars = int(
+                            data["open_interpreter_history_chars"]
+                        )
+                    if "open_interpreter_requests_per_minute" in data:
+                        settings.open_interpreter_requests_per_minute = max(
+                            0, int(data.get("open_interpreter_requests_per_minute") or 0)
+                        )
+                    if data.get("open_interpreter_max_tokens"):
+                        settings.open_interpreter_max_tokens = int(
+                            data["open_interpreter_max_tokens"]
+                        )
                     if "bypass_permissions" in data:
                         settings.bypass_permissions = bool(data.get("bypass_permissions"))
                     if data.get("web_search_provider"):
@@ -2333,6 +2367,50 @@ async def websocket_endpoint(
                         await websocket.send_json(
                             {"type": "message", "content": "✅ OpenAI API key saved!"}
                         )
+                    elif provider == "openai_pool" and key:
+                        settings.openai_api_keys = key
+                        if not settings.openai_api_key:
+                            first = next(
+                                (k.strip() for k in key.replace(",", "\n").splitlines() if k.strip()),
+                                None,
+                            )
+                            if first:
+                                settings.openai_api_key = first
+                        settings.llm_provider = "openai"
+                        settings.save()
+                        agent_loop.reset_router()
+                        await websocket.send_json(
+                            {"type": "message", "content": "✅ OpenAI key pool saved!"}
+                        )
+                    elif provider == "groq" and key:
+                        settings.groq_api_key = key
+                        settings.open_interpreter_provider = "groq"
+                        settings.save()
+                        agent_loop.reset_router()
+                        await websocket.send_json(
+                            {
+                                "type": "message",
+                                "content": "✅ Groq API key saved for Open Interpreter!",
+                            }
+                        )
+                    elif provider == "groq_pool" and key:
+                        settings.groq_api_keys = key
+                        if not settings.groq_api_key:
+                            first = next(
+                                (k.strip() for k in key.replace(",", "\n").splitlines() if k.strip()),
+                                None,
+                            )
+                            if first:
+                                settings.groq_api_key = first
+                        settings.open_interpreter_provider = "groq"
+                        settings.save()
+                        agent_loop.reset_router()
+                        await websocket.send_json(
+                            {
+                                "type": "message",
+                                "content": "✅ Groq key pool saved for Open Interpreter!",
+                            }
+                        )
                     elif provider == "tavily" and key:
                         settings.tavily_api_key = key
                         settings.save()
@@ -2411,9 +2489,21 @@ async def websocket_endpoint(
                             "ollamaHost": settings.ollama_host,
                             "ollamaModel": settings.ollama_model,
                             "anthropicModel": settings.anthropic_model,
+                            "openInterpreterProvider": settings.open_interpreter_provider,
+                            "openInterpreterModel": settings.open_interpreter_model,
+                            "openInterpreterHistoryMessages": settings.open_interpreter_history_messages,
+                            "openInterpreterHistoryChars": settings.open_interpreter_history_chars,
+                            "openInterpreterMaxTokens": settings.open_interpreter_max_tokens,
+                            "openInterpreterRequestsPerMinute": settings.open_interpreter_requests_per_minute,
+                            "openaiApiKeys": settings.openai_api_keys,
+                            "groqApiKeys": settings.groq_api_keys,
+                            "openInterpreterRegistryMode": settings.open_interpreter_registry_mode,
+                            "openInterpreterProviderRegistry": settings.open_interpreter_provider_registry,
+                            "uiLanguage": settings.ui_language,
                             "bypassPermissions": settings.bypass_permissions,
                             "hasAnthropicKey": bool(settings.anthropic_api_key),
-                            "hasOpenaiKey": bool(settings.openai_api_key),
+                            "hasOpenaiKey": bool(settings.openai_api_key or settings.openai_api_keys),
+                            "hasGroqKey": bool(settings.groq_api_key),
                             "webSearchProvider": settings.web_search_provider,
                             "urlExtractProvider": settings.url_extract_provider,
                             "hasTavilyKey": bool(settings.tavily_api_key),

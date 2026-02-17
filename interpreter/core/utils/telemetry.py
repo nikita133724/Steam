@@ -19,6 +19,19 @@ import pkg_resources
 import requests
 
 
+def _safe_oi_version() -> str:
+    """Return Open Interpreter version without raising DistributionNotFound.
+
+    In source-checkout installs, the `open-interpreter` distribution metadata may
+    be unavailable even though `interpreter` imports correctly.
+    """
+
+    try:
+        return pkg_resources.get_distribution("open-interpreter").version
+    except Exception:
+        return "source"
+
+
 def get_or_create_uuid():
     try:
         uuid_file_path = os.path.join(
@@ -47,9 +60,7 @@ user_id = get_or_create_uuid()
 def send_telemetry(event_name, properties=None):
     if properties is None:
         properties = {}
-    properties["oi_version"] = pkg_resources.get_distribution(
-        "open-interpreter"
-    ).version
+    properties["oi_version"] = _safe_oi_version()
     try:
         url = "https://app.posthog.com/capture"
         headers = {"Content-Type": "application/json"}
