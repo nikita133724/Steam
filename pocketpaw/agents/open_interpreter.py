@@ -649,13 +649,34 @@ class OpenInterpreterAgent:
                 executor_future = loop.run_in_executor(None, run_sync)
 
                 # Yield chunks as they arrive
+                idle_timeouts = 0
+                max_idle_timeouts = 10
                 while True:
                     try:
                         chunk = await asyncio.wait_for(chunk_queue.get(), timeout=60.0)
                         if chunk is None:  # End signal
                             break
+                        idle_timeouts = 0
                         yield chunk
                     except TimeoutError:
+                        idle_timeouts += 1
+
+                        # If the worker is already done and queue is empty, stop waiting.
+                        if executor_future.done():
+                            break
+
+                        # Avoid endless heartbeat loops when OI gets stuck.
+                        if idle_timeouts >= max_idle_timeouts:
+                            self._stop_flag = True
+                            yield {
+                                "type": "error",
+                                "content": (
+                                    "⚠️ Open Interpreter завис и не вернул ответ вовремя. "
+                                    "Остановил текущий запуск. Проверьте модель/провайдер и повторите запрос."
+                                ),
+                            }
+                            break
+
                         yield {"type": "message", "content": "⏳ Still processing..."}
 
                 # Wait for executor to finish
