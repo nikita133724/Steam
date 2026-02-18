@@ -9,7 +9,7 @@ from typing import Any
 
 try:
     from telegram import Update
-    from telegram.error import Conflict
+    from telegram.error import BadRequest, Conflict, Forbidden
     from telegram.ext import (
         Application,
         CommandHandler,
@@ -123,7 +123,11 @@ class TelegramAdapter(BaseChannelAdapter):
         """Parse a chat_id that may contain a topic suffix.
 
         Returns (real_chat_id, topic_id_or_None).
+
+        Special case: "broadcast" routes to allowed_user_id in direct chats.
         """
+        if raw_chat_id == "broadcast":
+            return "broadcast", None
         if ":topic:" in raw_chat_id:
             parts = raw_chat_id.split(":topic:")
             return parts[0], int(parts[1])
@@ -135,6 +139,14 @@ class TelegramAdapter(BaseChannelAdapter):
             return
 
         chat_id = message.chat_id
+        if chat_id == "broadcast":
+            if self.allowed_user_id is not None:
+                chat_id = str(self.allowed_user_id)
+            else:
+                logger.warning(
+                    "Telegram broadcast message dropped: allowed_user_id is not configured"
+                )
+                return
 
         # Basic security check - though AgentLoop should handle it via logic,
         # the adapter enforces the channel pipe.
@@ -222,6 +234,19 @@ class TelegramAdapter(BaseChannelAdapter):
                     send_kwargs["message_thread_id"] = topic_id
                 await self._send_message_with_fallback(**send_kwargs)
 
+        except Forbidden as e:
+            if chat_id in self._buffers:
+                self._buffers.pop(chat_id, None)
+            logger.warning(
+                "Failed to send telegram message (forbidden/chat not found). "
+                "Ask the user to open the bot and press /start, then re-pair. chat_id=%s error=%s",
+                chat_id,
+                e,
+            )
+        except BadRequest as e:
+            if chat_id in self._buffers:
+                self._buffers.pop(chat_id, None)
+            logger.warning("Failed to send telegram message (bad request): chat_id=%s error=%s", chat_id, e)
         except Exception as e:
             if chat_id in self._buffers:
                 self._buffers.pop(chat_id, None)

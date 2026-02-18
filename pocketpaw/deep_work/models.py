@@ -247,6 +247,7 @@ class PlannerResult:
     dependency_graph: dict[str, list[str]] = field(default_factory=dict)
     estimated_total_minutes: int = 0
     research_notes: str = ""
+    parse_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -259,6 +260,7 @@ class PlannerResult:
             "dependency_graph": self.dependency_graph,
             "estimated_total_minutes": self.estimated_total_minutes,
             "research_notes": self.research_notes,
+            "parse_diagnostics": self.parse_diagnostics,
         }
 
     @classmethod
@@ -275,4 +277,5 @@ class PlannerResult:
             dependency_graph=data.get("dependency_graph", {}),
             estimated_total_minutes=data.get("estimated_total_minutes", 0),
             research_notes=data.get("research_notes", ""),
+            parse_diagnostics=data.get("parse_diagnostics", {}),
         )

@@ -20,7 +20,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,14 @@ router = APIRouter(tags=["Deep Work"])
 class StartDeepWorkRequest(BaseModel):
     """Request body for starting a Deep Work project."""
 
-    description: str = Field(
-        ..., min_length=10, max_length=5000, description="Natural language project description"
+    # Accept legacy/external client field names too, so malformed clients
+    # don't hard-fail with 422 before we can normalize payloads.
+    description: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("description", "prompt", "input", "text"),
+        description="Natural language project description",
     )
-    research_depth: str = Field(
+    research_depth: str | None = Field(
         default="standard",
         description="Research thoroughness: 'none' (skip entirely), 'quick', 'standard', or 'deep'",
     )
@@ -53,10 +57,23 @@ async def start_deep_work(request: StartDeepWorkRequest) -> dict[str, Any]:
 
     manager = get_mission_control_manager()
 
+    # Normalize request defensively to avoid 422-style UX for minor
+    # client/schema mismatches (custom UIs, stale frontends, etc.).
+    description = (request.description or "").strip()
+    if len(description) < 10:
+        raise HTTPException(status_code=400, detail="Please describe your project (at least 10 characters)")
+    if len(description) > 20000:
+        raise HTTPException(status_code=400, detail="Project description is too long (max 20000 characters)")
+
+    research_depth = (request.research_depth or "standard").strip().lower()
+    if research_depth not in {"none", "quick", "standard", "deep"}:
+        logger.warning("Invalid research_depth '%s'; falling back to 'standard'", request.research_depth)
+        research_depth = "standard"
+
     # Create project immediately so we can return the ID
     project = await manager.create_project(
-        title=request.description[:80],
-        description=request.description,
+        title=description[:80],
+        description=description,
         creator_id="human",
     )
     project.status = ProjectStatus.PLANNING
@@ -68,8 +85,8 @@ async def start_deep_work(request: StartDeepWorkRequest) -> dict[str, Any]:
         try:
             await session.plan_existing_project(
                 project.id,
-                request.description,
-                research_depth=request.research_depth,
+                description,
+                research_depth=research_depth,
             )
         except Exception as e:
             logger.exception(f"Background planning failed for {project.id}: {e}")

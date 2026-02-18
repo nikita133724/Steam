@@ -8,6 +8,7 @@
 # materialized into Mission Control objects.
 
 import asyncio
+import ast
 import json
 import logging
 import re
@@ -122,15 +123,72 @@ class PlannerAgent:
 
     @staticmethod
     def _fallback_team_from_tasks(tasks: list[TaskSpec]) -> list[AgentSpec]:
-        """Create a minimal team recommendation when model doesn't return one."""
+        """Create a practical fallback team when model doesn't return valid JSON.
+
+        Keeps behavior deterministic but avoids always returning the same single
+        `execution-generalist` profile for every project.
+        """
         specialties: set[str] = set()
         for t in tasks:
             if t.task_type == "agent":
-                specialties.update(t.required_specialties)
+                specialties.update(s.lower().strip() for s in t.required_specialties if s and s.strip())
 
-        # Keep a compact but useful default team.
         if not specialties:
             specialties = {"python", "testing"}
+
+        buckets: dict[str, dict] = {
+            "engineering-core": {
+                "role": "Execution Engineer",
+                "description": "Implements core project requirements and integration work.",
+                "specialties": [],
+            },
+            "frontend-ui": {
+                "role": "Frontend Engineer",
+                "description": "Builds UI/UX, templates, and client-side interactions.",
+                "specialties": [],
+            },
+            "qa-validation": {
+                "role": "QA & Validation Engineer",
+                "description": "Runs tests, validates acceptance criteria, and reports gaps.",
+                "specialties": [],
+            },
+            "infra-ops": {
+                "role": "Infra & Ops Engineer",
+                "description": "Handles runtime configuration, deployment, and operations tasks.",
+                "specialties": [],
+            },
+        }
+
+        def _bucket_for_specialty(specialty: str) -> str:
+            s = specialty.lower()
+            if any(k in s for k in ("front", "ui", "html", "css", "javascript", "js", "react", "vue")):
+                return "frontend-ui"
+            if any(k in s for k in ("test", "qa", "quality", "validation")):
+                return "qa-validation"
+            if any(k in s for k in ("devops", "infra", "deploy", "docker", "k8s", "ops", "ci", "cd")):
+                return "infra-ops"
+            return "engineering-core"
+
+        for spec in sorted(specialties):
+            buckets[_bucket_for_specialty(spec)]["specialties"].append(spec)
+
+        result: list[AgentSpec] = []
+        for name, payload in buckets.items():
+            spec_list = payload["specialties"]
+            if not spec_list:
+                continue
+            result.append(
+                AgentSpec(
+                    name=name,
+                    role=payload["role"],
+                    description=payload["description"],
+                    specialties=spec_list,
+                    backend="open_interpreter",
+                )
+            )
+
+        if result:
+            return result
 
         return [
             AgentSpec(
@@ -144,6 +202,171 @@ class PlannerAgent:
                 backend="open_interpreter",
             )
         ]
+
+    @staticmethod
+    def _is_placeholder_response(raw: str) -> bool:
+        """Detect non-answer placeholder text from slow/stuck providers."""
+        normalized_raw = PlannerAgent._unwrap_provider_stream_payload(raw)
+        if not normalized_raw or not normalized_raw.strip():
+            return True
+
+        norm = " ".join(normalized_raw.lower().split())
+        placeholders = (
+            "⏳ still processing...",
+            "still processing...",
+            "`json` disabled or not supported.",
+            "json disabled or not supported.",
+        )
+        if any(p in norm for p in placeholders):
+            return True
+
+        if norm.startswith("the previous output was"):
+            return True
+
+        return False
+
+    @staticmethod
+    def _diagnostic_sample(raw: str, max_chars: int = 1600) -> str:
+        """Compact raw model output for project metadata diagnostics."""
+        if not raw:
+            return ""
+        compact = raw.replace("\r", "").strip()
+        if len(compact) <= max_chars:
+            return compact
+        return compact[:max_chars] + "..."
+
+    @staticmethod
+    def _unwrap_provider_stream_payload(raw: str) -> str:
+        """Normalize provider-specific stream envelopes to plain assistant text.
+
+        Some Ollama-compatible providers return JSONL envelopes per chunk:
+          {"response":"...","thinking":"...","done":false}
+        Planner expects plain text, so we join available `response` parts.
+        """
+        if not raw:
+            return ""
+
+        stripped = raw.strip()
+        if not stripped:
+            return ""
+
+        # Single JSON object payload
+        try:
+            single = json.loads(stripped)
+            if isinstance(single, dict):
+                response = single.get("response")
+                if isinstance(response, str) and response.strip():
+                    return response
+                message = single.get("message")
+                if isinstance(message, dict):
+                    content = message.get("content")
+                    if isinstance(content, str) and content.strip():
+                        return content
+        except Exception:
+            pass
+
+        # Multi-line JSON envelopes
+        lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+        if not lines:
+            return stripped
+
+        parsed_lines = []
+        for line in lines:
+            if not (line.startswith("{") and line.endswith("}")):
+                return stripped
+            try:
+                parsed = json.loads(line)
+            except Exception:
+                return stripped
+            if not isinstance(parsed, dict):
+                return stripped
+            parsed_lines.append(parsed)
+
+        response_parts: list[str] = []
+        for payload in parsed_lines:
+            response = payload.get("response")
+            if isinstance(response, str) and response:
+                response_parts.append(response)
+
+        if response_parts:
+            return "".join(response_parts)
+
+        return stripped
+
+    @staticmethod
+    def _derive_tasks_from_text(raw: str, project_description: str) -> list[TaskSpec]:
+        """Best-effort conversion when model ignores JSON and returns prose.
+
+        Extracts numbered requirements/bullets and converts them into TaskSpec
+        so planner doesn't collapse to static 3-task fallback for every project.
+        """
+        text = PlannerAgent._unwrap_provider_stream_payload(raw)
+        if not text:
+            return []
+
+        requirement_lines: list[str] = []
+        in_requirements = False
+        for line in text.splitlines():
+            cleaned = line.strip().lstrip("•").strip()
+            if not cleaned:
+                continue
+
+            lowered = cleaned.lower().rstrip(":")
+            if lowered in {"requirements", "## requirements"}:
+                in_requirements = True
+                continue
+            if in_requirements and lowered.startswith(("non-goals", "## non-goals", "technical constraints", "## technical constraints")):
+                in_requirements = False
+
+            if re.match(r"^\d+[\.)]\s+", cleaned):
+                requirement_lines.append(re.sub(r"^\d+[\.)]\s+", "", cleaned))
+            elif in_requirements and cleaned.startswith(("-", "*")):
+                requirement_lines.append(cleaned[1:].strip())
+
+        if not requirement_lines:
+            return []
+
+        tasks: list[TaskSpec] = []
+        for idx, req in enumerate(requirement_lines[:12], start=1):
+            key = f"t{idx}"
+            tasks.append(
+                TaskSpec(
+                    key=key,
+                    title=f"Implement requirement {idx}",
+                    description=(
+                        f"Deliver requirement: {req}. "
+                        "Include concrete acceptance checks in the final report."
+                    ),
+                    task_type="agent",
+                    priority="high" if idx <= 3 else "medium",
+                    tags=["requirement", "implementation"],
+                    estimated_minutes=45,
+                    required_specialties=["python"],
+                    blocked_by_keys=[f"t{idx-1}"] if idx > 1 else [],
+                )
+            )
+
+        review_key = f"t{len(tasks)+1}"
+        summary = (project_description or "").strip()
+        if len(summary) > 160:
+            summary = summary[:157] + "..."
+        tasks.append(
+            TaskSpec(
+                key=review_key,
+                title="Human review and approval",
+                description=(
+                    "Review implemented requirements and confirm next actions. "
+                    f"Project summary: {summary}"
+                ),
+                task_type="human",
+                priority="medium",
+                tags=["review", "approval"],
+                estimated_minutes=15,
+                required_specialties=["user"],
+                blocked_by_keys=[tasks[-1].key],
+            )
+        )
+        return tasks
 
     async def plan(
         self,
@@ -169,6 +392,7 @@ class PlannerAgent:
         from pocketpaw.config import get_settings
 
         router = AgentRouter(get_settings())
+        parse_diagnostics: dict[str, dict] = {}
 
         try:
             # Phase 1: Research (depth controls prompt and thoroughness)
@@ -200,48 +424,91 @@ class PlannerAgent:
 
             # Phase 3: Task breakdown
             self._broadcast_phase(project_id, "tasks")
-            tasks_raw = await self._run_prompt(
-                TASK_BREAKDOWN_PROMPT.format(
-                    project_description=project_description,
-                    prd_content=prd,
-                    research_notes=research,
-                ),
-                router=router,
+            tasks_prompt = TASK_BREAKDOWN_PROMPT.format(
+                project_description=project_description,
+                prd_content=prd,
+                research_notes=research,
+                parse_diagnostics=parse_diagnostics,
             )
+            tasks_attempts: list[str] = []
+            tasks_raw = await self._run_prompt(tasks_prompt, router=router)
+            tasks_attempts.append(self._diagnostic_sample(tasks_raw))
             tasks = self._parse_tasks(tasks_raw)
 
             # Retry once if task breakdown failed to parse
-            if not tasks:
+            if not tasks or self._is_placeholder_response(tasks_raw):
                 logger.info("Retrying task breakdown with explicit JSON instruction")
                 tasks_raw = await self._run_prompt(
-                    "Your previous response was not valid JSON. "
+                    "Your previous response was not valid JSON or was incomplete. "
                     "Return ONLY a JSON array of task objects, no markdown, "
-                    "no explanation — just the raw JSON array.\n\n"
-                    + TASK_BREAKDOWN_PROMPT.format(
-                        project_description=project_description,
-                        prd_content=prd,
-                        research_notes=research,
-                    ),
+                    "no explanation, no thinking preamble — just the raw JSON array.\n\n"
+                    + tasks_prompt,
                     router=router,
                 )
+                tasks_attempts.append(self._diagnostic_sample(tasks_raw))
                 tasks = self._parse_tasks(tasks_raw)
 
             if not tasks:
+                derived_tasks = self._derive_tasks_from_text(tasks_raw, project_description)
+                if derived_tasks:
+                    logger.warning(
+                        "Planner task JSON parse failed; derived %s tasks from prose response",
+                        len(derived_tasks),
+                    )
+                    parse_diagnostics["task_breakdown"] = {
+                        "fallback_used": False,
+                        "derived_from_text": True,
+                        "attempts": tasks_attempts,
+                    }
+                    tasks = derived_tasks
+
+            if not tasks:
                 logger.warning("Planner produced no parseable tasks; using fallback minimal task set")
+                parse_diagnostics["task_breakdown"] = {
+                    "fallback_used": True,
+                    "attempts": tasks_attempts,
+                }
                 tasks = self._fallback_tasks_from_context(project_description)
+            elif len(tasks_attempts) > 1:
+                parse_diagnostics["task_breakdown"] = {
+                    "fallback_used": False,
+                    "attempts": tasks_attempts,
+                }
 
             # Phase 4: Team assembly
             self._broadcast_phase(project_id, "team")
             tasks_json_str = json.dumps([t.to_dict() for t in tasks], indent=2)
-            team_raw = await self._run_prompt(
-                TEAM_ASSEMBLY_PROMPT.format(tasks_json=tasks_json_str),
-                router=router,
-            )
+            team_prompt = TEAM_ASSEMBLY_PROMPT.format(tasks_json=tasks_json_str)
+            team_attempts: list[str] = []
+            team_raw = await self._run_prompt(team_prompt, router=router)
+            team_attempts.append(self._diagnostic_sample(team_raw))
             team = self._parse_team(team_raw)
+
+            # Retry once if team assembly failed to parse
+            if not team or self._is_placeholder_response(team_raw):
+                logger.info("Retrying team assembly with explicit JSON instruction")
+                team_raw = await self._run_prompt(
+                    "Your previous response was not valid JSON or was incomplete. "
+                    "Return ONLY a JSON array of agent objects, no markdown, "
+                    "no explanation, no thinking preamble — just the raw JSON array.\n\n"
+                    + team_prompt,
+                    router=router,
+                )
+                team_attempts.append(self._diagnostic_sample(team_raw))
+                team = self._parse_team(team_raw)
 
             if not team:
                 logger.warning("Planner produced no parseable team; using fallback minimal team")
+                parse_diagnostics["team_assembly"] = {
+                    "fallback_used": True,
+                    "attempts": team_attempts,
+                }
                 team = self._fallback_team_from_tasks(tasks)
+            elif len(team_attempts) > 1:
+                parse_diagnostics["team_assembly"] = {
+                    "fallback_used": False,
+                    "attempts": team_attempts,
+                }
 
             # Split human tasks out for the result
             human_tasks = [t for t in tasks if t.task_type == "human"]
@@ -264,6 +531,7 @@ class PlannerAgent:
                 dependency_graph=dep_graph,
                 estimated_total_minutes=total_minutes,
                 research_notes=research,
+                parse_diagnostics=parse_diagnostics,
             )
         finally:
             try:
@@ -349,6 +617,11 @@ class PlannerAgent:
             if not content:
                 continue
 
+            normalized_content = " ".join(content.lower().split())
+            if expect_json and normalized_content in {"⏳ still processing...", "still processing..."}:
+                # Heartbeat from Open Interpreter should not pollute JSON output.
+                continue
+
             output_parts.append(content)
 
             # If this phase expects JSON, return as soon as we captured
@@ -394,7 +667,14 @@ class PlannerAgent:
         data = self._parse_json_list(raw, "task breakdown")
         if data is None:
             return []
-        return [TaskSpec.from_dict(item) for item in data if isinstance(item, dict)]
+
+        parsed: list[TaskSpec] = []
+        for item in self._coerce_dict_list(data):
+            try:
+                parsed.append(TaskSpec.from_dict(item))
+            except Exception as exc:
+                logger.debug("Skipping invalid task item: %s", exc)
+        return parsed
 
     def _parse_team(self, raw: str) -> list[AgentSpec]:
         """Parse LLM JSON output into a list of AgentSpec objects.
@@ -404,29 +684,183 @@ class PlannerAgent:
         data = self._parse_json_list(raw, "team assembly")
         if data is None:
             return []
-        return [AgentSpec.from_dict(item) for item in data if isinstance(item, dict)]
+
+        parsed: list[AgentSpec] = []
+        for item in self._coerce_dict_list(data):
+            try:
+                parsed.append(AgentSpec.from_dict(item))
+            except Exception as exc:
+                logger.debug("Skipping invalid team item: %s", exc)
+        return parsed
+
+    @staticmethod
+    def _coerce_dict_item(item):
+        """Best-effort conversion of JSON-ish item into dict."""
+        if isinstance(item, dict):
+            return item
+        if isinstance(item, str):
+            parsed = PlannerAgent._try_parse_json_like(item)
+            if isinstance(parsed, dict):
+                return parsed
+            if isinstance(parsed, list) and parsed and isinstance(parsed[0], dict):
+                return parsed[0]
+        return None
+
+    @staticmethod
+    def _coerce_dict_list(data) -> list[dict]:
+        """Normalize heterogeneous list payloads into list[dict]."""
+        result: list[dict] = []
+        if not isinstance(data, list):
+            return result
+
+        for item in data:
+            normalized = PlannerAgent._coerce_dict_item(item)
+            if normalized is not None:
+                result.append(normalized)
+        return result
 
     def _parse_json_list(self, raw: str, label: str) -> list[dict] | None:
-        """Parse raw LLM output as a JSON list, with one retry on failure.
+        """Parse raw LLM output as a JSON list, with tolerant recovery.
 
-        Returns None if parsing fails after retry.
+        Returns None if parsing fails after best-effort recovery.
         """
-        cleaned = self._strip_code_fences(raw)
+        normalized_raw = self._unwrap_provider_stream_payload(raw)
+        cleaned = self._strip_code_fences(normalized_raw)
+
+        # 1) Strict JSON parse first
+        strict_error: Exception | None = None
         try:
             data = json.loads(cleaned)
             if isinstance(data, list):
                 return data
-            logger.warning(f"{label} JSON is not a list")
+            if isinstance(data, dict):
+                extracted_obj = self._extract_list_from_json_object(cleaned, label)
+                if extracted_obj is not None:
+                    return extracted_obj
+            logger.warning("%s JSON is not a list (top-level type=%s)", label, type(data).__name__)
             return None
-        except (json.JSONDecodeError, TypeError):
-            # Some models prepend/append prose even when asked for raw JSON.
-            # Try best-effort extraction of the first valid JSON array.
-            extracted = self._extract_first_json_array(cleaned)
+        except (json.JSONDecodeError, TypeError) as exc:
+            strict_error = exc
+
+        # 2) Noisy prose around JSON array
+        extracted = self._extract_first_json_array(cleaned)
+        if extracted is not None:
+            return extracted
+
+        # 3) Object-wrapped provider payloads (including nested content strings)
+        extracted_obj = self._extract_list_from_json_object(normalized_raw, label)
+        if extracted_obj is not None:
+            return extracted_obj
+
+        # 4) Relaxed Python-style literals (single quotes / True / None)
+        relaxed = self._try_literal_eval_list(cleaned, label)
+        if relaxed is not None:
+            return relaxed
+
+        logger.warning(
+            "Failed to parse %s JSON (strict_error=%s). sample=\n%s",
+            label,
+            str(strict_error)[:180] if strict_error else "n/a",
+            normalized_raw[:400],
+        )
+        return None
+
+    @staticmethod
+    def _extract_list_from_json_object(raw: str, label: str) -> list[dict] | None:
+        """Extract list-like payloads from object-wrapped model responses.
+
+        Handles both direct object forms like {"tasks": [...]} and nested
+        wrapper payloads where JSON is embedded as string fields.
+        """
+        if not raw:
+            return None
+
+        cleaned = PlannerAgent._strip_code_fences(raw)
+        root = PlannerAgent._try_parse_json_like(cleaned)
+        if not isinstance(root, dict):
+            obj = PlannerAgent._extract_first_json_object(cleaned)
+            if isinstance(obj, dict):
+                root = obj
+            else:
+                return None
+
+        candidate_keys = {
+            "task breakdown": ["tasks", "task_breakdown", "taskBreakdown", "work_items", "items", "data", "result"],
+            "team assembly": ["team", "agents", "team_recommendation", "team_recommendations", "crew", "items", "data", "result"],
+        }.get(label, ["items", "data", "result"])
+
+        def _walk(node, depth: int = 0):
+            if depth > 5:
+                return None
+            if isinstance(node, list):
+                if node and all(isinstance(x, dict) for x in node):
+                    return node
+                return None
+            if isinstance(node, dict):
+                for key in candidate_keys:
+                    value = node.get(key)
+                    if isinstance(value, list):
+                        return value
+                    if isinstance(value, str):
+                        parsed = PlannerAgent._try_parse_json_like(value)
+                        found = _walk(parsed, depth + 1)
+                        if found is not None:
+                            return found
+
+                for value in node.values():
+                    if isinstance(value, str):
+                        parsed = PlannerAgent._try_parse_json_like(value)
+                        found = _walk(parsed, depth + 1)
+                        if found is not None:
+                            return found
+                    elif isinstance(value, (dict, list)):
+                        found = _walk(value, depth + 1)
+                        if found is not None:
+                            return found
+            return None
+
+        return _walk(root)
+
+    @staticmethod
+    def _try_parse_json_like(text: str):
+        """Best-effort parse for JSON-ish string payloads."""
+        if not isinstance(text, str):
+            return None
+
+        candidate = PlannerAgent._strip_code_fences(text)
+        if not candidate:
+            return None
+
+        try:
+            return json.loads(candidate)
+        except Exception:
+            pass
+
+        arr = PlannerAgent._extract_first_json_array(candidate)
+        if arr is not None:
+            return arr
+
+        obj = PlannerAgent._extract_first_json_object(candidate)
+        if obj is not None:
+            return obj
+
+        return None
+
+    @staticmethod
+    def _try_literal_eval_list(text: str, label: str) -> list[dict] | None:
+        """Parse Python-style list/dict literals as a fallback."""
+        try:
+            value = ast.literal_eval(text)
+        except Exception:
+            return None
+
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+        if isinstance(value, dict):
+            extracted = PlannerAgent._extract_list_from_json_object(str(value), label)
             if extracted is not None:
                 return extracted
-
-            logger.warning("Failed to parse %s JSON (will retry):\n%s", label, raw[:200])
-            return None
+        return None
 
     @staticmethod
     def _extract_first_json_array(text: str) -> list[dict] | None:
@@ -469,6 +903,50 @@ class PlannerAgent:
                         break
 
             start = text.find("[", start + 1)
+
+        return None
+
+    @staticmethod
+    def _extract_first_json_object(text: str) -> dict | None:
+        """Extract and parse the first JSON object from noisy LLM output."""
+        if not text:
+            return None
+
+        start = text.find("{")
+        while start != -1:
+            depth = 0
+            in_string = False
+            escaped = False
+
+            for idx in range(start, len(text)):
+                ch = text[idx]
+
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif ch == "\\":
+                        escaped = True
+                    elif ch == '"':
+                        in_string = False
+                    continue
+
+                if ch == '"':
+                    in_string = True
+                elif ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        candidate = text[start : idx + 1]
+                        try:
+                            parsed = json.loads(candidate)
+                        except Exception:
+                            break
+                        if isinstance(parsed, dict):
+                            return parsed
+                        break
+
+            start = text.find("{", start + 1)
 
         return None
 

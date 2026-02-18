@@ -188,6 +188,13 @@ class OpenInterpreterAgent:
     def _detect_provider_from_endpoint(self, api_base: str | None) -> str:
         """Infer provider from endpoint; default to OpenAI-compatible protocol."""
         base = (api_base or "").lower()
+        if not base:
+            return "openai"
+
+        # Ollama-compatible cloud endpoints may expose /api/generate or /api/chat.
+        if "ollama.com" in base or "/api/generate" in base or "/api/chat" in base:
+            return "ollama"
+
         # If endpoint already exposes OpenAI-style chat path, treat it as OpenAI-compatible,
         # even if hostname contains words like "ollama".
         if "/chat/completions" in base or "/openai" in base:
@@ -199,6 +206,24 @@ class OpenInterpreterAgent:
         if "localhost:11434" in base or "127.0.0.1:11434" in base:
             return "ollama"
         return "openai"
+
+    def _normalize_api_base_for_provider(self, provider: str, api_base: str | None) -> str | None:
+        """Normalize provider endpoint to what Open Interpreter/LiteLLM expects."""
+        if not api_base:
+            return api_base
+
+        normalized = api_base.strip().rstrip("/")
+        if provider == "ollama":
+            # OI/LiteLLM expects host base; keep path-less root to avoid
+            # accidental OpenAI chat route concatenation with /api/generate.
+            for suffix in ("/api/generate", "/api/chat", "/v1/chat/completions"):
+                if normalized.endswith(suffix):
+                    normalized = normalized[: -len(suffix)]
+                    break
+            if not normalized:
+                normalized = api_base.strip().rstrip("/")
+
+        return normalized
 
     def _normalize_model_for_provider(self, provider: str, model: str) -> str:
         model = (model or "").strip()
@@ -232,7 +257,7 @@ class OpenInterpreterAgent:
                 provider=provider,
                 model=self._normalize_model_for_provider(provider, model),
                 api_key=key,
-                api_base=api_base,
+                api_base=self._normalize_api_base_for_provider(provider, api_base),
                 provider_id=provider_id,
             )
         return None
@@ -459,6 +484,12 @@ class OpenInterpreterAgent:
             # Resolve and rotate provider/key each request per registry policy
             llm_cfg = self._resolve_runtime_llm()
             self._apply_llm_config(llm_cfg)
+            logger.info(
+                "Open Interpreter runtime LLM: provider=%s model=%s api_base=%s",
+                llm_cfg.provider_id or llm_cfg.provider,
+                llm_cfg.model,
+                llm_cfg.api_base or "default",
+            )
             effective_system = system_prompt or system_message
             chat_only = not _is_explicit_action_request(message)
             mode_guard = (

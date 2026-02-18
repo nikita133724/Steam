@@ -214,6 +214,11 @@ class DeepWorkSession:
             title = _extract_title(result.prd_content) or user_input[:80]
             project.title = title
 
+            # Persist planner parse diagnostics in project metadata so failures
+            # can be inspected from API/UI without digging through server logs.
+            if result.parse_diagnostics:
+                project.metadata["planner_parse_diagnostics"] = result.parse_diagnostics
+
             # Save PRD as Document
             if result.prd_content:
                 prd_doc = await self.manager.create_document(
@@ -528,6 +533,13 @@ class DeepWorkSession:
 
             if best_agent_id:
                 await self.manager.assign_task(task_id, [best_agent_id])
+            else:
+                logger.warning(
+                    "No suitable agent found for task %s (%s). required_specialties=%s",
+                    spec.key,
+                    spec.title,
+                    spec.required_specialties,
+                )
 
 
 def _extract_title(prd_content: str) -> str:

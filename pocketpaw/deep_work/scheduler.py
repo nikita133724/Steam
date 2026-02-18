@@ -124,7 +124,14 @@ class DependencyScheduler:
             agent_id = fresh.assignee_ids[0] if fresh.assignee_ids else None
             if agent_id:
                 logger.info(f"Auto-dispatching agent task: {fresh.title}")
-                await self.executor.execute_task_background(fresh.id, agent_id)
+                launched = await self.executor.execute_task_background(fresh.id, agent_id)
+                if not launched:
+                    logger.warning(
+                        "Task dispatch deferred/skipped: task=%s title=%s agent=%s",
+                        fresh.id,
+                        fresh.title,
+                        agent_id,
+                    )
             else:
                 logger.warning(f"Agent task has no assignee: {fresh.title}")
         elif fresh.task_type == "human":
