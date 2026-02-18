@@ -2266,6 +2266,11 @@ async def websocket_endpoint(
                         settings.open_interpreter_requests_per_minute = max(
                             0, int(data.get("open_interpreter_requests_per_minute") or 0)
                         )
+                    if "open_interpreter_min_request_interval_seconds" in data:
+                        settings.open_interpreter_min_request_interval_seconds = max(
+                            0.0,
+                            float(data.get("open_interpreter_min_request_interval_seconds") or 0.0),
+                        )
                     if data.get("open_interpreter_max_tokens"):
                         settings.open_interpreter_max_tokens = int(
                             data["open_interpreter_max_tokens"]
@@ -2495,6 +2500,7 @@ async def websocket_endpoint(
                             "openInterpreterHistoryChars": settings.open_interpreter_history_chars,
                             "openInterpreterMaxTokens": settings.open_interpreter_max_tokens,
                             "openInterpreterRequestsPerMinute": settings.open_interpreter_requests_per_minute,
+                            "openInterpreterMinRequestIntervalSeconds": settings.open_interpreter_min_request_interval_seconds,
                             "openaiApiKeys": settings.openai_api_keys,
                             "groqApiKeys": settings.groq_api_keys,
                             "openInterpreterRegistryMode": settings.open_interpreter_registry_mode,

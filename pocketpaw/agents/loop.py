@@ -46,6 +46,15 @@ async def _iter_with_timeout(aiter, first_timeout=30, timeout=120):
         except StopAsyncIteration:
             break
 
+def _backend_timeouts(backend: str) -> tuple[float, float]:
+    """Return first-chunk and subsequent-chunk timeouts per backend."""
+    name = (backend or "").strip().lower()
+    # Open Interpreter may spend extra time before first chunk when warming up
+    # hosted/custom providers (e.g. Ollama-compatible cloud endpoints).
+    if name == "open_interpreter":
+        return 90.0, 300.0
+    return 30.0, 120.0
+
 
 class AgentLoop:
     """
@@ -244,7 +253,14 @@ class AgentLoop:
 
             run_iter = router.run(content, system_prompt=system_prompt, history=history)
             try:
-                async for chunk in _iter_with_timeout(run_iter):
+                backend_name = getattr(getattr(router, "settings", None), "agent_backend", "")
+                first_timeout, stream_timeout = _backend_timeouts(backend_name)
+
+                async for chunk in _iter_with_timeout(
+                    run_iter,
+                    first_timeout=first_timeout,
+                    timeout=stream_timeout,
+                ):
                     chunk_type = chunk.get("type", "")
                     content = chunk.get("content", "")
                     metadata = chunk.get("metadata") or {}
@@ -400,7 +416,7 @@ class AgentLoop:
                     self.settings.memory_backend == "mem0" and self.settings.mem0_auto_learn
                 ) or (self.settings.memory_backend == "file" and self.settings.file_auto_learn)
                 if should_auto_learn:
-                    asyncio.create_task(
+                    t = asyncio.create_task(
                         self._auto_learn(
                             message.content,
                             full_response,
@@ -412,7 +428,8 @@ class AgentLoop:
                     t.add_done_callback(self._background_tasks.discard)
 
         except TimeoutError:
-            logger.error("Agent backend timed out")
+            backend_name = getattr(getattr(router, "settings", None), "agent_backend", "unknown")
+            logger.error("Agent backend timed out (backend=%s)", backend_name)
             # Kill the hung backend so it releases resources
             try:
                 await router.stop()
@@ -421,20 +438,32 @@ class AgentLoop:
             # Force router re-init on next message
             self._router = None
 
+            if backend_name == "open_interpreter":
+                timeout_help = (
+                    "Request timed out — Open Interpreter backend didn't return a chunk in time.\n\n"
+                    "**Possible causes:**\n"
+                    "- Hosted/custom model is still warming up\n"
+                    "- Provider endpoint or API key is invalid\n"
+                    "- Provider is rate-limited or temporarily unavailable\n\n"
+                    "Check Settings → Open Interpreter Provider and custom registry."
+                )
+            else:
+                timeout_help = (
+                    "Request timed out — the agent backend didn't respond.\n\n"
+                    "**Possible causes:**\n"
+                    "- Claude Code CLI is not installed "
+                    "(`npm install -g @anthropic-ai/claude-code`)\n"
+                    "- API key is missing or invalid "
+                    "(check Settings → API Keys)\n"
+                    "- Try switching to **PocketPaw Native** backend "
+                    "in Settings → General"
+                )
+
             await self.bus.publish_outbound(
                 OutboundMessage(
                     channel=message.channel,
                     chat_id=message.chat_id,
-                    content=(
-                        "Request timed out — the agent backend didn't respond.\n\n"
-                        "**Possible causes:**\n"
-                        "- Claude Code CLI is not installed "
-                        "(`npm install -g @anthropic-ai/claude-code`)\n"
-                        "- API key is missing or invalid "
-                        "(check Settings → API Keys)\n"
-                        "- Try switching to **PocketPaw Native** backend "
-                        "in Settings → General"
-                    ),
+                    content=timeout_help,
                     is_stream_chunk=True,
                 )
             )

@@ -122,6 +122,43 @@ class PlannerAgent:
         ]
 
     @staticmethod
+    def _fallback_prd_from_context(project_description: str, research_notes: str) -> str:
+        """Build a deterministic PRD fallback when provider output is empty."""
+
+        summary = (project_description or "").strip()
+        if len(summary) > 500:
+            summary = summary[:497] + "..."
+
+        research_excerpt = (research_notes or "").strip()
+        if len(research_excerpt) > 1200:
+            research_excerpt = research_excerpt[:1197] + "..."
+        if not research_excerpt:
+            research_excerpt = "Research phase returned empty output; proceed with conservative assumptions."
+
+        return (
+            "# Problem Statement\n"
+            f"{summary or 'User requested implementation work requiring structured execution.'}\n\n"
+            "# Scope\n"
+            "- Analyze existing repository and constraints\n"
+            "- Implement required code changes with minimal risk\n"
+            "- Validate behavior with available automated checks\n\n"
+            "# Requirements\n"
+            "1. Produce a concrete implementation plan from current codebase\n"
+            "2. Apply changes incrementally and keep commits reviewable\n"
+            "3. Run relevant checks/tests and report outcomes\n"
+            "4. Escalate uncertain operations for explicit user approval\n\n"
+            "# Non-Goals\n"
+            "- Unapproved destructive operations\n"
+            "- Unnecessary dependency churn\n\n"
+            "# Technical Constraints\n"
+            "- Respect repository instructions and coding conventions\n"
+            "- Keep behavior deterministic under provider limitations\n"
+            "- Prefer robust fallback behavior over hard failure\n\n"
+            "# Research Notes\n"
+            f"{research_excerpt}\n"
+        )
+
+    @staticmethod
     def _fallback_team_from_tasks(tasks: list[TaskSpec]) -> list[AgentSpec]:
         """Create a practical fallback team when model doesn't return valid JSON.
 
@@ -237,11 +274,12 @@ class PlannerAgent:
 
     @staticmethod
     def _unwrap_provider_stream_payload(raw: str) -> str:
-        """Normalize provider-specific stream envelopes to plain assistant text.
+        """Normalize provider stream envelopes to plain assistant text.
 
-        Some Ollama-compatible providers return JSONL envelopes per chunk:
-          {"response":"...","thinking":"...","done":false}
-        Planner expects plain text, so we join available `response` parts.
+        Supports common chunk formats:
+        - Ollama JSON/JSONL (`response`, `message.content`)
+        - OpenAI-style streamed chunks (`choices[].delta.content`, `choices[].message.content`)
+        - SSE lines with `data: { ... }`
         """
         if not raw:
             return ""
@@ -250,45 +288,137 @@ class PlannerAgent:
         if not stripped:
             return ""
 
+        def _extract_text(payload) -> str:
+            if not isinstance(payload, dict):
+                return ""
+
+            def _text_from_content_block(content) -> str:
+                if isinstance(content, str):
+                    return content
+                if isinstance(content, list):
+                    parts: list[str] = []
+                    for item in content:
+                        if isinstance(item, str):
+                            if item:
+                                parts.append(item)
+                            continue
+                        if not isinstance(item, dict):
+                            continue
+                        # OpenAI/Responses-style content fragments
+                        for key in ("text", "content"):
+                            value = item.get(key)
+                            if isinstance(value, str) and value:
+                                parts.append(value)
+                        nested_text = item.get("output_text")
+                        if isinstance(nested_text, str) and nested_text:
+                            parts.append(nested_text)
+                    if parts:
+                        return "".join(parts)
+                return ""
+
+            # Ollama-style
+            response = payload.get("response")
+            if isinstance(response, str) and response:
+                return response
+
+            # Responses-style shortcuts
+            for key in ("output_text", "generated_text", "text"):
+                value = payload.get(key)
+                if isinstance(value, str) and value:
+                    return value
+
+            message = payload.get("message")
+            if isinstance(message, dict):
+                content = _text_from_content_block(message.get("content"))
+                if content:
+                    return content
+
+            # OpenAI-style
+            choices = payload.get("choices")
+            if isinstance(choices, list):
+                parts: list[str] = []
+                for choice in choices:
+                    if not isinstance(choice, dict):
+                        continue
+                    delta = choice.get("delta")
+                    if isinstance(delta, dict):
+                        content = _text_from_content_block(delta.get("content"))
+                        if content:
+                            parts.append(content)
+                    msg = choice.get("message")
+                    if isinstance(msg, dict):
+                        content = _text_from_content_block(msg.get("content"))
+                        if content:
+                            parts.append(content)
+                    text = choice.get("text")
+                    if isinstance(text, str) and text:
+                        parts.append(text)
+                if parts:
+                    return "".join(parts)
+
+            # Nested common wrappers
+            for key in ("data", "result", "output"):
+                nested = payload.get(key)
+                if isinstance(nested, dict):
+                    nested_text = _extract_text(nested)
+                    if nested_text:
+                        return nested_text
+                if isinstance(nested, list):
+                    nested_parts: list[str] = []
+                    for item in nested:
+                        if isinstance(item, dict):
+                            t = _extract_text(item)
+                            if t:
+                                nested_parts.append(t)
+                    if nested_parts:
+                        return "".join(nested_parts)
+                if isinstance(nested, str) and nested.strip():
+                    return nested
+
+            return ""
+
         # Single JSON object payload
         try:
             single = json.loads(stripped)
             if isinstance(single, dict):
-                response = single.get("response")
-                if isinstance(response, str) and response.strip():
-                    return response
-                message = single.get("message")
-                if isinstance(message, dict):
-                    content = message.get("content")
-                    if isinstance(content, str) and content.strip():
-                        return content
+                extracted = _extract_text(single)
+                if extracted.strip():
+                    return extracted
         except Exception:
             pass
 
-        # Multi-line JSON envelopes
+        # Multi-line JSON envelopes / SSE lines
         lines = [line.strip() for line in stripped.splitlines() if line.strip()]
         if not lines:
             return stripped
 
-        parsed_lines = []
+        response_parts: list[str] = []
+        seen_structured_line = False
+
         for line in lines:
-            if not (line.startswith("{") and line.endswith("}")):
+            candidate = line
+            if candidate.startswith("data:"):
+                candidate = candidate[5:].strip()
+            if candidate in {"[DONE]", "DONE"}:
+                continue
+
+            if not (candidate.startswith("{") and candidate.endswith("}")):
+                # Non-JSON line means this isn't a structured stream envelope.
                 return stripped
+
             try:
-                parsed = json.loads(line)
+                payload = json.loads(candidate)
             except Exception:
                 return stripped
-            if not isinstance(parsed, dict):
+            if not isinstance(payload, dict):
                 return stripped
-            parsed_lines.append(parsed)
 
-        response_parts: list[str] = []
-        for payload in parsed_lines:
-            response = payload.get("response")
-            if isinstance(response, str) and response:
-                response_parts.append(response)
+            seen_structured_line = True
+            extracted = _extract_text(payload)
+            if extracted:
+                response_parts.append(extracted)
 
-        if response_parts:
+        if seen_structured_line and response_parts:
             return "".join(response_parts)
 
         return stripped
@@ -407,20 +537,27 @@ class PlannerAgent:
                     "deep": RESEARCH_PROMPT_DEEP,
                 }
                 prompt_template = research_prompts.get(research_depth, RESEARCH_PROMPT)
-                research = await self._run_prompt(
-                    prompt_template.format(project_description=project_description),
+                research = await self._run_phase_prompt_or_empty(
                     router=router,
+                    phase="research",
+                    prompt=prompt_template.format(project_description=project_description),
+                    context="research phase",
                 )
 
             # Phase 2: PRD
             self._broadcast_phase(project_id, "prd")
-            prd = await self._run_prompt(
-                PRD_PROMPT.format(
+            prd = await self._run_phase_prompt_or_empty(
+                router=router,
+                phase="prd",
+                prompt=PRD_PROMPT.format(
                     project_description=project_description,
                     research_notes=research,
                 ),
-                router=router,
+                context="prd phase",
             )
+            if not (prd or "").strip():
+                logger.warning("Planner PRD phase returned empty output; using deterministic fallback PRD")
+                prd = self._fallback_prd_from_context(project_description, research)
 
             # Phase 3: Task breakdown
             self._broadcast_phase(project_id, "tasks")
@@ -431,19 +568,28 @@ class PlannerAgent:
                 parse_diagnostics=parse_diagnostics,
             )
             tasks_attempts: list[str] = []
-            tasks_raw = await self._run_prompt(tasks_prompt, router=router)
+            tasks_raw = await self._run_phase_prompt_or_empty(
+                router=router,
+                phase="tasks",
+                prompt=tasks_prompt,
+                context="tasks phase",
+            )
             tasks_attempts.append(self._diagnostic_sample(tasks_raw))
             tasks = self._parse_tasks(tasks_raw)
 
             # Retry once if task breakdown failed to parse
             if not tasks or self._is_placeholder_response(tasks_raw):
                 logger.info("Retrying task breakdown with explicit JSON instruction")
-                tasks_raw = await self._run_prompt(
-                    "Your previous response was not valid JSON or was incomplete. "
-                    "Return ONLY a JSON array of task objects, no markdown, "
-                    "no explanation, no thinking preamble — just the raw JSON array.\n\n"
-                    + tasks_prompt,
+                tasks_raw = await self._run_phase_prompt_or_empty(
                     router=router,
+                    phase="tasks",
+                    prompt=(
+                        "Your previous response was not valid JSON or was incomplete. "
+                        "Return ONLY a JSON array of task objects, no markdown, "
+                        "no explanation, no thinking preamble — just the raw JSON array.\n\n"
+                        + tasks_prompt
+                    ),
+                    context="tasks retry",
                 )
                 tasks_attempts.append(self._diagnostic_sample(tasks_raw))
                 tasks = self._parse_tasks(tasks_raw)
@@ -480,19 +626,28 @@ class PlannerAgent:
             tasks_json_str = json.dumps([t.to_dict() for t in tasks], indent=2)
             team_prompt = TEAM_ASSEMBLY_PROMPT.format(tasks_json=tasks_json_str)
             team_attempts: list[str] = []
-            team_raw = await self._run_prompt(team_prompt, router=router)
+            team_raw = await self._run_phase_prompt_or_empty(
+                router=router,
+                phase="team",
+                prompt=team_prompt,
+                context="team phase",
+            )
             team_attempts.append(self._diagnostic_sample(team_raw))
             team = self._parse_team(team_raw)
 
             # Retry once if team assembly failed to parse
             if not team or self._is_placeholder_response(team_raw):
                 logger.info("Retrying team assembly with explicit JSON instruction")
-                team_raw = await self._run_prompt(
-                    "Your previous response was not valid JSON or was incomplete. "
-                    "Return ONLY a JSON array of agent objects, no markdown, "
-                    "no explanation, no thinking preamble — just the raw JSON array.\n\n"
-                    + team_prompt,
+                team_raw = await self._run_phase_prompt_or_empty(
                     router=router,
+                    phase="team",
+                    prompt=(
+                        "Your previous response was not valid JSON or was incomplete. "
+                        "Return ONLY a JSON array of agent objects, no markdown, "
+                        "no explanation, no thinking preamble — just the raw JSON array.\n\n"
+                        + team_prompt
+                    ),
+                    context="team retry",
                 )
                 team_attempts.append(self._diagnostic_sample(team_raw))
                 team = self._parse_team(team_raw)
@@ -539,7 +694,7 @@ class PlannerAgent:
             except Exception:
                 pass
 
-    async def _run_prompt(self, prompt: str, router=None) -> str:
+    async def _run_prompt(self, prompt: str, router=None, *, phase: str = "unknown") -> str:
         """Run a planner prompt through selected backend and collect text only."""
         if router is None:
             from pocketpaw.agents.router import AgentRouter
@@ -571,6 +726,15 @@ class PlannerAgent:
         started = asyncio.get_event_loop().time()
         max_output_chars = 120000
         recent_norm_chunks: deque[str] = deque(maxlen=12)
+        chunk_count = 0
+        accepted_parts = 0
+
+        logger.info(
+            "Planner phase '%s' started (backend=%s, expect_json=%s)",
+            phase,
+            backend_name or "unknown",
+            expect_json,
+        )
 
         while True:
             elapsed = asyncio.get_event_loop().time() - started
@@ -607,9 +771,34 @@ class PlannerAgent:
                     f"Planner phase stalled for {chunk_idle_timeout_s:.0f}s without new output"
                 ) from exc
 
+            chunk_count += 1
             chunk_type = chunk.get("type")
             if chunk_type == "done":
                 break
+            if chunk_type == "error":
+                raw_error = (chunk.get("content") or "Unknown backend error").strip()
+                lowered = raw_error.lower()
+                side = "backend"
+                hint = ""
+                if any(tok in lowered for tok in ("401", "unauthorized", "api key", "forbidden", "authentication")):
+                    side = "llm_provider_auth"
+                    hint = (
+                        "Likely provider-side auth/config issue: verify endpoint + API key for the selected provider."
+                    )
+                elif any(tok in lowered for tok in ("quota", "insufficient_quota", "billing", "max budget")):
+                    side = "llm_provider_quota"
+                    hint = "Likely provider quota/budget issue: check billing/limits for the selected provider/key."
+                elif any(tok in lowered for tok in ("timeout", "connection", "dns", "ssl", "temporarily unavailable")):
+                    side = "network_or_provider_availability"
+                    hint = "Likely network/provider availability issue."
+
+                compact_error = " ".join(raw_error.split())
+                if len(compact_error) > 420:
+                    compact_error = compact_error[:420] + "..."
+                raise RuntimeError(
+                    f"Planner phase '{phase}' failed (backend={backend_name or 'unknown'}, side={side}): {compact_error}"
+                    + (f" Hint: {hint}" if hint else "")
+                )
             if chunk_type != "message":
                 continue
 
@@ -623,6 +812,7 @@ class PlannerAgent:
                 continue
 
             output_parts.append(content)
+            accepted_parts += 1
 
             # If this phase expects JSON, return as soon as we captured
             # one complete valid JSON array to avoid post-JSON chatter.
@@ -655,8 +845,39 @@ class PlannerAgent:
                     logger.warning("Planner stream stopped due to repetitive output loop detection")
                     break
 
-        return "".join(output_parts)
+        final_output = "".join(output_parts)
+        logger.info(
+            "Planner phase '%s' stream finished: chunks=%s accepted_parts=%s output_chars=%s",
+            phase,
+            chunk_count,
+            accepted_parts,
+            len(final_output),
+        )
 
+        return final_output
+
+    async def _run_phase_prompt_or_empty(
+        self,
+        *,
+        router,
+        phase: str,
+        prompt: str,
+        context: str,
+    ) -> str:
+        """Run a planner phase prompt and degrade to empty text on backend failures."""
+
+        try:
+            return await self._run_prompt(prompt, router=router, phase=phase)
+        except Exception as exc:
+            compact_error = " ".join(str(exc).split())
+            if len(compact_error) > 500:
+                compact_error = compact_error[:500] + "..."
+            logger.warning(
+                "Planner %s failed; continuing with fallback path. error=%s",
+                context,
+                compact_error,
+            )
+            return ""
 
     def _parse_tasks(self, raw: str) -> list[TaskSpec]:
         """Parse LLM JSON output into a list of TaskSpec objects.
@@ -725,7 +946,20 @@ class PlannerAgent:
         Returns None if parsing fails after best-effort recovery.
         """
         normalized_raw = self._unwrap_provider_stream_payload(raw)
+        if not (normalized_raw or "").strip() and (raw or "").strip():
+            normalized_raw = raw
         cleaned = self._strip_code_fences(normalized_raw)
+
+        if not cleaned:
+            logger.warning(
+                "Failed to parse %s JSON: model returned empty output after stream normalization "
+                "(raw_chars=%s, normalized_chars=%s). raw_sample=\n%s",
+                label,
+                len(raw or ""),
+                len(normalized_raw or ""),
+                (raw or "")[:600],
+            )
+            return None
 
         # 1) Strict JSON parse first
         strict_error: Exception | None = None
@@ -758,10 +992,11 @@ class PlannerAgent:
             return relaxed
 
         logger.warning(
-            "Failed to parse %s JSON (strict_error=%s). sample=\n%s",
+            "Failed to parse %s JSON (strict_error=%s). normalized_sample=\n%s\ncleaned_sample=\n%s",
             label,
             str(strict_error)[:180] if strict_error else "n/a",
             normalized_raw[:400],
+            cleaned[:400],
         )
         return None
 

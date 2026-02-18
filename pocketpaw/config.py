@@ -147,6 +147,13 @@ class Settings(BaseSettings):
         default=0,
         description="Optional Open Interpreter request-rate limit per minute (0 disables limiter)",
     )
+    open_interpreter_min_request_interval_seconds: float = Field(
+        default=0.0,
+        description=(
+            "Optional minimum delay between Open Interpreter provider requests in seconds "
+            "(0 uses rate-derived pacing only)"
+        ),
+    )
     open_interpreter_registry_mode: str = Field(
         default="selected",
         description=(
@@ -510,6 +517,7 @@ class Settings(BaseSettings):
             "open_interpreter_history_messages": self.open_interpreter_history_messages,
             "open_interpreter_history_chars": self.open_interpreter_history_chars,
             "open_interpreter_requests_per_minute": self.open_interpreter_requests_per_minute,
+            "open_interpreter_min_request_interval_seconds": self.open_interpreter_min_request_interval_seconds,
             "open_interpreter_registry_mode": self.open_interpreter_registry_mode,
             "open_interpreter_provider_registry": self.open_interpreter_provider_registry,
             "ui_language": self.ui_language,

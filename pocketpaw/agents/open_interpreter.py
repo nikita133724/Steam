@@ -162,6 +162,7 @@ class OpenInterpreterAgent:
         self._provider_key_indices: dict[str, int] = {}
         self._active_provider_id: str | None = None
         self._request_times: deque[float] = deque()
+        self._last_request_ts: float = 0.0
         self._active_executor_future: asyncio.Future | None = None
         self._initialize()
 
@@ -296,11 +297,69 @@ class OpenInterpreterAgent:
             return replace(resolved, api_key=self._next_openai_key() or resolved.api_key)
         return resolved
 
+    def _has_runtime_fallback(self, llm: OpenInterpreterLLMConfig) -> bool:
+        """Return True if failover can select a different key/provider."""
+
+        selected = self.settings.open_interpreter_provider or "auto"
+        mode = getattr(self.settings, "open_interpreter_registry_mode", "selected")
+
+        if selected == "registry_auto" and mode in {"round_robin", "failover"}:
+            active = [
+                p
+                for p in self._load_custom_providers()
+                if p.get("id") and p.get("enabled", True) is not False
+            ]
+            if len(active) > 1:
+                return True
+
+        provider_id = llm.provider_id or ""
+        if provider_id:
+            custom = next(
+                (
+                    p
+                    for p in self._load_custom_providers()
+                    if p.get("id") == provider_id and p.get("enabled", True) is not False
+                ),
+                None,
+            )
+            if custom:
+                keys_raw = custom.get("api_keys", custom.get("api_key", []))
+                if isinstance(keys_raw, str):
+                    keys = [k.strip() for k in keys_raw.replace(",", "\n").splitlines() if k.strip()]
+                elif isinstance(keys_raw, list):
+                    keys = [str(k).strip() for k in keys_raw if str(k).strip()]
+                else:
+                    keys = []
+                return len(keys) > 1
+
+        if llm.provider == "groq":
+            return len(self._get_groq_keys()) > 1
+        if llm.provider == "openai":
+            return len(self._get_openai_keys()) > 1
+        return False
+
+    @staticmethod
+    def _is_quota_like_error(error_text: str) -> bool:
+        lowered = (error_text or "").lower()
+        return any(
+            token in lowered
+            for token in (
+                "quota",
+                "insufficient_quota",
+                "max budget",
+                "billing",
+                "credit",
+            )
+        )
+
     def _apply_llm_config(self, llm: OpenInterpreterLLMConfig) -> None:
         if llm.provider == "ollama":
             self._interpreter.llm.model = f"ollama/{llm.model}"
             self._interpreter.llm.api_base = llm.api_base
-            self._interpreter.llm.api_key = "ollama"
+            # Keep explicit API keys for hosted Ollama-compatible endpoints
+            # (e.g. ollama.com or private gateways). Local Ollama does not
+            # require a key, so preserve previous behavior as fallback.
+            self._interpreter.llm.api_key = llm.api_key or "ollama"
         else:
             self._interpreter.llm.model = llm.model
             self._interpreter.llm.api_base = llm.api_base
@@ -311,6 +370,11 @@ class OpenInterpreterAgent:
             int(getattr(self.settings, "open_interpreter_max_tokens", 2090) or 2090),
         )
         self._interpreter.llm.max_tokens = configured_max_tokens
+        # Prevent hidden provider-side retry bursts for quota-limited models.
+        if hasattr(self._interpreter.llm, "max_retries"):
+            self._interpreter.llm.max_retries = 0
+        if hasattr(self._interpreter.llm, "num_retries"):
+            self._interpreter.llm.num_retries = 0
 
         if llm.provider in {"groq", "openai"} or llm.provider_id:
             self._interpreter.llm.context_window = 131072
@@ -369,10 +433,30 @@ class OpenInterpreterAgent:
     def _enforce_requests_per_minute(self) -> None:
         """Block briefly when Open Interpreter request/minute limit is reached."""
         limit = max(0, int(getattr(self.settings, "open_interpreter_requests_per_minute", 0) or 0))
-        if limit <= 0:
-            return
+        configured_min_interval = max(
+            0.0,
+            float(getattr(self.settings, "open_interpreter_min_request_interval_seconds", 0.0) or 0.0),
+        )
+        derived_interval = (60.0 / limit) if limit > 0 else 0.0
+        min_interval = max(configured_min_interval, derived_interval)
 
         now = time.monotonic()
+        if min_interval > 0 and self._last_request_ts > 0:
+            delta = now - self._last_request_ts
+            if delta < min_interval:
+                sleep_for = min_interval - delta
+                logger.info(
+                    "⏱ Open Interpreter pacing delay active (%.1fs between provider calls). Waiting %.1fs",
+                    min_interval,
+                    sleep_for,
+                )
+                time.sleep(sleep_for)
+                now = time.monotonic()
+
+        if limit <= 0:
+            self._last_request_ts = now
+            return
+
         window = 60.0
         while self._request_times and (now - self._request_times[0]) >= window:
             self._request_times.popleft()
@@ -390,7 +474,9 @@ class OpenInterpreterAgent:
                 while self._request_times and (now - self._request_times[0]) >= window:
                     self._request_times.popleft()
 
-        self._request_times.append(time.monotonic())
+        now = time.monotonic()
+        self._request_times.append(now)
+        self._last_request_ts = now
 
     def _initialize(self) -> None:
         """Initialize the Open Interpreter instance."""
@@ -539,6 +625,13 @@ class OpenInterpreterAgent:
                 current_code: list[str] = []
                 current_language = None
                 shown_running = False
+                emitted_chunks = 0
+                can_failover = self._has_runtime_fallback(llm_cfg)
+
+                def _emit(chunk: dict) -> None:
+                    nonlocal emitted_chunks
+                    emitted_chunks += 1
+                    asyncio.run_coroutine_threadsafe(chunk_queue.put(chunk), loop)
 
                 def _flush_pending_code() -> None:
                     nonlocal current_code, current_language
@@ -548,14 +641,11 @@ class OpenInterpreterAgent:
                     if code_text:
                         lang = (current_language or "").strip()
                         fence_lang = lang if lang else "text"
-                        asyncio.run_coroutine_threadsafe(
-                            chunk_queue.put(
-                                {
-                                    "type": "message",
-                                    "content": f"```{fence_lang}\n{code_text}\n```",
-                                }
-                            ),
-                            loop,
+                        _emit(
+                            {
+                                "type": "message",
+                                "content": f"```{fence_lang}\n{code_text}\n```",
+                            }
                         )
                     current_code = []
 
@@ -582,18 +672,15 @@ class OpenInterpreterAgent:
                                     if is_start and current_language and not shown_running:
                                         # Emit tool_use event for Activity panel
                                         lang_display = current_language.title()
-                                        asyncio.run_coroutine_threadsafe(
-                                            chunk_queue.put(
-                                                {
-                                                    "type": "tool_use",
-                                                    "content": f"Running {lang_display}...",
-                                                    "metadata": {
-                                                        "name": f"run_{current_language}",
-                                                        "input": {},
-                                                    },
-                                                }
-                                            ),
-                                            loop,
+                                        _emit(
+                                            {
+                                                "type": "tool_use",
+                                                "content": f"Running {lang_display}...",
+                                                "metadata": {
+                                                    "name": f"run_{current_language}",
+                                                    "input": {},
+                                                },
+                                            }
                                         )
                                         shown_running = True
                                     elif is_end:
@@ -601,21 +688,14 @@ class OpenInterpreterAgent:
                                         lang_display = (
                                             current_language.title() if current_language else "Code"
                                         )
-                                        asyncio.run_coroutine_threadsafe(
-                                            chunk_queue.put(
-                                                {
-                                                    "type": "tool_result",
-                                                    "content": (
-                                                        f"{lang_display} execution completed"
-                                                    ),
-                                                    "metadata": {
-                                                        "name": (
-                                                            f"run_{current_language or 'code'}"
-                                                        )
-                                                    },
-                                                }
-                                            ),
-                                            loop,
+                                        _emit(
+                                            {
+                                                "type": "tool_result",
+                                                "content": f"{lang_display} execution completed",
+                                                "metadata": {
+                                                    "name": f"run_{current_language or 'code'}"
+                                                },
+                                            }
                                         )
                                         # Reset for next code block
                                         shown_running = False
@@ -624,10 +704,7 @@ class OpenInterpreterAgent:
 
                                 # Surface non-console computer prompts (e.g. confirmations)
                                 if content:
-                                    asyncio.run_coroutine_threadsafe(
-                                        chunk_queue.put({"type": "message", "content": str(content)}),
-                                        loop,
-                                    )
+                                    _emit({"type": "message", "content": str(content)})
                                 continue
 
                             # Handle assistant chunks
@@ -637,14 +714,11 @@ class OpenInterpreterAgent:
                                     current_language = chunk_format or "code"
                                     # Flush any pending prose before code block
                                     if current_message:
-                                        asyncio.run_coroutine_threadsafe(
-                                            chunk_queue.put(
-                                                {
-                                                    "type": "message",
-                                                    "content": "".join(current_message),
-                                                }
-                                            ),
-                                            loop,
+                                        _emit(
+                                            {
+                                                "type": "message",
+                                                "content": "".join(current_message),
+                                            }
                                         )
                                         current_message = []
                                     if content:
@@ -653,10 +727,7 @@ class OpenInterpreterAgent:
                                     # Flush pending code before next prose segment
                                     _flush_pending_code()
                                     # Stream message chunks
-                                    asyncio.run_coroutine_threadsafe(
-                                        chunk_queue.put({"type": "message", "content": content}),
-                                        loop,
-                                    )
+                                    _emit({"type": "message", "content": content})
                         elif isinstance(chunk, str) and chunk:
                             current_message.append(chunk)
 
@@ -666,18 +737,52 @@ class OpenInterpreterAgent:
                     # Flush remaining buffered content
                     _flush_pending_code()
                     if current_message:
-                        asyncio.run_coroutine_threadsafe(
-                            chunk_queue.put(
-                                {"type": "message", "content": "".join(current_message)}
-                            ),
-                            loop,
-                        )
+                        _emit({"type": "message", "content": "".join(current_message)})
+
+                    if emitted_chunks == 0:
+                        # Some providers fail in OI internals and only print quota text to terminal,
+                        # yielding no stream chunks and no exception. Try one failover rotation,
+                        # then emit a hard error so planner can classify it.
+                        if can_failover:
+                            try:
+                                llm_retry = self._resolve_runtime_llm(on_error=True)
+                                self._apply_llm_config(llm_retry)
+                                _stream_once()
+                            except Exception:
+                                pass
+                        else:
+                            logger.warning(
+                                "Open Interpreter returned zero chunks and no fallback key/provider is available"
+                            )
+
+                        if emitted_chunks == 0:
+                            _emit(
+                                {
+                                    "type": "error",
+                                    "content": (
+                                        "Agent error: provider returned no stream output "
+                                        "(possible quota/rate-limit/auth issue in Open Interpreter runtime)."
+                                    ),
+                                }
+                            )
                 except Exception as e:
                     err = str(e).lower()
+                    quota_like = self._is_quota_like_error(err)
                     # Auto-failover: next key/provider for common quota/rate/auth issues
                     if any(
-                        t in err for t in ["rate limit", "too many requests", "429", "quota", "api key"]
-                    ):
+                        t in err
+                        for t in [
+                            "rate limit",
+                            "too many requests",
+                            "429",
+                            "quota",
+                            "api key",
+                            "unauthorized",
+                            "401",
+                            "forbidden",
+                            "authentication",
+                        ]
+                    ) and (can_failover or not quota_like):
                         try:
                             llm_retry = self._resolve_runtime_llm(on_error=True)
                             self._apply_llm_config(llm_retry)
@@ -685,10 +790,7 @@ class OpenInterpreterAgent:
                             return
                         except Exception as e2:
                             e = e2
-                    asyncio.run_coroutine_threadsafe(
-                        chunk_queue.put({"type": "error", "content": f"Agent error: {str(e)}"}),
-                        loop,
-                    )
+                    _emit({"type": "error", "content": f"Agent error: {str(e)}"})
                 finally:
                     # Signal completion
                     asyncio.run_coroutine_threadsafe(chunk_queue.put(None), loop)
