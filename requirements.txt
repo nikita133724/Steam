@@ -1,0 +1,3 @@
+litellm==1.81.12
+pocketpaw==0.4.0
+interpreter==0.4.3
