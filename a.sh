@@ -55,7 +55,7 @@ ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "Authtoken уже добав
 # 6) Запуск публичного туннеля с basic auth
 # ---------------------------
 echo "Запускаем публичный туннель ngrok с авторизацией..."
-nohup ngrok http $PORT --http-auth="$NGROK_USER:$NGROK_PASSWORD" > ngrok.log 2>&1 &
+nohup ngrok http $PORT > ngrok.log 2>&1 &
 sleep 5
 
 # ---------------------------
@@ -63,7 +63,7 @@ sleep 5
 # ---------------------------
 NGROK_URL=$(ngrok api tunnels list --json | jq -r '.tunnels[0].public_url')
 echo "ngrok запущен! Публичный URL: $NGROK_URL"
-
+ngrok api tunnels list --json | jq -r '.tunnels[0].public_url'
 # ---------------------------
 # 8) Пример запроса cURL с базовой авторизацией
 # ---------------------------
