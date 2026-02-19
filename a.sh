@@ -2,7 +2,7 @@
 set -e
 
 MODEL="llama3.2:3b"
-NGROK_AUTHTOKEN="39ld8AoprRvDifymsvZdx1zriMf_FmTGhHjfQPidQfVRoAjw"
+NGROK_AUTHTOKEN="39sBajKz1uuDqelrLi9TzKrOLxe_53kq1Zm8nj1B7BDQ3bNNx"
 OLLAMA_PATH="$HOME/.ollama/bin"
 NGROK_PATH="$HOME/.ngrok/bin"
 PORT=11434
