@@ -20,7 +20,7 @@ else
 fi
 
 # ---------------------------
-# 2. Установка ngrok
+# 2. Установка ngrok 2.x
 # ---------------------------
 if ! command -v ngrok &> /dev/null; then
     echo "ngrok не найден, устанавливаем..."
@@ -56,21 +56,17 @@ for i in {1..10}; do
 done
 
 # ---------------------------
-# 5. Конфиг ngrok
-# ---------------------------
-ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "ngrok токен уже добавлен"
-
-# ---------------------------
-# 6. Запуск ngrok туннеля
+# 5. Запуск ngrok с токеном через переменную окружения
 # ---------------------------
 echo "Запускаем ngrok на localhost:$PORT..."
+export NGROK_AUTHTOKEN
 nohup ngrok http $PORT --host-header="localhost:$PORT" > ngrok.log 2>&1 &
 
-sleep 2
+sleep 3
 echo "ngrok запущен. Публичный адрес смотри в ngrok.log"
 
 # ---------------------------
-# 7. Пример cURL
+# 6. Пример cURL
 # ---------------------------
 echo ""
 echo "Пример запроса к Ollama через cURL:"
