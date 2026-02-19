@@ -67,3 +67,5 @@ echo "Пример запроса к Ollama через этот URL:"
 echo "curl https://<твое-имя>-11434.app.github.dev/v1/chat/completions \\"
 echo "  -H \"Content-Type: application/json\" \\"
 echo "  -d '{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"Привет!\"}]}'"
+
+top -p $(pgrep -d',' -f ollama)
