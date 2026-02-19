@@ -58,7 +58,7 @@ ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "Автогок токен �
 
 # 7) Запуск туннеля ngrok
 echo "Запускаем ngrok..."
-nohup ngrok http bind $PORT > ngrok.log 2>&1 &
+nohup ngrok http $PORT > ngrok.log 2>&1 &
 sleep 3
 echo "ngrok запущен — см. ngrok.log"
 
