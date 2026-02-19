@@ -4,7 +4,7 @@ set -e
 # ---------------------------
 # Настройки
 # ---------------------------
-MODEL="llama3.2:3b"
+MODEL="llama3.2:7b"
 PORT=11434
 OLLAMA_PATH="$HOME/.ollama/bin"
 
