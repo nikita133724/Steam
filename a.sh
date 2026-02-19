@@ -7,7 +7,7 @@ set -e
 MODEL="llama3.2:3b"
 PORT=11434
 OLLAMA_PATH="$HOME/.ollama/bin"
-NGROK_PATH="/usr/local/bin"   # для apt установки ngrok
+NGROK_PATH="$HOME/.ngrok/bin"
 NGROK_AUTHTOKEN="39sBajKz1uuDqelrLi9TzKrOLxe_53kq1Zm8nj1B7BDQ3bNNx"
 
 export PATH="$OLLAMA_PATH:$NGROK_PATH:$PATH"
@@ -45,31 +45,23 @@ for i in {1..10}; do
 done
 
 # ---------------------------
-# 4. Установка ngrok 3.x через apt
+# 4. Установка ngrok через zip (обход apt)
 # ---------------------------
 if ! command -v ngrok &> /dev/null; then
     echo "ngrok не найден, устанавливаем..."
+    mkdir -p "$NGROK_PATH"
 
-    # Исправляем ошибку с подписью Yarn (иначе apt update прервётся)
-    echo "Добавляем публичный ключ Yarn для APT..."
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/yarn.gpg
+    curl -sSL https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
+    unzip -o ngrok.zip -d "$NGROK_PATH"
+    chmod +x "$NGROK_PATH/ngrok"
 
-    # Обновляем список пакетов после добавления ключа
-    sudo apt update
-
-    # Ставим ngrok
-    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-      | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-    echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
-      | sudo tee /etc/apt/sources.list.d/ngrok.list
-    sudo apt update
-    sudo apt install -y ngrok
+    echo "ngrok установлен в $NGROK_PATH"
 else
     echo "ngrok уже установлен"
 fi
 
 # ---------------------------
-# 5. Добавляем токен (один раз)
+# 5. Добавляем токен ngrok (один раз)
 # ---------------------------
 ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "ngrok токен уже добавлен"
 
