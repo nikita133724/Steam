@@ -49,6 +49,15 @@ done
 # ---------------------------
 if ! command -v ngrok &> /dev/null; then
     echo "ngrok не найден, устанавливаем..."
+
+    # Исправляем ошибку с подписью Yarn (иначе apt update прервётся)
+    echo "Добавляем публичный ключ Yarn для APT..."
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/yarn.gpg
+
+    # Обновляем список пакетов после добавления ключа
+    sudo apt update
+
+    # Ставим ngrok
     curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
       | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
     echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
