@@ -55,7 +55,7 @@ ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "Authtoken уже добав
 # 6) Запуск публичного туннеля с basic auth
 # ---------------------------
 echo "Запускаем публичный туннель ngrok с авторизацией..."
-nohup ngrok http $PORT --auth="$NGROK_USER:$NGROK_PASSWORD" > ngrok.log 2>&1 &
+nohup ngrok http $PORT --http-auth="$NGROK_USER:$NGROK_PASSWORD" > ngrok.log 2>&1 &
 sleep 5
 
 # ---------------------------
