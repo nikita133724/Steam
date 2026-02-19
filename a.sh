@@ -4,10 +4,15 @@ set -e
 MODEL="llama3.2:3b"
 PORT=11434
 OLLAMA_PATH="$HOME/.ollama/bin"
+NGROK_AUTHTOKEN="39sBajKz1uuDqelrLi9TzKrOLxe_53kq1Zm8nj1B7BDQ3bNNx"
+NGROK_USER="user"          # придумай любое имя
+NGROK_PASSWORD="pass123"   # придумай пароль
 
 export PATH="$OLLAMA_PATH:$PATH"
 
-# 1) Установка Ollama
+# ---------------------------
+# 1) Проверка Ollama
+# ---------------------------
 if ! command -v ollama &> /dev/null; then
     echo "Ollama не найден — устанавливаем..."
     curl -fsSL https://ollama.com/install.sh | sh
@@ -15,31 +20,24 @@ else
     echo "Ollama уже установлен"
 fi
 
-# 2) Подтягиваем модель
-echo "Подтягиваем модель $MODEL..."
-ollama pull $MODEL || echo "Warning: pull может падать до запуска сервера"
+# ---------------------------
+# 2) Модель уже подтянута
+# ---------------------------
+echo "Используем модель $MODEL (предполагается, что pull уже сделан)"
 
-# 3) Запуск Ollama API
+# ---------------------------
+# 3) Запуск Ollama API в фоне
+# ---------------------------
 echo "Запускаем Ollama API..."
 nohup ollama serve > ollama.log 2>&1 &
+sleep 3
+echo "Ollama сервер запущен на localhost:$PORT"
 
-echo "Ждём Ollama сервер..."
-for i in {1..10}; do
-    if curl -s http://127.0.0.1:$PORT/v1/models > /dev/null; then
-        echo "Ollama сервер готов!"
-        break
-    fi
-    sleep 1
-done
-
-# 4) Отключаем Yarn репозиторий (чтобы apt update не падал)
-if [ -f /etc/apt/sources.list.d/yarn.list ]; then
-    sudo mv /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.list.disabled
-fi
-
-# 5) Установка ngrok
+# ---------------------------
+# 4) Установка ngrok, если нужно
+# ---------------------------
 if ! command -v ngrok &> /dev/null; then
-    echo "Устанавливаем ngrok 3.x..."
+    echo "Устанавливаем ngrok..."
     curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
     echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" | sudo tee /etc/apt/sources.list.d/ngrok.list
     sudo apt update
@@ -48,18 +46,30 @@ else
     echo "ngrok уже установлен"
 fi
 
-# 6) Запуск публичного туннеля (без токена)
-echo "Запускаем публичный ngrok туннель..."
-nohup ngrok http $PORT > ngrok.log 2>&1 &
+# ---------------------------
+# 5) Добавление токена ngrok
+# ---------------------------
+ngrok config add-authtoken $NGROK_AUTHTOKEN || echo "Authtoken уже добавлен"
 
-# 7) Ждём 5 секунд и показываем лог
+# ---------------------------
+# 6) Запуск публичного туннеля с basic auth
+# ---------------------------
+echo "Запускаем публичный туннель ngrok с авторизацией..."
+nohup ngrok http $PORT --auth="$NGROK_USER:$NGROK_PASSWORD" > ngrok.log 2>&1 &
 sleep 5
-echo "ngrok запущен, смотри URL в ngrok.log"
-echo "Пример команды для проверки URL:"
-grep -o 'https://[0-9a-z]*\.ngrok\.io' ngrok.log || echo "URL пока не появился — подожди пару секунд и проверь снова"
 
-# 8) Пример cURL запроса (подставь URL из лога)
+# ---------------------------
+# 7) Получаем публичный URL
+# ---------------------------
+NGROK_URL=$(ngrok api tunnels list --json | jq -r '.tunnels[0].public_url')
+echo "ngrok запущен! Публичный URL: $NGROK_URL"
+
+# ---------------------------
+# 8) Пример запроса cURL с базовой авторизацией
+# ---------------------------
 echo ""
-echo "curl https://<твоя_ngrok_url>.ngrok.io/v1/chat/completions \\"
+echo "Пример запроса к Ollama через ngrok:"
+echo "curl -u \"$NGROK_USER:$NGROK_PASSWORD\" \\"
+echo "  -X POST \"$NGROK_URL/v1/chat/completions\" \\"
 echo "  -H \"Content-Type: application/json\" \\"
 echo "  -d '{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"Привет, Ollama!\"}]}'"
