@@ -1,0 +1,752 @@
+<html class=" responsive touch DesktopUI" lang="ru"><head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+			<meta name="viewport" content="width=device-width,initial-scale=1">
+		<meta name="theme-color" content="#171a21">
+		<title>Войти</title>
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+	
+	
+	<link href="https://community.fastly.steamstatic.com/public/shared/css/motiva_sans.css?v=-yZgCk0Nu7kH&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/shared/css/buttons.css?v=0Ihq-pAoptBq&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/shared/css/shared_global.css?v=uKH1RcGNHaGr&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/css/globalv2.css?v=9RV1KkrS040q&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/shared/css/login.css?v=Q076eXXOSY2M&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/css/skin_1/home.css?v=0f-t7NpEduTG&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/shared/css/shared_responsive.css?v=KWbVpwRCHuVv&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<link href="https://community.fastly.steamstatic.com/public/css/skin_1/header.css?v=EM4kCu67DNda&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<script type="text/javascript">
+	var __PrototypePreserve=[];
+	__PrototypePreserve[0] = Array.from;
+	__PrototypePreserve[1] = Array.prototype.filter;
+	__PrototypePreserve[2] = Array.prototype.flatMap;
+	__PrototypePreserve[3] = Array.prototype.find;
+	__PrototypePreserve[4] = Array.prototype.some;
+	__PrototypePreserve[5] = Function.prototype.bind;
+	__PrototypePreserve[6] = HTMLElement.prototype.scrollTo;
+</script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/prototype-1.7.js?v=npJElBnrEO6W&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript">
+	Array.from = __PrototypePreserve[0] || Array.from;
+	Array.prototype.filter = __PrototypePreserve[1] || Array.prototype.filter;
+	Array.prototype.flatMap = __PrototypePreserve[2] || Array.prototype.flatMap;
+	Array.prototype.find = __PrototypePreserve[3] || Array.prototype.find;
+	Array.prototype.some = __PrototypePreserve[4] || Array.prototype.some;
+	Function.prototype.bind = __PrototypePreserve[5] || Function.prototype.bind;
+	HTMLElement.prototype.scrollTo = __PrototypePreserve[6] || HTMLElement.prototype.scrollTo;
+</script>
+<script type="text/javascript">
+	var __ScriptaculousPreserve=[];
+	__ScriptaculousPreserve[0] = Array.from;
+	__ScriptaculousPreserve[1] = Function.prototype.bind;
+	__ScriptaculousPreserve[2] = HTMLElement.prototype.scrollTo;
+</script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/scriptaculous/_combined.js?v=pbdAKOcDIgbC&amp;l=russian&amp;_cdn=fastly&amp;load=effects,controls,slider,dragdrop"></script>
+<script type="text/javascript">
+	Array.from = __ScriptaculousPreserve[0] || Array.from;
+	Function.prototype.bind = __ScriptaculousPreserve[1] || Function.prototype.bind;
+	HTMLElement.prototype.scrollTo = __ScriptaculousPreserve[2] || HTMLElement.prototype.scrollTo;
+delete String['__parseStyleElement'];  Prototype.Browser.WebKit = true;</script>
+<script type="text/javascript">VALVE_PUBLIC_PATH = "https:\/\/community.fastly.steamstatic.com\/public\/";</script><script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/global.js?v=15MHoVZcGR_u&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/jquery-1.11.1.min.js?v=gQHVlrK4-jX-&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/shared/javascript/tooltip.js?v=LZHsOVauqTrm&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/shared/javascript/shared_global.js?v=7Pe7VU2WyrF4&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/shared/javascript/auth_refresh.js?v=w6QbwI-5-j2S&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript">Object.seal && [ Object, Array, String, Number ].map( function( builtin ) { Object.seal( builtin.prototype ); } );</script><script type="text/javascript">$J = jQuery.noConflict();
+if ( typeof JSON != 'object' || !JSON.stringify || !JSON.parse ) { document.write( "<scr" + "ipt type=\"text\/javascript\" src=\"https:\/\/community.fastly.steamstatic.com\/public\/javascript\/json2.js?v=54NKNglvGTO8&amp;l=russian&amp;_cdn=fastly\"><\/script>\n" ); };
+</script>
+		<script type="text/javascript">
+			document.addEventListener('DOMContentLoaded', function(event) {
+				SetupTooltips( { tooltipCSSClass: 'community_tooltip'} );
+		});
+		</script><script type="text/javascript" src="https://community.fastly.steamstatic.com/public/shared/javascript/login.js?v=FY82e0EG90T2&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/shared/javascript/shared_responsive_adapter.js?v=pB0CO9l3lRnc&amp;l=russian&amp;_cdn=fastly"></script>
+
+						<meta name="twitter:card" content="summary_large_image">
+			
+	<meta name="twitter:site" content="@steam">
+
+						<meta property="og:title" content="Войти">
+					<meta property="twitter:title" content="Войти">
+					<meta property="og:type" content="website">
+					<meta property="fb:app_id" content="105386699540688">
+			
+	
+			<link rel="image_src" href="https://community.fastly.steamstatic.com/public/shared/images/responsive/steam_share_image.jpg">
+		<meta property="og:image" content="https://community.fastly.steamstatic.com/public/shared/images/responsive/steam_share_image.jpg">
+		<meta name="twitter:image" content="https://community.fastly.steamstatic.com/public/shared/images/responsive/steam_share_image.jpg">
+					<meta property="og:image:secure" content="https://community.fastly.steamstatic.com/public/shared/images/responsive/steam_share_image.jpg">
+				
+	
+	
+	
+	
+	<link rel="stylesheet" type="text/css" href="https://community.fastly.steamstatic.com/public/css/applications/community/chunk~215b3e016.css?contenthash=0c1505481373fe7e7ab1"><link rel="stylesheet" type="text/css" href="https://community.fastly.steamstatic.com/public/css/applications/community/login.css?contenthash=a66289e969ece5d1faad"><style type="text/css">.eruda-search-highlight-block{display:inline}.eruda-search-highlight-block .eruda-keyword{background:#fffbe5;color:#5c5c00}</style><style type="text/css">@font-face{font-family:eruda-icon;src:url('data:application/x-font-woff;charset=utf-8;base64,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') format('woff')}[class*=' eruda-icon-'],[class^='eruda-icon-']{font-family:eruda-icon!important;font-size:16px;font-style:normal;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.eruda-icon-arrow-left:before{content:'\f101'}.eruda-icon-arrow-right:before{content:'\f102'}.eruda-icon-caret-down:before{content:'\f103'}.eruda-icon-caret-right:before{content:'\f104'}.eruda-icon-clear:before{content:'\f105'}.eruda-icon-compress:before{content:'\f106'}.eruda-icon-delete:before{content:'\f107'}.eruda-icon-error:before{content:'\f108'}.eruda-icon-expand:before{content:'\f109'}.eruda-icon-eye:before{content:'\f10a'}.eruda-icon-play:before{content:'\f10b'}.eruda-icon-refresh:before{content:'\f10c'}.eruda-icon-reset:before{content:'\f10d'}.eruda-icon-search:before{content:'\f10e'}.eruda-icon-select:before{content:'\f10f'}.eruda-icon-tool:before{content:'\f110'}.eruda-icon-warn:before{content:'\f111'}</style></head>
+<body class="login global responsive_page ">
+
+
+<div class="responsive_page_frame with_header">
+						<div role="navigation" class="responsive_page_menu_ctn mainmenu" aria-label="Мобильное меню">
+				<div class="responsive_page_menu" id="responsive_page_menu">
+										<div class="mainmenu_contents">
+						<div class="mainmenu_contents_items">
+															<a class="menuitem" href="https://steamcommunity.com/login/home/?goto=login%2Fhome%2F%3Fgoto%3D">
+									Войти								</a>
+															<a class="menuitem supernav" href="https://store.steampowered.com/" data-tooltip-type="selector" data-tooltip-content=".submenu_Store">
+				Магазин			</a>
+			<div class="submenu_Store" style="display: none;" data-submenuid="Store">
+														<a class="submenuitem" href="https://store.steampowered.com/">
+						Главная											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/explore/">
+						Рекомендации											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/my/wishlist/">
+						Список желаемого											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/points/shop/">
+						Предметы за очки											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/news/">
+						Новости											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/stats/">
+						Чарты											</a>
+							</div>
+										<a class="menuitem supernav supernav_active" href="https://steamcommunity.com/" data-tooltip-type="selector" data-tooltip-content=".submenu_Community">
+				Сообщество			</a>
+			<div class="submenu_Community" style="display: none;" data-submenuid="Community">
+														<a class="submenuitem" href="https://steamcommunity.com/">
+						Главная											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/discussions/">
+						Обсуждения											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/workshop/">
+						Мастерская											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/market/">
+						Торговая площадка											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/?subsection=broadcasts">
+						Трансляции											</a>
+							</div>
+										<a class="menuitem " href="https://store.steampowered.com/about/">
+				Информация			</a>
+										<a class="menuitem " href="https://help.steampowered.com/ru/">
+				Поддержка			</a>
+			
+							<div class="minor_menu_items">
+																								<div class="menuitem change_language_action">
+									Изменить язык								</div>
+																																	<a class="menuitem" href="https://store.steampowered.com/mobile" target="_blank" rel="noreferrer">Скачать мобильное приложение Steam</a>
+																									<div class="menuitem" role="link" onclick="Responsive_RequestDesktopView();">
+										Полная версия									</div>
+															</div>
+						</div>
+						<div class="mainmenu_footer_spacer  "></div>
+						<div class="mainmenu_footer">
+															<div class="mainmenu_footer_logo"><img src="https://community.fastly.steamstatic.com/public/shared/images/responsive/footerLogo_valve_new.png"></div>
+								© Valve Corporation. Все права сохранены. Все торговые марки являются собственностью соответствующих владельцев в США и других странах.								<span class="mainmenu_valve_links">
+									<a href="https://store.steampowered.com/privacy_agreement/" target="_blank">Политика конфиденциальности</a>
+									&nbsp;| &nbsp;<a href="http://www.valvesoftware.com/legal.htm" target="_blank">Правовая информация</a>
+									&nbsp;| &nbsp;<a href="https://help.steampowered.com/faqs/view/10BB-D27A-6378-4436" target="_blank">Доступность</a>
+									&nbsp;| &nbsp;<a href="https://store.steampowered.com/subscriber_agreement/" target="_blank">Соглашение подписчика Steam</a>
+									&nbsp;| &nbsp;<a href="https://store.steampowered.com/steam_refunds/" target="_blank">Возврат средств</a>
+									&nbsp;| &nbsp;<a href="https://store.steampowered.com/account/cookiepreferences/" target="_blank">Файлы cookie</a>
+								</span>
+													</div>
+					</div>
+									</div>
+			</div>
+		
+		<div class="responsive_local_menu_tab"></div>
+
+		<div class="responsive_page_menu_ctn localmenu">
+			<div class="responsive_page_menu" id="responsive_page_local_menu" data-panel="{&quot;onOptionsActionDescription&quot;:&quot;#filter_toggle&quot;,&quot;onOptionsButton&quot;:&quot;Responsive_ToggleLocalMenu()&quot;,&quot;onCancelButton&quot;:&quot;Responsive_ToggleLocalMenu()&quot;}">
+				<div class="localmenu_content" data-panel="{&quot;maintainY&quot;:true,&quot;bFocusRingRoot&quot;:true,&quot;flow-children&quot;:&quot;column&quot;}">
+				</div>
+			</div>
+		</div>
+
+
+
+					<div class="responsive_header">
+				<div class="responsive_header_content">
+					<div id="responsive_menu_logo">
+						<img src="https://community.fastly.steamstatic.com/public/shared/images/responsive/header_menu_hamburger.png" height="100%">
+											</div>
+					<div class="responsive_header_logo">
+						<a href="https://store.steampowered.com/">
+															<img src="https://community.fastly.steamstatic.com/public/shared/images/responsive/header_logo.png" height="36" border="0" alt="STEAM">
+													</a>
+					</div>
+									</div>
+			</div>
+		
+		<div class="responsive_page_content_overlay">
+
+		</div>
+
+		<div class="responsive_fixonscroll_ctn nonresponsive_hidden ">
+		</div>
+	
+	<div class="responsive_page_content">
+
+		<div role="banner" id="global_header" data-panel="{&quot;flow-children&quot;:&quot;row&quot;}">
+	<div class="content">
+		<div class="logo">
+			<span id="logo_holder">
+									<a href="https://store.steampowered.com/" aria-label="Ссылка на домашнюю страницу Steam">
+						<img src="https://community.fastly.steamstatic.com/public/shared/images/header/logo_steam.svg?t=962016" width="176" height="44" alt="Ссылка на домашнюю страницу Steam">
+					</a>
+							</span>
+		</div>
+
+			<div role="navigation" class="supernav_container" aria-label="Глобальное меню">
+								<a class="menuitem supernav" href="https://store.steampowered.com/" data-tooltip-type="selector" data-tooltip-content=".submenu_Store">
+				МАГАЗИН			</a>
+			<div class="submenu_Store" style="display: none;" data-submenuid="Store">
+														<a class="submenuitem" href="https://store.steampowered.com/">
+						Главная											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/explore/">
+						Рекомендации											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/my/wishlist/">
+						Список желаемого											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/points/shop/">
+						Предметы за очки											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/news/">
+						Новости											</a>
+														<a class="submenuitem" href="https://store.steampowered.com/stats/">
+						Чарты											</a>
+							</div>
+										<a class="menuitem supernav supernav_active" href="https://steamcommunity.com/" data-tooltip-type="selector" data-tooltip-content=".submenu_Community">
+				СООБЩЕСТВО			</a>
+			<div class="submenu_Community" style="display: none;" data-submenuid="Community">
+														<a class="submenuitem" href="https://steamcommunity.com/">
+						Главная											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/discussions/">
+						Обсуждения											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/workshop/">
+						Мастерская											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/market/">
+						Торговая площадка											</a>
+														<a class="submenuitem" href="https://steamcommunity.com/?subsection=broadcasts">
+						Трансляции											</a>
+							</div>
+										<a class="menuitem " href="https://store.steampowered.com/about/">
+				Информация			</a>
+										<a class="menuitem " href="https://help.steampowered.com/ru/">
+				ПОДДЕРЖКА			</a>
+				</div>
+	<script type="text/javascript">
+		jQuery(function($) {
+			$('#global_header .supernav').v_tooltip({'location':'bottom', 'destroyWhenDone': false, 'tooltipClass': 'supernav_content', 'offsetY':-6, 'offsetX': 1, 'horizontalSnap': 4, 'tooltipParent': '#global_header .supernav_container', 'correctForScreenSize': false});
+		});
+	</script>
+
+		<div id="global_actions">
+			<div role="navigation" id="global_action_menu" aria-label="Меню аккаунта">
+									<a class="header_installsteam_btn header_installsteam_btn_green" href="https://store.steampowered.com/about/">
+						<div class="header_installsteam_btn_content">
+							Установить Steam						</div>
+					</a>
+				
+				
+									<a class="global_action_link" href="https://steamcommunity.com/login/home/?goto=login%2Fhome%2F%3Fgoto%3D">вход</a>
+											&nbsp;|&nbsp;
+						<span class="pulldown global_action_link" id="language_pulldown" onclick="ShowMenu( this, 'language_dropdown', 'right' );">язык</span>
+						<div class="popup_block_new" id="language_dropdown" style="display: none;">
+							<div class="popup_body popup_menu">
+																																					<a class="popup_menu_item tight" href="?l=schinese&amp;goto=" onclick="ChangeLanguage( 'schinese' ); return false;">简体中文 (упрощенный китайский)</a>
+																													<a class="popup_menu_item tight" href="?l=tchinese&amp;goto=" onclick="ChangeLanguage( 'tchinese' ); return false;">繁體中文 (традиционный китайский)</a>
+																													<a class="popup_menu_item tight" href="?l=japanese&amp;goto=" onclick="ChangeLanguage( 'japanese' ); return false;">日本語 (японский)</a>
+																													<a class="popup_menu_item tight" href="?l=koreana&amp;goto=" onclick="ChangeLanguage( 'koreana' ); return false;">한국어 (корейский)</a>
+																													<a class="popup_menu_item tight" href="?l=thai&amp;goto=" onclick="ChangeLanguage( 'thai' ); return false;">ไทย (тайский)</a>
+																													<a class="popup_menu_item tight" href="?l=bulgarian&amp;goto=" onclick="ChangeLanguage( 'bulgarian' ); return false;">Български (болгарский)</a>
+																													<a class="popup_menu_item tight" href="?l=czech&amp;goto=" onclick="ChangeLanguage( 'czech' ); return false;">Čeština (чешский)</a>
+																													<a class="popup_menu_item tight" href="?l=danish&amp;goto=" onclick="ChangeLanguage( 'danish' ); return false;">Dansk (датский)</a>
+																													<a class="popup_menu_item tight" href="?l=german&amp;goto=" onclick="ChangeLanguage( 'german' ); return false;">Deutsch (немецкий)</a>
+																													<a class="popup_menu_item tight" href="?l=english&amp;goto=" onclick="ChangeLanguage( 'english' ); return false;">English (английский)</a>
+																													<a class="popup_menu_item tight" href="?l=spanish&amp;goto=" onclick="ChangeLanguage( 'spanish' ); return false;">Español - España (испанский — Испания)</a>
+																													<a class="popup_menu_item tight" href="?l=latam&amp;goto=" onclick="ChangeLanguage( 'latam' ); return false;">Español - Latinoamérica (испанский — Латинская Америка)</a>
+																													<a class="popup_menu_item tight" href="?l=greek&amp;goto=" onclick="ChangeLanguage( 'greek' ); return false;">Ελληνικά (греческий)</a>
+																													<a class="popup_menu_item tight" href="?l=french&amp;goto=" onclick="ChangeLanguage( 'french' ); return false;">Français (французский)</a>
+																													<a class="popup_menu_item tight" href="?l=italian&amp;goto=" onclick="ChangeLanguage( 'italian' ); return false;">Italiano (итальянский)</a>
+																													<a class="popup_menu_item tight" href="?l=indonesian&amp;goto=" onclick="ChangeLanguage( 'indonesian' ); return false;">Bahasa Indonesia (индонезийский)</a>
+																													<a class="popup_menu_item tight" href="?l=hungarian&amp;goto=" onclick="ChangeLanguage( 'hungarian' ); return false;">Magyar (венгерский)</a>
+																													<a class="popup_menu_item tight" href="?l=dutch&amp;goto=" onclick="ChangeLanguage( 'dutch' ); return false;">Nederlands (нидерландский)</a>
+																													<a class="popup_menu_item tight" href="?l=norwegian&amp;goto=" onclick="ChangeLanguage( 'norwegian' ); return false;">Norsk (норвежский)</a>
+																													<a class="popup_menu_item tight" href="?l=polish&amp;goto=" onclick="ChangeLanguage( 'polish' ); return false;">Polski (польский)</a>
+																													<a class="popup_menu_item tight" href="?l=portuguese&amp;goto=" onclick="ChangeLanguage( 'portuguese' ); return false;">Português (португальский — Португалия)</a>
+																													<a class="popup_menu_item tight" href="?l=brazilian&amp;goto=" onclick="ChangeLanguage( 'brazilian' ); return false;">Português-Brasil (португальский — Бразилия)</a>
+																													<a class="popup_menu_item tight" href="?l=romanian&amp;goto=" onclick="ChangeLanguage( 'romanian' ); return false;">Română (румынский)</a>
+																																							<a class="popup_menu_item tight" href="?l=finnish&amp;goto=" onclick="ChangeLanguage( 'finnish' ); return false;">Suomi (финский)</a>
+																													<a class="popup_menu_item tight" href="?l=swedish&amp;goto=" onclick="ChangeLanguage( 'swedish' ); return false;">Svenska (шведский)</a>
+																													<a class="popup_menu_item tight" href="?l=turkish&amp;goto=" onclick="ChangeLanguage( 'turkish' ); return false;">Türkçe (турецкий)</a>
+																													<a class="popup_menu_item tight" href="?l=vietnamese&amp;goto=" onclick="ChangeLanguage( 'vietnamese' ); return false;">Tiếng Việt (вьетнамский)</a>
+																													<a class="popup_menu_item tight" href="?l=ukrainian&amp;goto=" onclick="ChangeLanguage( 'ukrainian' ); return false;">Українська (украинский)</a>
+																									<a class="popup_menu_item tight" href="https://www.valvesoftware.com/en/contact?contact-person=Translation%20Team%20Feedback" target="_blank">Сообщить о проблеме с переводом</a>
+							</div>
+						</div>
+												</div>
+					</div>
+			</div>
+</div>
+<script type="text/javascript">
+	g_sessionID = "c6337a621aacc864b198968d";
+	g_steamID = false;
+	g_strLanguage = "russian";
+	g_SNR = '2_60_703_';
+	g_bAllowAppImpressions = true;
+		g_ContentDescriptorPreferences = [1,3,4];
+
+	
+
+	// We always want to have the timezone cookie set for PHP to use
+	setTimezoneCookies();
+
+	$J( function() {
+
+		InitMiniprofileHovers(( 'https%3A%2F%2Fsteamcommunity.com' ));
+		InitEmoticonHovers();
+		ApplyAdultContentPreferences();
+	});
+
+	$J( function() { InitEconomyHovers( "https:\/\/community.fastly.steamstatic.com\/public\/css\/skin_1\/economy.css?v=fuB2MMv_edMx&l=russian&_cdn=fastly", "https:\/\/community.fastly.steamstatic.com\/public\/javascript\/economy_common.js?v=3TZBCEPvtfTo&l=russian&_cdn=fastly", "https:\/\/community.fastly.steamstatic.com\/public\/javascript\/economy.js?v=6eg7SdF-2Dvd&l=russian&_cdn=fastly" );});</script>
+<div id="application_config" style="display: none;" data-config="{&quot;EUNIVERSE&quot;:1,&quot;WEB_UNIVERSE&quot;:&quot;public&quot;,&quot;LANGUAGE&quot;:&quot;russian&quot;,&quot;COUNTRY&quot;:&quot;HU&quot;,&quot;MEDIA_CDN_COMMUNITY_URL&quot;:&quot;https:\/\/cdn.fastly.steamstatic.com\/steamcommunity\/public\/&quot;,&quot;MEDIA_CDN_URL&quot;:&quot;https:\/\/cdn.fastly.steamstatic.com\/&quot;,&quot;VIDEO_CDN_URL&quot;:&quot;https:\/\/video.fastly.steamstatic.com\/&quot;,&quot;COMMUNITY_CDN_URL&quot;:&quot;https:\/\/community.fastly.steamstatic.com\/&quot;,&quot;COMMUNITY_CDN_ASSET_URL&quot;:&quot;https:\/\/cdn.fastly.steamstatic.com\/steamcommunity\/public\/assets\/&quot;,&quot;STORE_CDN_URL&quot;:&quot;https:\/\/store.fastly.steamstatic.com\/&quot;,&quot;PUBLIC_SHARED_URL&quot;:&quot;https:\/\/community.fastly.steamstatic.com\/public\/shared\/&quot;,&quot;COMMUNITY_BASE_URL&quot;:&quot;https:\/\/steamcommunity.com\/&quot;,&quot;CHAT_BASE_URL&quot;:&quot;https:\/\/steamcommunity.com\/&quot;,&quot;STORE_BASE_URL&quot;:&quot;https:\/\/store.steampowered.com\/&quot;,&quot;STORE_CHECKOUT_BASE_URL&quot;:&quot;https:\/\/checkout.steampowered.com\/&quot;,&quot;IMG_URL&quot;:&quot;https:\/\/community.fastly.steamstatic.com\/public\/images\/&quot;,&quot;STEAMTV_BASE_URL&quot;:&quot;https:\/\/steam.tv\/&quot;,&quot;HELP_BASE_URL&quot;:&quot;https:\/\/help.steampowered.com\/&quot;,&quot;PARTNER_BASE_URL&quot;:&quot;https:\/\/partner.steamgames.com\/&quot;,&quot;STATS_BASE_URL&quot;:&quot;https:\/\/partner.steampowered.com\/&quot;,&quot;INTERNAL_STATS_BASE_URL&quot;:&quot;https:\/\/steamstats.valve.org\/&quot;,&quot;IN_CLIENT&quot;:false,&quot;USE_POPUPS&quot;:false,&quot;STORE_ICON_BASE_URL&quot;:&quot;https:\/\/shared.fastly.steamstatic.com\/store_item_assets\/steam\/apps\/&quot;,&quot;STORE_ITEM_BASE_URL&quot;:&quot;https:\/\/shared.fastly.steamstatic.com\/store_item_assets\/&quot;,&quot;WEBAPI_BASE_URL&quot;:&quot;https:\/\/api.steampowered.com\/&quot;,&quot;TOKEN_URL&quot;:&quot;https:\/\/steamcommunity.com\/chat\/clientjstoken&quot;,&quot;BUILD_TIMESTAMP&quot;:1770931571,&quot;PAGE_TIMESTAMP&quot;:1771149576,&quot;IN_TENFOOT&quot;:false,&quot;IN_GAMEPADUI&quot;:false,&quot;IN_CHROMEOS&quot;:false,&quot;IN_MOBILE_WEBVIEW&quot;:false,&quot;PLATFORM&quot;:&quot;unknown&quot;,&quot;BASE_URL_STORE_CDN_ASSETS&quot;:&quot;https:\/\/cdn.fastly.steamstatic.com\/store\/&quot;,&quot;EREALM&quot;:1,&quot;LOGIN_BASE_URL&quot;:&quot;https:\/\/login.steampowered.com\/&quot;,&quot;AVATAR_BASE_URL&quot;:&quot;https:\/\/avatars.fastly.steamstatic.com\/&quot;,&quot;FROM_WEB&quot;:true,&quot;WEBSITE_ID&quot;:&quot;Community&quot;,&quot;BASE_URL_SHARED_CDN&quot;:&quot;https:\/\/shared.fastly.steamstatic.com\/&quot;,&quot;CLAN_CDN_ASSET_URL&quot;:&quot;https:\/\/clan.fastly.steamstatic.com\/&quot;,&quot;COMMUNITY_ASSETS_BASE_URL&quot;:&quot;https:\/\/shared.fastly.steamstatic.com\/community_assets\/&quot;,&quot;SNR&quot;:&quot;2_60_703_&quot;}" data-userinfo="{&quot;logged_in&quot;:false,&quot;country_code&quot;:&quot;HU&quot;,&quot;excluded_content_descriptors&quot;:[1,3,4]}" data-community="[]" data-loyaltystore="{&quot;webapi_token&quot;:&quot;&quot;}" data-steam_notifications="null"></div><link href="https://community.fastly.steamstatic.com/public/css/applications/community/main.css?v=oq_ptEGSQx2R&amp;l=russian&amp;_cdn=fastly" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/applications/community/manifest.js?v=L6BxDH3DOhY1&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/applications/community/libraries~b28b7af69.js?v=otJTfeJA4u84&amp;l=russian&amp;_cdn=fastly"></script>
+<script type="text/javascript" src="https://community.fastly.steamstatic.com/public/javascript/applications/community/main.js?v=5J0_5OultlVJ&amp;l=russian&amp;_cdn=fastly"></script>
+	<div id="application_root"><div class="_2KPA3I9eXE9r251_-GX_iv noOpinionatedGlobalStyles"><div data-accent-color="blue" data-dull-color="greyneutral" data-body-text-color="text-light" class="_3zHvvIxS4vSW6Qh5GqLflX"><div class="_3BGADF5vKbdAji-Xj65xxm"></div></div></div></div>
+
+		<div role="main" class="responsive_page_template_content" id="responsive_page_template_content" data-panel="{&quot;autoFocus&quot;:true}">
+
+			
+
+
+<script language="Javascript">
+	function StartLogin()
+	{
+		LoginManager = new CLoginPromptManager( 'https://steamcommunity.com', {
+			strRedirectURL: "https:\/\/steamcommunity.com\/my",
+			gidCaptcha: -1,
+			strMobileClientType: null,
+			strMobileClientVersion: null,
+			bIsMobile: false,
+			bMobileClientSupportsPostMessage: false		} );
+
+								let form = document.forms['logon'];
+			if ( form ) {
+				form.elements['username'].focus();
+			}
+		
+			}
+
+	$J( function() {
+		StartLogin();
+	});
+</script>
+
+<div class="page_content">
+	
+	
+	<div class="login_featuretarget_ctn" data-featuretarget="login" data-props="{&quot;redirectUrl&quot;:&quot;https://steamcommunity.com/my&quot;,&quot;disableQR&quot;:false,&quot;guest&quot;:false}"><div class="_2vAS_iK_bJ7iv_7pRL7Zdk"><div class="lat0M-V5X4uYd6Mpm1DJ1"><div class="_1NOsG2PAO2rRBb8glCFM_6 _2EuR68sQbA8eP01DlIfu6O" style="gap: 32px;"><div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 16px;"><div class="g5L61o-ZrHHmwLEugLjLI">Вход</div></div><div class="_3XCnc4SuTz8V8-jXVwkt_s"><div class="ZHRZ8czyqs7NaNmv65ARI"><form class="_2v60tM463fW0V7GDe92E5f"><div class="_3BkiHun-mminuTO-Y-zXke"><div class="XrYgea66b38RASmbI3PJo _12zBmIktqPpcwJXItTb8f9">Войдите, используя имя аккаунта</div><div class=""></div><input class="_2GBWeup5cttgbTw8FM3tfx" type="text" value=""></div><div class="_3BkiHun-mminuTO-Y-zXke"><div class="XrYgea66b38RASmbI3PJo">Пароль</div><div class=""></div><input class="_2GBWeup5cttgbTw8FM3tfx" type="password" value=""></div><div class="tool-tip-source Focusable"><div class="_1Qku5jMXBi5-wawzqY1kzG"><div tabindex="0" class="LBS7IDpob52Sb4ZoKobh0"><div class="_28MB9LhS2kVTalIp0NHDv4"><svg version="1.1" id="base" xmlns="http://www.w3.org/2000/svg" class="SVGIcon_Button SVGIcon_Check" x="0px" y="0px" width="256px" height="256px" viewBox="0 0 256 256" stroke-width="35" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10"><polyline fill="none" points="49.5,147.75 95,210.75 206.5,45.25 "></polyline></svg></div></div><div class="_10bGilozn2bfCfiPfANMhC">Запомнить меня</div></div></div><div class="_16fbihk6Bi9CXuksG7_tLt"><button class="DjSvCZoKKfoNSmarsEcTS" type="submit">Войти</button></div><div class="_1W_6HXiG4JJ0By1qN_0fGZ">&nbsp;</div><a class="_1K431RbY14lkaFW6-XgSsC _2FyQDUS2uHbW1fzoFK2jLx" href="https://help.steampowered.com/wizard/HelpWithLogin?redir=https%3A%2F%2Fsteamcommunity.com%2Flogin%2Fhome%2F%3Fgoto%3D">Помогите, я не могу войти в аккаунт</a></form><div class="_3wSeH3OorL-tMzwXL55smN"><div class="mFCQSE5-57z0lcZgUiE9K"><div class="_2vrvETim46niDklOy_kH33">Новое!</div><div class="_14ZzKYkQD-qXL4aLAaupwp"><div class="_14ZzKYkQD-qXL4aLAaupwp">Пользователи мобильного приложения Steam могут войти в аккаунт, просканировав QR-код.</div></div><div class="_3k-6J60Y5_Cs3sqk7SgbQU">Показать QR-код</div><a href="https://store.steampowered.com/mobile" class="_1kBrGj8mpIJs7FywIdPpik">Подробнее</a></div></div></div></div></div></div></div></div>			<div class="login_bottom_row">
+			<div class="login_btn_ctn login_bottom_row_item">
+				<div class="headline">Первый раз в Steam?</div>
+				<a target="_top" href="https://store.steampowered.com/join" class="login_create_btn btn_blue_steamui btn_medium">
+					<span>Создать аккаунт</span>
+				</a>
+			</div>
+			<div class="login_bottom_row_item">
+				<div class="subtext">Это бесплатно и просто. Откройте для себя тысячи игр, в которые можно играть с миллионами новых друзей.					<a class="login_join_desc about_link" href="https://store.steampowered.com/about">Узнайте больше о Steam</a>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+<div id="loginModals">
+	<div class="login_modal loginAuthCodeModal" style="display: none">
+		<form data-ajax="false">
+			<div class="auth_message_area">
+				<div id="auth_icon" class="auth_icon auth_icon_key">
+				</div>
+				<div class="auth_messages" id="auth_messages">
+					<div class="auth_message" id="auth_message_entercode" style="display: none;">
+						<div class="auth_modal_h1">Здравствуйте!</div>
+						<p>Похоже, вы пытаетесь войти в Steam через другой браузер или с другого компьютера. Или просто давно не заходили в свой аккаунт…</p>
+					</div>
+					<div class="auth_message" id="auth_message_checkspam" style="display: none;">
+						<div class="auth_modal_h1">Может быть, оно попало в спам?</div>
+						<p>Если вы не нашли письма от службы поддержки Steam на своей электронной почте, проверьте папку со спамом.</p>
+					</div>
+					<div class="auth_message" id="auth_message_success" style="display: none;">
+						<div class="auth_modal_h1">Готово!</div>
+						<p>Вы получили доступ к своему аккаунту Steam.</p>
+					</div>
+					<div class="auth_message" id="auth_message_incorrectcode" style="display: none;">
+						<div class="auth_modal_h1">Ой!</div>
+						<p>Извините, <br>но он неверен...</p>
+					</div>
+					<div class="auth_message" id="auth_message_help" style="display: none;">
+						<div class="auth_modal_h1">Позвольте помочь вам!</div>
+						<p>Сожалеем, что вы испытываете трудности. Мы понимаем, что вы цените свой аккаунт Steam, поэтому постараемся помочь вам сохранить доступ к нему.</p>
+					</div>
+				</div>
+			</div>
+			<div id="auth_details_messages" class="auth_details_messages">
+				<div class="auth_details" id="auth_details_entercode" style="display: none;">
+					В качестве меры защиты аккаунта вам необходимо предоставить доступ этому браузеру, введя код, который мы отправили на ваш адрес электронной почты <span id="emailauth_entercode_emaildomain"></span>.				</div>
+				<div class="auth_details" id="auth_details_success" style="display: none;">
+					Если это не ваш компьютер, перед уходом не забудьте выйти из своего аккаунта.				</div>
+				<div class="auth_details" id="auth_details_help" style="display: none;">
+					Пожалуйста, обратитесь в службу поддержки Steam. Решение проблем с доступом к аккаунту — наша основная задача.				</div>
+			</div>
+			<div class="authcode_entry_area">
+				<div id="authcode_entry">
+					<div class="authcode_entry_box">
+						<input class="authcode_entry_input authcode_placeholder" id="authcode" type="text" value="" placeholder="введите код здесь">
+
+					</div>
+				</div>
+				<div id="authcode_help_supportlink">
+					<a href="https://help.steampowered.com/ru/faqs/view/06B0-26E6-2CF8-254C" data-ajax="false" data-externallink="1">Свяжитесь со службой поддержки Steam, чтобы вернуть доступ к аккаунту</a>
+				</div>
+			</div>
+			<div class="modal_buttons" id="auth_buttonsets">
+				<div class="auth_buttonset" id="auth_buttonset_entercode" style="display: none;">
+					<div data-modalstate="submit" class="auth_button leftbtn">
+						<div class="auth_button_h3">Отправить</div>
+						<div class="auth_button_h5">мой код доступа</div>
+					</div>
+					<div data-modalstate="checkspam" class="auth_button">
+						<div class="auth_button_h3">Какое сообщение?</div>
+						<div class="auth_button_h5">Сообщение от службы поддержки Steam не пришло…</div>
+					</div>
+					<div style="clear: left;"></div>
+				</div>
+				<div class="auth_buttonset" id="auth_buttonset_checkspam" style="display: none;">
+					<div data-modalstate="submit" class="auth_button leftbtn">
+						<div class="auth_button_h3">Письмо нашлось!</div>
+						<div class="auth_button_h5">и код доступа введён выше</div>
+					</div>
+					<div data-modalstate="help" class="auth_button">
+						<div class="auth_button_h3">Письма всё равно нет...</div>
+						<div class="auth_button_h5">Сообщение от службы поддержки Steam не пришло…</div>
+					</div>
+					<div style="clear: left;"></div>
+				</div>
+				<div class="auth_buttonset" id="auth_buttonset_success" style="display: none;">
+					<div class="auth_button auth_button_spacer">
+					</div>
+					<a data-modalstate="complete" class="auth_button" id="success_continue_btn" href="javascript:void(0);">
+						<div class="auth_button_h3">Перейти к Steam!</div>
+						<div class="auth_button_h5">&nbsp;<br>&nbsp;</div>
+					</a>
+					<div style="clear: left;"></div>
+				</div>
+				<div class="auth_buttonset" id="auth_buttonset_incorrectcode" style="display: none;">
+					<div data-modalstate="submit" class="auth_button leftbtn">
+						<div class="auth_button_h3">Повторить</div>
+						<div class="auth_button_h5">Я проверил код доступа выше</div>
+					</div>
+					<div data-modalstate="help" class="auth_button">
+						<div class="auth_button_h3">Помогите</div>
+						<div class="auth_button_h5">Мне нужна помощь службы поддержки Steam...</div>
+					</div>
+					<div style="clear: left;"></div>
+				</div>
+				<div class="auth_buttonset" id="auth_buttonset_waiting" style="display: none;">
+				</div>
+			</div>
+			<div style="" id="auth_details_computer_name" class="auth_details_messages">
+				Чтобы легко узнать этот браузер среди устройств, прошедших проверку Steam Guard, дайте ему подходящее имя длиной не менее шести символов.				<div id="friendly_name_box" class="friendly_name_box">
+					<input class="authcode_entry_input authcode_placeholder" id="friendlyname" type="text" placeholder="введите название">
+				</div>
+			</div>
+			<div style="display: none;">
+				<input type="submit">
+			</div>
+		</form>
+	</div>
+
+	<div class="login_modal loginIPTModal" style="display: none">
+		<div class="auth_message_area">
+			<div class="auth_icon ipt_icon">
+			</div>
+			<div class="auth_messages">
+				<div class="auth_message">
+					<div class="auth_modal_h1">Извините</div>
+					<p>Доступ к аккаунту не может быть получен без дополнительного разрешения.</p>
+				</div>
+			</div>
+		</div>
+		<div class="auth_details_messages">
+			<div class="auth_details">
+				Пожалуйста, обратитесь в службу поддержки Steam. Решение проблем с доступом к аккаунту — наша основная задача.			</div>
+		</div>
+		<div class="authcode_entry_area">
+		</div>
+		<div class="modal_buttons">
+			<div class="auth_buttonset">
+				<a href="https://help.steampowered.com/" class="auth_button leftbtn" data-ajax="false" data-externallink="1">
+					<div class="auth_button_h3">Узнать больше</div>
+					<div class="auth_button_h5">о технологии защиты личности Intel®</div>
+				</a>
+				<a href="https://support.steampowered.com" class="auth_button" data-ajax="false" data-externallink="1">
+					<div class="auth_button_h3">Помогите,</div>
+					<div class="auth_button_h5">мне нужна помощь службы поддержки Steam…</div>
+				</a>
+				<div style="clear: left;"></div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="login_modal loginTwoFactorCodeModal" style="display: none;">
+		<form>
+		<div class="twofactorauth_message_area">
+			<div id="login_twofactorauth_icon" class="auth_icon auth_icon_key">
+			</div>
+			<div class="twofactorauth_messages" id="login_twofactorauth_messages">
+				<div class="twofactorauth_message" id="login_twofactorauth_message_entercode" style="display: none;">
+					<div class="auth_modal_h1">Здравствуйте, <span id="login_twofactorauth_message_entercode_accountname"></span>!</div>
+					<p>Этот аккаунт находится под защитой мобильного аутентификатора Steam.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_incorrectcode" style="display: none;">
+					<div class="auth_modal_h1">Ой!</div>
+					<p>Извините, <br>но код неверен…</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp" style="display: none;">
+					<div class="auth_modal_h1">Позвольте помочь вам!</div>
+					<p>Сожалеем, что вы испытываете трудности. Мы понимаем, что вы цените свой аккаунт Steam, поэтому постараемся помочь вам сохранить доступ к нему.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_sms_remove" style="display: none;">
+					<div class="auth_modal_h1">Подтвердите владение аккаунтом</div>
+					<p>Мы отправим СМС с кодом восстановления аккаунта на номер, заканчивающийся на <span id="login_twofactorauth_selfhelp_sms_remove_last_digits"></span>. Когда вы введёте код, мы удалим аутентификатор с вашего аккаунта, и вы будете получать коды Steam Guard по электронной почте.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_sms_remove_entercode" style="display: none;">
+					<div class="auth_modal_h1">Подтвердите владение аккаунтом</div>
+					<p>Мы отправили СМС с кодом подтверждения на ваш номер телефона, который заканчивается на <span id="login_twofactorauth_selfhelp_sms_remove_entercode_last_digits"></span>. Введите код ниже, чтобы мы могли удалить мобильный аутентификатор с вашего аккаунта.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_sms_remove_incorrectcode" style="display: none;">
+					<div class="auth_modal_h1">Ой!</div>
+					<p>Извините, <br>но код неверен…</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_twofactor_removed" style="display: none;">
+					<div class="auth_modal_h1">Готово!</div>
+					<p>Мы удалили аутентификатор с вашего аккаунта. При следующем входе потребуется код Steam Guard, отправленный на вашу электронную почту.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_twofactor_replaced" style="display: none;">
+					<div class="auth_modal_h1">Готово!</div>
+					<p>Теперь вы будете получать коды мобильного аутентификатора только на этот телефон.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_nosms" style="display: none;">
+					<div class="auth_modal_h1">У вас есть код восстановления?</div>
+					<p>К вашему аккаунту Steam не привязан номер телефона, поэтому подтвердить обладание аккаунтом с помощью СМС невозможно. Возможно, у вас остался код восстановления, который вы записали при добавлении мобильного аутентификатора. Он начинается с буквы R.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_rcode" style="display: none;">
+					<div class="auth_modal_h1">Введите код восстановления</div>
+					<p>Пожалуйста, введите код восстановления ниже. Он начинается с буквы R.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_rcode_incorrectcode" style="display: none;">
+					<div class="auth_modal_h1">Ой!</div>
+					<p>Извините, <br>но код неверен…</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_rcode_incorrectcode_exhausted" style="display: none;">
+					<div class="auth_modal_h1">Ой!</div>
+					<p>Извините, <br>но код неверен…</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_rcode_message" style="display: none;">
+					<div class="auth_modal_h1">Ой!</div>
+					<p>Извините, <br>но код неверен…</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_couldnthelp" style="display: none;">
+					<div class="auth_modal_h1">Позвольте помочь вам!</div>
+					<p>Если вы потеряли доступ к мобильному устройству или номеру телефона, привязанному к аккаунту, а также не имеете кода восстановления, который записали при добавлении мобильного аутентификатора, свяжитесь со службой поддержки Steam, чтобы восстановить доступ к аккаунту.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_help" style="display: none;">
+					<div class="auth_modal_h1">Позвольте помочь вам!</div>
+					<p>Сожалеем, что вы испытываете трудности. Мы понимаем, что вы цените свой аккаунт Steam, поэтому постараемся помочь вам сохранить доступ к нему.</p>
+				</div>
+				<div class="twofactorauth_message" id="login_twofactorauth_message_selfhelp_failure" style="display: none;">
+					<div class="auth_modal_h1">Извините!</div>
+					<p>При обработке вашего запроса произошла ошибка.</p>
+				</div>
+			</div>
+		</div>
+		<div id="login_twofactorauth_details_messages" class="twofactorauth_details_messages">
+			<div class="twofactorauth_details" id="login_twofactorauth_details_entercode" style="display: none;">
+				Введите код из мобильного приложения Steam:			</div>
+			<div class="twofactorauth_details" id="login_twofactorauth_details_selfhelp" style="display: none;">
+				Если вы потеряли доступ к мобильному устройству или удалили приложение Steam и больше не получаете коды, то можете удалить мобильный аутентификатор со своего аккаунта. Это снизит уровень безопасности, поэтому рекомендуем добавить аутентификатор на новом устройстве.			</div>
+			<div class="twofactorauth_details" id="login_twofactorauth_details_help" style="display: none;">
+				Пожалуйста, обратитесь в службу поддержки Steam.			</div>
+			<div class="twofactorauth_details" id="login_twofactorauth_details_selfhelp_failure" style="display: none;">
+			</div>
+			<div class="twofactorauth_details" id="login_twofactorauth_details_selfhelp_rcode_incorrectcode" style="display: none;">
+			</div>
+			<div class="twofactorauth_details" id="login_twofactorauth_details_selfhelp_rcode_incorrectcode_exhausted" style="display: none;">
+			</div>
+		</div>
+		<div class="twofactorauthcode_entry_area">
+			<div id="login_twofactor_authcode_entry">
+				<div class="twofactorauthcode_entry_box">
+					<input class="twofactorauthcode_entry_input authcode_placeholder" id="twofactorcode_entry" type="text" placeholder="введите код здесь" autocomplete="off">
+				</div>
+			</div>
+			<div id="login_twofactor_authcode_help_supportlink">
+				<a href="https://help.steampowered.com/ru/faqs/view/06B0-26E6-2CF8-254C">
+					Свяжитесь со службой поддержки Steam, чтобы вернуть доступ к аккаунту				</a>
+			</div>
+		</div>
+		<div class="modal_buttons" id="login_twofactorauth_buttonsets">
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_entercode" style="display: none;">
+				<div type="submit" class="auth_button leftbtn" data-modalstate="submit">
+					<div class="auth_button_h3">Подтвердить</div>
+					<div class="auth_button_h5">код аутентификатора</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp">
+					<div class="auth_button_h3">Помогите,</div>
+					<div class="auth_button_h5">у меня больше нет доступа к кодам аутентификатора</div>
+				</div>
+				<div style="clear: left;"></div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_incorrectcode" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="submit">
+					<div class="auth_button_h3">Повторить</div>
+					<div class="auth_button_h5">Код аутентификатора введен верно</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp">
+					<div class="auth_button_h3">Помогите,</div>
+					<div class="auth_button_h5">мне нужна помощь службы поддержки Steam…</div>
+				</div>
+				<div style="clear: left;"></div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_start">
+					<div class="auth_button_h3" style="font-size: 16px;">Удалить аутентификатор</div>
+					<div class="auth_button_h5">и снова получать коды по электронной почте</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_sms_reset_start">
+					<div class="auth_button_h3">Использовать это устройство</div>
+					<div class="auth_button_h5">и получать коды аутентификации из приложения</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_sms_remove" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_sendcode">
+					<div class="auth_button_h3">Хорошо!</div>
+					<div class="auth_button_h5">Отправьте мне СМС</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_nosms">
+					<div class="auth_button_h3">Не надо,</div>
+					<div class="auth_button_h5">у меня нет доступа к этому номеру телефона</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_sms_remove_entercode" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_checkcode">
+					<div class="auth_button_h3">Подтвердить</div>
+					<div class="auth_button_h5">Я ввел код выше</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_nosms">
+					<div class="auth_button_h3">Помогите,</div>
+					<div class="auth_button_h5">сообщение не приходит</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_sms_remove_incorrectcode" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_checkcode">
+					<div class="auth_button_h3">Подтвердить</div>
+					<div class="auth_button_h5">Я проверил код. Попробуем еще раз.</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_nosms">
+					<div class="auth_button_h3">Помогите,</div>
+					<div class="auth_button_h5">сообщение не приходит</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_twofactor_removed" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_complete">
+					<div class="auth_button_h3">Войти</div>
+					<div class="auth_button_h5">и удалить мобильный аутентификатор</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_twofactor_replaced" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_sms_remove_complete">
+					<div class="auth_button_h3">Войти</div>
+					<div class="auth_button_h5">в мобильное приложение Steam</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_nosms" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_rcode">
+					<div class="auth_button_h3">Да,</div>
+					<div class="auth_button_h5">у меня есть код, начинающийся на R</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_couldnthelp">
+					<div class="auth_button_h3">Нет,</div>
+					<div class="auth_button_h5">у меня нет такого кода</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_rcode" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_rcode_checkcode">
+					<div class="auth_button_h3">Отправить</div>
+					<div class="auth_button_h5">код восстановления</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_couldnthelp">
+					<div class="auth_button_h3">Помогите!</div>
+					<div class="auth_button_h5">Кажется, мне нужно обратиться в поддержку Steam…</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_rcode_incorrectcode" style="display: none;">
+				<div class="auth_button leftbtn" data-modalstate="selfhelp_rcode_checkcode">
+					<div class="auth_button_h3">Отправить</div>
+					<div class="auth_button_h5">Я проверил код. Попробуем еще раз.</div>
+				</div>
+				<div class="auth_button" data-modalstate="selfhelp_couldnthelp">
+					<div class="auth_button_h3">Помогите!</div>
+					<div class="auth_button_h5">Кажется, мне нужно обратиться в поддержку Steam…</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_rcode_incorrectcode_exhausted" style="display: none;">
+				<div class="auth_button" data-modalstate="selfhelp_couldnthelp">
+					<div class="auth_button_h3">Помогите!</div>
+					<div class="auth_button_h5">Кажется, мне нужно обратиться в поддержку Steam…</div>
+				</div>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_selfhelp_couldnthelp" style="display: none;">
+				<a class="auth_button leftbtn" href="https://help.steampowered.com/">
+					<div class="auth_button_h3">Свяжитесь с нами</div>
+					<div class="auth_button_h5">для помощи с доступом к аккаунту</div>
+				</a>
+			</div>
+			<div class="auth_buttonset" id="login_twofactorauth_buttonset_waiting" style="display: none;">
+			</div>
+		</div>
+		<div style="display: none;">
+			<input type="submit">
+		</div>
+		</form>
+	</div>
+</div>
+
+		</div>	<!-- responsive_page_legacy_content -->
+
+			<div id="footer_spacer" class=""></div>
+	<div id="footer_responsive_optin_spacer"></div>
+	<div id="footer">
+					<div class="footer_content">
+				<span id="footerLogo"><img src="https://community.fastly.steamstatic.com/public/images/skin_1/footerLogo_valve.png?v=1" width="96" height="26" border="0" alt="Логотип Valve"></span>
+				<span id="footerText">
+					© Valve Corporation. Все права сохранены. Все торговые марки являются собственностью соответствующих владельцев в США и других странах. Часть географических сведений на этом сайте предоставлена <a href="https://steamcommunity.com/linkfilter/?u=http%3A%2F%2Fwww.geonames.org" target="_blank" rel=" noopener">geonames.org</a>.					<br>
+											<span class="valve_links">
+							<a href="http://store.steampowered.com/privacy_agreement/" target="_blank">Политика конфиденциальности</a>
+							&nbsp; | &nbsp;<a href="https://store.steampowered.com/legal/" target="_blank">Правовая информация</a>
+							&nbsp; | &nbsp;<a href="https://help.steampowered.com/faqs/view/10BB-D27A-6378-4436" target="_blank">Доступность</a>
+							&nbsp;| &nbsp;<a href="http://store.steampowered.com/subscriber_agreement/" target="_blank">Соглашение подписчика Steam</a>
+                            &nbsp;| &nbsp;<a href="http://store.steampowered.com/account/cookiepreferences/" target="_blank">Файлы cookie</a>
+						</span>
+									</span>
+			</div>
+							<div class="responsive_optin_link">
+				<div class="btn_medium btnv6_grey_black" role="link" onclick="Responsive_RequestMobileView()">
+					<span>Мобильная версия</span>
+				</div>
+			</div>
+			</div>
+	
+	</div>	<!-- responsive_page_content -->
+
+</div>	<!-- responsive_page_frame -->
+
+<div class="miniprofile_hover" style="display: none;"><div class="shadow_ul"></div><div class="shadow_top"></div><div class="shadow_ur"></div><div class="shadow_left"></div><div class="shadow_right"></div><div class="shadow_bl"></div><div class="shadow_bottom"></div><div class="shadow_br"></div><div class="miniprofile_hover_inner shadow_content"></div></div><div class="FullModalOverlay" style="display: none;"><div class="ModalOverlayContent ModalOverlayBackground"></div></div></body><div class="__chii-hide__" style="display: none; position: absolute; pointer-events: none;"><div style="position: absolute; box-sizing: border-box; z-index: 100000;"></div><div style="position: absolute; box-sizing: border-box; z-index: 100000;"></div><div style="position: absolute; box-sizing: border-box; z-index: 100000;"></div><div style="position: absolute; box-sizing: border-box; z-index: 100000;"></div><div style="position: absolute; box-sizing: border-box; z-index: 100000; height: 25px; line-height: 25px; background: rgb(255, 255, 255); color: rgb(34, 34, 34); font-size: 12px; padding: 0px 5px; white-space: nowrap; overflow-x: hidden; box-shadow: rgba(0, 0, 0, 0.05) 0px 2px 2px 0px, rgba(0, 0, 0, 0.08) 0px 1px 4px 0px, rgba(0, 0, 0, 0.2) 0px 3px 1px -2px;"></div></div><div style="all: initial;"></div></html>
