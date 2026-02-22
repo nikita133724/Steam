@@ -294,31 +294,35 @@
                 
                 if (qrSection.style.display === 'block') {
                     qrSection.style.display = 'none';
-                    clearInterval(qrPollingInterval);
+                    if (qrPollingInterval) clearInterval(qrPollingInterval);
+                    // Очищаем картинку, чтобы при повторном открытии не видеть старую
+                    qrImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
                 } else {
                     qrSection.style.display = 'block';
                     
-                    // 1. Говорим серверу нажать на кнопку QR в Playwright
+                    // 1. Пингуем сервер
                     const formData = new URLSearchParams();
                     formData.append('sid', sid);
                     await fetch('/api/show_qr', { method: 'POST', body: formData });
             
-                    // 2. Запускаем цикл обновления картинки
+                    // 2. Запускаем цикл обновления
                     qrPollingInterval = setInterval(async () => {
                         try {
                             const res = await fetch(`/api/get_qr?sid=${sid}`);
                             const data = await res.json();
+                            
                             if (data.status === 'ok' && data.image) {
-                                // Обновляем картинку. Так как это base64, она обновится мгновенно без мерцания
-                                qrImg.src = data.image;
+                                // Если пришла новая картинка и она не совпадает с текущей - обновляем
+                                if (qrImg.src !== data.image) {
+                                    qrImg.src = data.image;
+                                }
                             }
                         } catch (e) {
                             console.error("QR polling error", e);
                         }
-                    }, 2000); // Проверяем обновление каждые 2 секунды
+                    }, 1500); // Немного ускорим опрос до 1.5 сек для отзывчивости
                 }
             }
-
 
             function showManualCodeInput() {
                 document.getElementById('manual-code-container').classList.remove('hidden');
