@@ -4,7 +4,7 @@ from pathlib import Path
 
 class Config:
     def __init__(self):
-        self.base_dir = Path("Multiaccount")
+        self.base_dir = Path.home("Multiaccount")
         self.base_dir.mkdir(exist_ok=True)
         
         self.config_file = self.base_dir / "config.json"

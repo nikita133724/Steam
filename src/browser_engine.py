@@ -1,7 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 from pathlib import Path
-
+import sys
 
 class BrowserEngine:
     def __init__(self):
@@ -35,11 +35,12 @@ class BrowserEngine:
             browser = await self.playwright.chromium.launch_persistent_context(
                 user_data_dir=str(profile_path),
                 headless=False,
-                args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
-                    '--no-sandbox'
-                ],
+                args = ['--disable-blink-features=AutomationControlled']
+                if sys.platform == 'linux':
+                    args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
+                elif sys.platform == 'win32':
+                    args.append('--disable-gpu')
+
                 viewport=None,  # Используем сохранённый размер или дефолт
                 locale=account.get("locale", "ru-RU"),
                 timezone_id=account.get("timezone", "Europe/Moscow"),
