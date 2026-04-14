@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -21,6 +24,12 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
+
+      - name: Clean build folders
+        run: |
+          rmdir /s /q build || exit 0
+          rmdir /s /q dist || exit 0
+          rmdir /s /q spec || exit 0
 
       - name: Build app
         run: python build.py

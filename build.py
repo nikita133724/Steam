@@ -13,15 +13,8 @@ PyInstaller.__main__.run([
 
     '--name=Multiaccount',
 
-    # assets
     '--add-data=assets;assets',
 
-    # стабильные папки сборки
     '--distpath=dist',
     '--workpath=build',
-    '--specpath=spec',
-
-    # важные зависимости (Playwright)
-    '--hidden-import=playwright',
-    '--hidden-import=playwright.async_api',
 ])
