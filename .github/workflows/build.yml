@@ -23,15 +23,15 @@ jobs:
       - name: Install deps
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller==6.19.0
 
       - name: Clean build folders
-        shell: cmd
+        shell: pwsh
         run: |
-         rmdir /s /q build 2>nul
-         rmdir /s /q dist 2>nul
-         rmdir /s /q spec 2>nul
-
+         Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+         Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+         Remove-Item -Recurse -Force spec -ErrorAction SilentlyContinue
+         
       - name: Build app
         run: python build.py
 
