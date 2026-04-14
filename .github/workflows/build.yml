@@ -23,7 +23,7 @@ jobs:
       - name: Install deps
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller==6.19.0
+          pip install pyinstaller==6.19.0 requests urllib3
 
       - name: Clean build folders
         shell: pwsh

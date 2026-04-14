@@ -9,7 +9,7 @@ MAIN_FILE = BASE_DIR / "main.py"
 PyInstaller.__main__.run([
     str(MAIN_FILE),
 
-    '--onefile',
+    '--onedir',
     '--windowed',
     '--clean',
     '--noconfirm',
@@ -22,7 +22,9 @@ PyInstaller.__main__.run([
     '--workpath=build',
     '--specpath=spec',
 
-    '--collect-submodules=PyQt6',
-    '--collect-submodules=playwright',
+    '--collect-all=PyQt6',
+    '--collect-all=playwright',
+
     '--hidden-import=requests',
+    '--hidden-import=asyncio',
 ])

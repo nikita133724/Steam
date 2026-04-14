@@ -7,6 +7,7 @@ PyInstaller.__main__.run([
     os.path.join(BASE_DIR, 'installer.py'),
 
     '--onefile',
+    '--windowed',
     '--clean',
     '--noconfirm',
 
@@ -17,4 +18,8 @@ PyInstaller.__main__.run([
     '--specpath=spec',
 
     '--hidden-import=requests',
+    '--hidden-import=urllib3',
+    '--hidden-import=PyQt6.QtCore',
+    '--hidden-import=PyQt6.QtWidgets',
+    '--hidden-import=PyQt6.QtGui',
 ])

@@ -5,17 +5,18 @@ import sys
 
 EXE_PATH = Path("dist/Multiaccount.exe")
 
+
 def sha256(file_path):
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
-        while chunk := f.read(8192):
+        for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
 
 
 def main(version, url):
     if not EXE_PATH.exists():
-        raise FileNotFoundError(f"Missing build output: {EXE_PATH}")
+        raise FileNotFoundError("Missing build output")
 
     manifest = {
         "version": version,
@@ -28,7 +29,7 @@ def main(version, url):
 
 
 if __name__ == "__main__":
-    version = sys.argv[1]  # ВАЖНО: без lstrip("v")
+    version = sys.argv[1]
 
     main(
         version=version,
