@@ -26,10 +26,11 @@ jobs:
           pip install pyinstaller
 
       - name: Clean build folders
+        shell: cmd
         run: |
-          rmdir /s /q build || exit 0
-          rmdir /s /q dist || exit 0
-          rmdir /s /q spec || exit 0
+         rmdir /s /q build 2>nul
+         rmdir /s /q dist 2>nul
+         rmdir /s /q spec 2>nul
 
       - name: Build app
         run: python build.py

@@ -22,7 +22,11 @@ def main(version, url):
         json.dump(manifest, f, indent=2)
 
 if __name__ == "__main__":
+    import sys
+
+    version = sys.argv[1] if len(sys.argv) > 1 else "dev"
+
     main(
-        version="1.0.1",
-        url="https://github.com/nikita133724/Steam/releases/download/v1.0.1/Multiaccount.exe"
+        version=version,
+        url=f"https://github.com/nikita133724/Steam/releases/download/v{version}/Multiaccount.exe"
     )
