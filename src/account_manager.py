@@ -22,6 +22,7 @@ class AccountManager:
             "id": self.next_id,
             "name": name,
             "domain": None,  # Будет задан при первом запуске
+            "proxy": None,
             "created_at": datetime.now().isoformat(),
             "user_agent": self._generate_user_agent(),
             "locale": "ru-RU",
@@ -56,6 +57,18 @@ class AccountManager:
                 account["domain"] = domain
                 self.config.save_accounts(self.accounts)
                 Logger.get_instance().info(f"Updated domain for {account['name']}: {domain}")
+                return True
+        return False
+
+    def update_proxy(self, account_id, proxy, timezone=None):
+        """Обновляет прокси аккаунта"""
+        for account in self.accounts:
+            if account["id"] == account_id:
+                account["proxy"] = proxy
+                if timezone:
+                    account["timezone"] = timezone
+                self.config.save_accounts(self.accounts)
+                Logger.get_instance().info(f"Updated proxy for {account['name']}")
                 return True
         return False
     

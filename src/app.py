@@ -1,5 +1,7 @@
 import asyncio
 import sys
+from urllib.parse import urlparse
+import requests
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
@@ -101,6 +103,91 @@ class AddAccountDialog(QDialog):
         return self.name_input.text() or "Unnamed"
 
 
+class ProxyDialog(QDialog):
+    def __init__(self, lang, account, parent=None):
+        super().__init__(parent)
+        self.lang = lang
+        self.account = account
+        self.detected_timezone = account.get("timezone", "Europe/Moscow")
+        self.setWindowTitle(lang.get("proxy_settings"))
+        self.setFixedSize(520, 220)
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(f"{lang.get('account_name')}: {account['name']}"))
+        layout.addWidget(QLabel(lang.get("enter_proxy")))
+
+        self.proxy_input = QLineEdit()
+        self.proxy_input.setPlaceholderText("socks5://user:pass@host:port")
+        current_proxy = account.get("proxy") or {}
+        self.proxy_input.setText(current_proxy.get("server", ""))
+        layout.addWidget(self.proxy_input)
+
+        self.tz_label = QLabel(f"{lang.get('timezone')}: {self.detected_timezone}")
+        layout.addWidget(self.tz_label)
+
+        detect_btn = QPushButton(lang.get("detect_timezone"))
+        detect_btn.clicked.connect(self.detect_timezone)
+        layout.addWidget(detect_btn)
+
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton(lang.get("save"))
+        save_btn.clicked.connect(self.accept)
+        cancel_btn = QPushButton(lang.get("cancel"))
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+        self.setLayout(layout)
+
+    def _parse_proxy(self, value):
+        parsed = urlparse(value)
+        if parsed.scheme.lower() not in {"socks5", "socks5h", "http", "https"}:
+            raise ValueError("Unsupported proxy scheme")
+        if not parsed.hostname or not parsed.port:
+            raise ValueError("Proxy host/port is required")
+        return {
+            "server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}",
+            "username": parsed.username,
+            "password": parsed.password
+        }
+
+    def get_proxy(self):
+        raw = self.proxy_input.text().strip()
+        if not raw:
+            return None
+        return self._parse_proxy(raw)
+
+    def detect_timezone(self):
+        try:
+            proxy = self.get_proxy()
+            if not proxy:
+                QMessageBox.warning(self, "Proxy", self.lang.get("proxy_required"))
+                return
+
+            proxy_url = proxy["server"]
+            if proxy.get("username") and proxy.get("password"):
+                parsed = urlparse(proxy_url)
+                proxy_url = (
+                    f"{parsed.scheme}://{proxy['username']}:{proxy['password']}"
+                    f"@{parsed.hostname}:{parsed.port}"
+                )
+
+            response = requests.get(
+                "https://ipapi.co/timezone/",
+                proxies={"http": proxy_url, "https": proxy_url},
+                timeout=8
+            )
+            timezone = response.text.strip()
+            if "/" in timezone:
+                self.detected_timezone = timezone
+                self.tz_label.setText(f"{self.lang.get('timezone')}: {timezone}")
+            else:
+                raise ValueError("Timezone not detected")
+        except Exception as e:
+            QMessageBox.warning(self, "Timezone", f"{self.lang.get('timezone_error')}: {e}")
+
+
 class AsyncWorker(QThread):
     finished = pyqtSignal(object)
     
@@ -165,11 +252,12 @@ class MainWindow(QMainWindow):
         
         # Таблица аккаунтов
         self.table = QTableWidget()
-        self.table.setColumnCount(4)
+        self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([
             "ID", 
             lang.get("account_name"), 
             lang.get("domain"),
+            lang.get("proxy"),
             ""
         ])
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -208,6 +296,9 @@ class MainWindow(QMainWindow):
             
             domain = acc.get("domain") or "—"
             self.table.setItem(i, 2, QTableWidgetItem(domain))
+            proxy_data = acc.get("proxy") or {}
+            proxy_title = proxy_data.get("server", "—")
+            self.table.setItem(i, 3, QTableWidgetItem(proxy_title))
             
             # Кнопки действий
             actions = QWidget()
@@ -217,14 +308,18 @@ class MainWindow(QMainWindow):
             open_btn = QPushButton(lang.get("open_account"))
             open_btn.clicked.connect(lambda _, a=acc: self.open_account(a))
             
+            edit_proxy_btn = QPushButton(lang.get("proxy"))
+            edit_proxy_btn.clicked.connect(lambda _, a=acc: self.edit_proxy(a))
+
             delete_btn = QPushButton(lang.get("delete_account"))
             delete_btn.clicked.connect(lambda _, a=acc: self.delete_account(a))
             
             actions_layout.addWidget(open_btn)
+            actions_layout.addWidget(edit_proxy_btn)
             actions_layout.addWidget(delete_btn)
             actions_layout.addStretch()
             
-            self.table.setCellWidget(i, 3, actions)
+            self.table.setCellWidget(i, 4, actions)
     
     def add_account(self):
         lang = self.config.lang
@@ -249,10 +344,32 @@ class MainWindow(QMainWindow):
         if reply == QMessageBox.StandardButton.Yes:
             # Закрываем браузер если открыт
             if self.browser_engine:
-                asyncio.create_task(self.browser_engine.close_account(account["id"]))
+                self.run_async(self.browser_engine.close_account(account["id"]))
             
             self.account_manager.delete_account(account["id"])
             self.refresh_table()
+
+    def edit_proxy(self, account):
+        lang = self.config.lang
+        dialog = ProxyDialog(lang, account, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            try:
+                proxy = dialog.get_proxy()
+                self.account_manager.update_proxy(
+                    account["id"],
+                    proxy,
+                    timezone=dialog.detected_timezone if proxy else None
+                )
+                account["proxy"] = proxy
+                if proxy:
+                    account["timezone"] = dialog.detected_timezone
+                self.refresh_table()
+                self.logger.info(
+                    f"Proxy updated for account {account['name']} "
+                    f"(timezone: {dialog.detected_timezone})"
+                )
+            except ValueError:
+                QMessageBox.warning(self, "Proxy", lang.get("proxy_invalid"))
     
     def open_account(self, account):
         lang = self.config.lang
@@ -268,7 +385,7 @@ class MainWindow(QMainWindow):
                     account["domain"] = domain
                 else:
                     return
-        
+
         # Открываем браузер
         async def do_open():
             result = await self.browser_engine.open_account(

@@ -68,7 +68,9 @@ class Logger:
         self.logger.setLevel(logging.DEBUG)
         
         # File handler
-        log_file = Path("Multiaccount/logs") / f"{datetime.now().strftime('%Y-%m-%d')}.log"
+        logs_dir = Path.home() / "Multiaccount" / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_file = logs_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
         file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         

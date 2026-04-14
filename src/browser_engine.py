@@ -1,6 +1,5 @@
 import asyncio
 from playwright.async_api import async_playwright
-from pathlib import Path
 import sys
 
 class BrowserEngine:
@@ -31,17 +30,30 @@ class BrowserEngine:
         logger.info(f"Opening account {account['name']} with domain {domain}")
         
         try:
+            args = ['--disable-blink-features=AutomationControlled']
+            if sys.platform == 'linux':
+                args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
+            elif sys.platform == 'win32':
+                args.append('--disable-gpu')
+
+            proxy_settings = account.get("proxy") or {}
+            proxy = None
+            if proxy_settings.get("server"):
+                proxy = {
+                    "server": proxy_settings["server"],
+                }
+                if proxy_settings.get("username"):
+                    proxy["username"] = proxy_settings["username"]
+                if proxy_settings.get("password"):
+                    proxy["password"] = proxy_settings["password"]
+
             # Запускаем persistent context (сохраняет всё в profile_path)
             browser = await self.playwright.chromium.launch_persistent_context(
                 user_data_dir=str(profile_path),
                 headless=False,
-                args = ['--disable-blink-features=AutomationControlled']
-                if sys.platform == 'linux':
-                    args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
-                elif sys.platform == 'win32':
-                    args.append('--disable-gpu')
-
+                args=args,
                 viewport=None,  # Используем сохранённый размер или дефолт
+                proxy=proxy,
                 locale=account.get("locale", "ru-RU"),
                 timezone_id=account.get("timezone", "Europe/Moscow"),
                 user_agent=account.get("user_agent", 

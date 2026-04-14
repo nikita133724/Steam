@@ -1,0 +1,837 @@
+diff --git a/assets/en.json b/assets/en.json
+index d2db296bc6dcf6ce37f546289e9b24aedbb87f3c..2f506d24fb053641100ff1ca359e4696b13285a2 100644
+--- a/assets/en.json
++++ b/assets/en.json
+@@ -1 +1 @@
+-{"window_title":"Multiaccount","add_account":"Add","delete_account":"Delete","open_account":"Open","close_account":"Close","account_name":"Name","domain":"Domain","save":"Save","cancel":"Cancel","first_run_title":"Welcome","select_language":"Language:","logs":"Logs","status_active":"🟢 Active","status_inactive":"⚫ Inactive","enter_domain":"Enter domain:","remember":"Remember"}
++{"window_title":"Multiaccount","add_account":"Add","delete_account":"Delete","open_account":"Open","close_account":"Close","account_name":"Name","domain":"Domain","save":"Save","cancel":"Cancel","first_run_title":"Welcome","select_language":"Language:","logs":"Logs","status_active":"🟢 Active","status_inactive":"⚫ Inactive","enter_domain":"Enter domain:","remember":"Remember","proxy":"Proxy","proxy_settings":"Proxy settings","enter_proxy":"Enter proxy (socks5://user:pass@host:port):","proxy_required":"Please set a proxy first.","proxy_invalid":"Invalid proxy format.","proxy_first":"Set a proxy before first account launch.","detect_timezone":"Detect timezone via proxy","timezone":"Timezone","timezone_error":"Failed to detect timezone","cleanup_data":"Cleanup data","cleanup_confirm":"Delete all app runtime data (profiles, logs, downloaded browser)? Personal files outside Multiaccount are not touched.","cleanup_done":"App runtime data has been cleaned.","cleanup_restart":"Restart the app to initialize browser runtime again."}
+\ No newline at end of file
+diff --git a/assets/ru.json b/assets/ru.json
+index 1a174c48bdc689d7205e2fc785c3a9e54f65a121..79363d707c0fd4bf02573d7aa8b8d46dbe718f0e 100644
+--- a/assets/ru.json
++++ b/assets/ru.json
+@@ -1,2 +1 @@
+-{"window_title":"Multiaccount","add_account":"Добавить","delete_account":"Удалить","open_account":"Открыть","close_account":"Закрыть","account_name":"Название","domain":"Домен","save":"Сохранить","cancel":"Отмена","first_run_title":"Привет","select_language":"Язык:","logs":"Логи","status_active":"🟢 Открыт","status_inactive":"⚫ Закрыт","enter_domain":"Введите домен:","remember":"Запомнить"}
+-
++{"window_title":"Multiaccount","add_account":"Добавить","delete_account":"Удалить","open_account":"Открыть","close_account":"Закрыть","account_name":"Название","domain":"Домен","save":"Сохранить","cancel":"Отмена","first_run_title":"Привет","select_language":"Язык:","logs":"Логи","status_active":"🟢 Открыт","status_inactive":"⚫ Закрыт","enter_domain":"Введите домен:","remember":"Запомнить","proxy":"Прокси","proxy_settings":"Настройки прокси","enter_proxy":"Введите прокси (socks5://user:pass@host:port):","proxy_required":"Сначала укажите прокси.","proxy_invalid":"Неверный формат прокси.","proxy_first":"Перед первым запуском аккаунта укажите прокси.","detect_timezone":"Определить тайм-зону через прокси","timezone":"Тайм-зона","timezone_error":"Не удалось определить тайм-зону","cleanup_data":"Очистить данные","cleanup_confirm":"Удалить все рабочие данные приложения (профили, логи, скачанный браузер)? Личные файлы вне Multiaccount не затрагиваются.","cleanup_done":"Рабочие данные приложения очищены.","cleanup_restart":"Перезапустите приложение для повторной инициализации браузера."}
+\ No newline at end of file
+diff --git a/build.py b/build.py
+index 3e26a671359a09766abf012d704a5d3be81c5826..e1b22aae369a326e3cbc44c51db1daa0a7de0ffe 100644
+--- a/build.py
++++ b/build.py
+@@ -1,13 +1,15 @@
+ import PyInstaller.__main__
+ import os
+ 
++data_separator = ';' if os.name == 'nt' else ':'
++
+ PyInstaller.__main__.run([
+     'main.py',
+     '--onefile',
+     '--windowed',
+     '--name', 'Multiaccount',
+-    '--add-data', 'assets;assets',
++    '--add-data', f'assets{data_separator}assets',
+     '--icon', 'NONE',
+     '--clean',
+     '--noconfirm'
+ ])
+diff --git a/src/account_manager.py b/src/account_manager.py
+index 740725adaa9d499017e9b3836b0e97ef806e3ccb..7b9fcb47e3768409488b5737e33b84ece0b78e3d 100644
+--- a/src/account_manager.py
++++ b/src/account_manager.py
+@@ -1,70 +1,88 @@
+ import random
+ from datetime import datetime
+ 
+ 
+ class AccountManager:
+     def __init__(self, config):
+         self.config = config
+         self.accounts = config.load_accounts()
+         self.next_id = self._get_next_id()
+     
+     def _get_next_id(self):
+         if not self.accounts:
+             return 1
+         return max(a["id"] for a in self.accounts) + 1
+     
+     def get_accounts(self):
+         return self.accounts
+     
+     def add_account(self, name):
+         """Добавляет новый аккаунт без прокси пока"""
+         account = {
+             "id": self.next_id,
+             "name": name,
+             "domain": None,  # Будет задан при первом запуске
++            "proxy": None,
+             "created_at": datetime.now().isoformat(),
+             "user_agent": self._generate_user_agent(),
+             "locale": "ru-RU",
+             "timezone": "Europe/Moscow"
+         }
+         
+         self.accounts.append(account)
+         self.config.save_accounts(self.accounts)
+         self.next_id += 1
+         
+         Logger.get_instance().info(f"Created account: {name}")
+         return account
+     
+     def delete_account(self, account_id):
+         """Удаляет аккаунт"""
+         self.accounts = [a for a in self.accounts if a["id"] != account_id]
+         self.config.save_accounts(self.accounts)
+         
+         # Удаляем профиль
+         profile_path = self.config.get_profile_path(account_id)
+         if profile_path.exists():
+             import shutil
+             shutil.rmtree(profile_path)
+         
+         Logger.get_instance().info(f"Deleted account ID: {account_id}")
+         return True
+     
+     def update_domain(self, account_id, domain):
+         """Обновляет домен аккаунта"""
+         for account in self.accounts:
+             if account["id"] == account_id:
+                 account["domain"] = domain
+                 self.config.save_accounts(self.accounts)
+                 Logger.get_instance().info(f"Updated domain for {account['name']}: {domain}")
+                 return True
+         return False
++
++    def update_proxy(self, account_id, proxy, timezone=None):
++        """Обновляет прокси аккаунта"""
++        for account in self.accounts:
++            if account["id"] == account_id:
++                account["proxy"] = proxy
++                if timezone:
++                    account["timezone"] = timezone
++                self.config.save_accounts(self.accounts)
++                Logger.get_instance().info(f"Updated proxy for {account['name']}")
++                return True
++        return False
++
++    def reset_accounts(self):
++        """Очищает аккаунты в памяти (после удаления data-файлов)."""
++        self.accounts = []
++        self.next_id = 1
+     
+     def _generate_user_agent(self):
+         """Генерирует реальный User-Agent"""
+         chrome_versions = ["120.0.0.0", "121.0.0.0", "122.0.0.0", "123.0.0.0", "124.0.0.0"]
+         version = random.choice(chrome_versions)
+         
+         return f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.0"
+ 
+ 
+ from src.logger import Logger
+diff --git a/src/app.py b/src/app.py
+index c0ae02f84cc5e69b31827af19cbf884396f9c232..efe0d63490e40c9c52db06d93c943d0ceb6a908a 100644
+--- a/src/app.py
++++ b/src/app.py
+@@ -1,27 +1,29 @@
+ import asyncio
+ import sys
++from urllib.parse import urlparse
++import requests
+ from PyQt6.QtWidgets import (
+     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
+     QLabel, QMessageBox, QComboBox, QTextEdit
+ )
+ from PyQt6.QtCore import Qt, QThread, pyqtSignal
+ from PyQt6.QtGui import QIcon
+ 
+ from src.config import Config
+ from src.account_manager import AccountManager
+ from src.browser_engine import BrowserEngine
+ from src.logger import Logger
+ 
+ 
+ class LanguageDialog(QDialog):
+     def __init__(self, parent=None):
+         super().__init__(parent)
+         self.setWindowTitle("Welcome / Добро пожаловать")
+         self.setFixedSize(300, 150)
+         
+         layout = QVBoxLayout()
+         
+         layout.addWidget(QLabel("Select language / Выберите язык:"))
+         
+         self.combo = QComboBox()
+@@ -79,50 +81,135 @@ class AddAccountDialog(QDialog):
+         
+         layout = QVBoxLayout()
+         
+         layout.addWidget(QLabel(lang.get("account_name")))
+         
+         self.name_input = QLineEdit()
+         self.name_input.setPlaceholderText("Account 1")
+         layout.addWidget(self.name_input)
+         
+         btn_layout = QHBoxLayout()
+         save_btn = QPushButton(lang.get("save"))
+         save_btn.clicked.connect(self.accept)
+         cancel_btn = QPushButton(lang.get("cancel"))
+         cancel_btn.clicked.connect(self.reject)
+         
+         btn_layout.addWidget(save_btn)
+         btn_layout.addWidget(cancel_btn)
+         layout.addLayout(btn_layout)
+         
+         self.setLayout(layout)
+     
+     def get_name(self):
+         return self.name_input.text() or "Unnamed"
+ 
+ 
++class ProxyDialog(QDialog):
++    def __init__(self, lang, account, parent=None):
++        super().__init__(parent)
++        self.lang = lang
++        self.account = account
++        self.detected_timezone = account.get("timezone", "Europe/Moscow")
++        self.setWindowTitle(lang.get("proxy_settings"))
++        self.setFixedSize(520, 220)
++
++        layout = QVBoxLayout()
++        layout.addWidget(QLabel(f"{lang.get('account_name')}: {account['name']}"))
++        layout.addWidget(QLabel(lang.get("enter_proxy")))
++
++        self.proxy_input = QLineEdit()
++        self.proxy_input.setPlaceholderText("socks5://user:pass@host:port")
++        current_proxy = account.get("proxy") or {}
++        self.proxy_input.setText(current_proxy.get("server", ""))
++        layout.addWidget(self.proxy_input)
++
++        self.tz_label = QLabel(f"{lang.get('timezone')}: {self.detected_timezone}")
++        layout.addWidget(self.tz_label)
++
++        detect_btn = QPushButton(lang.get("detect_timezone"))
++        detect_btn.clicked.connect(self.detect_timezone)
++        layout.addWidget(detect_btn)
++
++        btn_layout = QHBoxLayout()
++        save_btn = QPushButton(lang.get("save"))
++        save_btn.clicked.connect(self.accept)
++        cancel_btn = QPushButton(lang.get("cancel"))
++        cancel_btn.clicked.connect(self.reject)
++        btn_layout.addWidget(save_btn)
++        btn_layout.addWidget(cancel_btn)
++        layout.addLayout(btn_layout)
++
++        self.setLayout(layout)
++
++    def _parse_proxy(self, value):
++        parsed = urlparse(value)
++        if parsed.scheme.lower() not in {"socks5", "socks5h", "http", "https"}:
++            raise ValueError("Unsupported proxy scheme")
++        if not parsed.hostname or not parsed.port:
++            raise ValueError("Proxy host/port is required")
++        return {
++            "server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}",
++            "username": parsed.username,
++            "password": parsed.password
++        }
++
++    def get_proxy(self):
++        raw = self.proxy_input.text().strip()
++        if not raw:
++            return None
++        return self._parse_proxy(raw)
++
++    def detect_timezone(self):
++        try:
++            proxy = self.get_proxy()
++            if not proxy:
++                QMessageBox.warning(self, "Proxy", self.lang.get("proxy_required"))
++                return
++
++            proxy_url = proxy["server"]
++            if proxy.get("username") and proxy.get("password"):
++                parsed = urlparse(proxy_url)
++                proxy_url = (
++                    f"{parsed.scheme}://{proxy['username']}:{proxy['password']}"
++                    f"@{parsed.hostname}:{parsed.port}"
++                )
++
++            response = requests.get(
++                "https://ipapi.co/timezone/",
++                proxies={"http": proxy_url, "https": proxy_url},
++                timeout=8
++            )
++            timezone = response.text.strip()
++            if "/" in timezone:
++                self.detected_timezone = timezone
++                self.tz_label.setText(f"{self.lang.get('timezone')}: {timezone}")
++            else:
++                raise ValueError("Timezone not detected")
++        except Exception as e:
++            QMessageBox.warning(self, "Timezone", f"{self.lang.get('timezone_error')}: {e}")
++
++
+ class AsyncWorker(QThread):
+     finished = pyqtSignal(object)
+     
+     def __init__(self, coro):
+         super().__init__()
+         self.coro = coro
+     
+     def run(self):
+         loop = asyncio.new_event_loop()
+         asyncio.set_event_loop(loop)
+         result = loop.run_until_complete(self.coro)
+         self.finished.emit(result)
+ 
+ 
+ class MainWindow(QMainWindow):
+     def __init__(self):
+         super().__init__()
+         
+         self.config = Config()
+         self.account_manager = AccountManager(self.config)
+         self.browser_engine = None
+         self.logger = Logger.get_instance()
+         
+         # Проверяем первый запуск
+         if self.config.data.get("first_run", True):
+@@ -137,167 +224,236 @@ class MainWindow(QMainWindow):
+             lang = dialog.get_language()
+             self.config.set_language(lang)
+             self.config.data["first_run"] = False
+             self.config.save_config()
+     
+     def setup_ui(self):
+         lang = self.config.lang
+         
+         self.setWindowTitle(lang.get("window_title", "Multiaccount"))
+         self.setMinimumSize(800, 500)
+         
+         central = QWidget()
+         self.setCentralWidget(central)
+         layout = QVBoxLayout(central)
+         
+         # Кнопки управления
+         btn_layout = QHBoxLayout()
+         
+         self.add_btn = QPushButton(lang.get("add_account"))
+         self.add_btn.clicked.connect(self.add_account)
+         btn_layout.addWidget(self.add_btn)
+         
+         self.logs_btn = QPushButton(lang.get("logs"))
+         self.logs_btn.clicked.connect(self.logger.show_window)
+         btn_layout.addWidget(self.logs_btn)
++
++        self.cleanup_btn = QPushButton(lang.get("cleanup_data"))
++        self.cleanup_btn.clicked.connect(self.cleanup_data)
++        btn_layout.addWidget(self.cleanup_btn)
+         
+         btn_layout.addStretch()
+         layout.addLayout(btn_layout)
+         
+         # Таблица аккаунтов
+         self.table = QTableWidget()
+-        self.table.setColumnCount(4)
++        self.table.setColumnCount(5)
+         self.table.setHorizontalHeaderLabels([
+             "ID", 
+             lang.get("account_name"), 
+             lang.get("domain"),
++            lang.get("proxy"),
+             ""
+         ])
+         self.table.horizontalHeader().setStretchLastSection(True)
+         layout.addWidget(self.table)
+         
+         self.refresh_table()
+     
+     def init_browser(self):
+         async def setup():
+-            self.browser_engine = BrowserEngine()
++            self.browser_engine = BrowserEngine(self.config)
+             await self.browser_engine.init()
+             
+             # Проверяем Chromium
+             if not await self.browser_engine.check_chromium():
+                 self.logger.info("Chromium not found, installing...")
+                 await self.browser_engine.install_chromium()
+             
+             self.logger.info("Browser engine ready")
+         
+         self.run_async(setup())
++
++    def cleanup_data(self):
++        lang = self.config.lang
++        reply = QMessageBox.question(
++            self,
++            lang.get("cleanup_data"),
++            lang.get("cleanup_confirm"),
++            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
++        )
++        if reply != QMessageBox.StandardButton.Yes:
++            return
++
++        async def do_cleanup():
++            if self.browser_engine:
++                await self.browser_engine.shutdown()
++            return True
++
++        self.cleanup_worker = AsyncWorker(do_cleanup())
++        self.cleanup_worker.finished.connect(self._finish_cleanup)
++        self.cleanup_worker.start()
++
++    def _finish_cleanup(self, _):
++        self.config.clear_runtime_data()
++        self.account_manager.reset_accounts()
++        self.browser_engine = None
++        self.refresh_table()
++        QMessageBox.information(
++            self,
++            self.config.lang.get("cleanup_data"),
++            f"{self.config.lang.get('cleanup_done')} {self.config.lang.get('cleanup_restart')}"
++        )
+     
+     def run_async(self, coro):
+         self.worker = AsyncWorker(coro)
+         self.worker.finished.connect(lambda _: None)
+         self.worker.start()
+     
+     def refresh_table(self):
+         lang = self.config.lang
+         accounts = self.account_manager.get_accounts()
+         
+         self.table.setRowCount(len(accounts))
+         
+         for i, acc in enumerate(accounts):
+             self.table.setItem(i, 0, QTableWidgetItem(str(acc["id"])))
+             self.table.setItem(i, 1, QTableWidgetItem(acc["name"]))
+             
+             domain = acc.get("domain") or "—"
+             self.table.setItem(i, 2, QTableWidgetItem(domain))
++            proxy_data = acc.get("proxy") or {}
++            proxy_title = proxy_data.get("server", "—")
++            self.table.setItem(i, 3, QTableWidgetItem(proxy_title))
+             
+             # Кнопки действий
+             actions = QWidget()
+             actions_layout = QHBoxLayout(actions)
+             actions_layout.setContentsMargins(5, 0, 5, 0)
+             
+             open_btn = QPushButton(lang.get("open_account"))
+             open_btn.clicked.connect(lambda _, a=acc: self.open_account(a))
+             
++            edit_proxy_btn = QPushButton(lang.get("proxy"))
++            edit_proxy_btn.clicked.connect(lambda _, a=acc: self.edit_proxy(a))
++
+             delete_btn = QPushButton(lang.get("delete_account"))
+             delete_btn.clicked.connect(lambda _, a=acc: self.delete_account(a))
+             
+             actions_layout.addWidget(open_btn)
++            actions_layout.addWidget(edit_proxy_btn)
+             actions_layout.addWidget(delete_btn)
+             actions_layout.addStretch()
+             
+-            self.table.setCellWidget(i, 3, actions)
++            self.table.setCellWidget(i, 4, actions)
+     
+     def add_account(self):
+         lang = self.config.lang
+         dialog = AddAccountDialog(lang, self)
+         
+         if dialog.exec() == QDialog.DialogCode.Accepted:
+             name = dialog.get_name()
+             self.account_manager.add_account(name)
+             self.refresh_table()
+             self.logger.info(f"Added account: {name}")
+     
+     def delete_account(self, account):
+         lang = self.config.lang
+         
+         reply = QMessageBox.question(
+             self,
+             lang.get("delete_account"),
+             f"Delete {account['name']}?",
+             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+         )
+         
+         if reply == QMessageBox.StandardButton.Yes:
+             # Закрываем браузер если открыт
+             if self.browser_engine:
+-                asyncio.create_task(self.browser_engine.close_account(account["id"]))
++                self.run_async(self.browser_engine.close_account(account["id"]))
+             
+             self.account_manager.delete_account(account["id"])
+             self.refresh_table()
++
++    def edit_proxy(self, account):
++        lang = self.config.lang
++        dialog = ProxyDialog(lang, account, self)
++        if dialog.exec() == QDialog.DialogCode.Accepted:
++            try:
++                proxy = dialog.get_proxy()
++                self.account_manager.update_proxy(
++                    account["id"],
++                    proxy,
++                    timezone=dialog.detected_timezone if proxy else None
++                )
++                account["proxy"] = proxy
++                if proxy:
++                    account["timezone"] = dialog.detected_timezone
++                self.refresh_table()
++                self.logger.info(
++                    f"Proxy updated for account {account['name']} "
++                    f"(timezone: {dialog.detected_timezone})"
++                )
++            except ValueError:
++                QMessageBox.warning(self, "Proxy", lang.get("proxy_invalid"))
+     
+     def open_account(self, account):
+         lang = self.config.lang
++
++        if not self.browser_engine:
++            QMessageBox.information(self, "Info", lang.get("cleanup_restart"))
++            return
+         
+         # Проверяем домен
+         if not account.get("domain"):
+             domain_dialog = DomainDialog(account["name"], lang, self)
+             if domain_dialog.exec() == QDialog.DialogCode.Accepted:
+                 domain = domain_dialog.get_domain()
+                 if domain:
+                     self.account_manager.update_domain(account["id"], domain)
+                     self.refresh_table()
+                     account["domain"] = domain
+                 else:
+                     return
+-        
++
+         # Открываем браузер
+         async def do_open():
+             result = await self.browser_engine.open_account(
+                 account, 
+                 self.config,
+                 on_close=lambda aid: self.on_browser_close(aid)
+             )
+             
+             if result and result.get("need_domain"):
+                 # Не должно произойти, но на всякий случай
+                 pass
+             elif result and result.get("error"):
+                 QMessageBox.critical(self, "Error", result["error"])
+         
+         self.run_async(do_open())
+         self.logger.info(f"Opening account: {account['name']}")
+     
+     def on_browser_close(self, account_id):
+         self.logger.info(f"Account {account_id} closed by user")
+     
+     def closeEvent(self, event):
+         # Мягкое закрытие всех браузеров
+         if self.browser_engine:
+             async def close_all():
+-                await self.browser_engine.close_all()
++                await self.browser_engine.shutdown()
+             
+             loop = asyncio.new_event_loop()
+             asyncio.set_event_loop(loop)
+             loop.run_until_complete(close_all())
+         
+         self.logger.info("Application closed")
+         event.accept()
+diff --git a/src/browser_engine.py b/src/browser_engine.py
+index 1bb77dadbd71721f73f41b992bfaa52d457a3116..f2c1a7549aedb0ed0661eac118559ac1b0d47406 100644
+--- a/src/browser_engine.py
++++ b/src/browser_engine.py
+@@ -1,69 +1,84 @@
+ import asyncio
+ from playwright.async_api import async_playwright
+-from pathlib import Path
+ import sys
++import os
+ 
+ class BrowserEngine:
+-    def __init__(self):
++    def __init__(self, config):
++        self.config = config
+         self.playwright = None
+         self.browsers = {}  # account_id -> browser_context
+     
+     async def init(self):
++        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.config.browsers_dir)
+         self.playwright = await async_playwright().start()
+     
+     async def open_account(self, account, config, on_close=None):
+         """Открывает аккаунт в изолированном браузере"""
+         logger = Logger.get_instance()
+         account_id = account["id"]
+         
+         # Проверяем, не открыт ли уже
+         if account_id in self.browsers:
+             logger.info(f"Account {account['name']} already open")
+             return None
+         
+         profile_path = config.get_profile_path(account_id)
+         
+         # Проверяем первый запуск (нужен домен)
+         domain = account.get("domain")
+         if not domain:
+             return {"need_domain": True}
+         
+         logger.info(f"Opening account {account['name']} with domain {domain}")
+         
+         try:
++            args = ['--disable-blink-features=AutomationControlled']
++            if sys.platform == 'linux':
++                args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
++            elif sys.platform == 'win32':
++                args.append('--disable-gpu')
++
++            proxy_settings = account.get("proxy") or {}
++            proxy = None
++            if proxy_settings.get("server"):
++                proxy = {
++                    "server": proxy_settings["server"],
++                }
++                if proxy_settings.get("username"):
++                    proxy["username"] = proxy_settings["username"]
++                if proxy_settings.get("password"):
++                    proxy["password"] = proxy_settings["password"]
++
+             # Запускаем persistent context (сохраняет всё в profile_path)
+             browser = await self.playwright.chromium.launch_persistent_context(
+                 user_data_dir=str(profile_path),
+                 headless=False,
+-                args = ['--disable-blink-features=AutomationControlled']
+-                if sys.platform == 'linux':
+-                    args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
+-                elif sys.platform == 'win32':
+-                    args.append('--disable-gpu')
+-
++                args=args,
+                 viewport=None,  # Используем сохранённый размер или дефолт
++                proxy=proxy,
+                 locale=account.get("locale", "ru-RU"),
+                 timezone_id=account.get("timezone", "Europe/Moscow"),
+                 user_agent=account.get("user_agent", 
+                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+             )
+             
+             page = await browser.new_page()
+             await page.goto(domain)
+             
+             self.browsers[account_id] = browser
+             
+             # Мониторим закрытие
+             asyncio.create_task(self._monitor_browser(account_id, browser, on_close))
+             
+             logger.info(f"Account {account['name']} opened successfully")
+             return {"success": True}
+             
+         except Exception as e:
+             logger.error(f"Failed to open account {account['name']}: {str(e)}")
+             return {"error": str(e)}
+     
+     async def _monitor_browser(self, account_id, browser, on_close):
+         """Следит за закрытием браузера"""
+         try:
+             # Ждём пока все страницы не закроются
+@@ -79,50 +94,57 @@ class BrowserEngine:
+             # Браузер закрыт пользователем
+             await asyncio.sleep(1)  # Даём время на сохранение данных
+             await browser.close()
+             
+             if account_id in self.browsers:
+                 del self.browsers[account_id]
+             
+             if on_close:
+                 on_close(account_id)
+                 
+         except Exception as e:
+             Logger.get_instance().error(f"Monitor error: {str(e)}")
+     
+     async def close_account(self, account_id):
+         """Мягкое закрытие аккаунта"""
+         if account_id in self.browsers:
+             browser = self.browsers[account_id]
+             await asyncio.sleep(1)  # Даём сохраниться
+             await browser.close()
+             del self.browsers[account_id]
+     
+     async def close_all(self):
+         """Мягкое закрытие всех браузеров"""
+         for account_id, browser in list(self.browsers.items()):
+             await self.close_account(account_id)
++
++    async def shutdown(self):
++        """Полная остановка движка"""
++        await self.close_all()
++        if self.playwright:
++            await self.playwright.stop()
++            self.playwright = None
+     
+     async def check_chromium(self):
+         """Проверяет установлен ли Chromium"""
+         try:
+             browser = await self.playwright.chromium.launch()
+             await browser.close()
+             return True
+         except:
+             return False
+     
+     async def install_chromium(self):
+         """Устанавливает Chromium"""
+         import subprocess
+         import sys
+         
+         Logger.get_instance().info("Installing Chromium...")
+         
+         process = await asyncio.create_subprocess_exec(
+             sys.executable, "-m", "playwright", "install", "chromium",
+             stdout=asyncio.subprocess.PIPE,
+             stderr=asyncio.subprocess.PIPE
+         )
+         
+         stdout, stderr = await process.communicate()
+         
+diff --git a/src/config.py b/src/config.py
+index 3214fc8534fb284873344e48653f6ed10831e309..81f5114f9d608d3c185e9864c175e425aa26d607 100644
+--- a/src/config.py
++++ b/src/config.py
+@@ -1,58 +1,72 @@
+ import json
+-import os
+ from pathlib import Path
++import shutil
+ 
+ class Config:
+     def __init__(self):
+-        self.base_dir = Path.home("Multiaccount")
++        self.base_dir = Path.home() / "Multiaccount"
+         self.base_dir.mkdir(exist_ok=True)
+         
+         self.config_file = self.base_dir / "config.json"
+         self.accounts_file = self.base_dir / "accounts.json"
+         self.profiles_dir = self.base_dir / "profiles"
+         self.logs_dir = self.base_dir / "logs"
++        self.browsers_dir = self.base_dir / "browsers"
+         
+         self.profiles_dir.mkdir(exist_ok=True)
+         self.logs_dir.mkdir(exist_ok=True)
++        self.browsers_dir.mkdir(exist_ok=True)
+         
+         self.data = self.load_config()
+         self.lang = self.load_language()
+     
+     def load_config(self):
+         if self.config_file.exists():
+             with open(self.config_file, 'r', encoding='utf-8') as f:
+                 return json.load(f)
+         return {"language": None, "first_run": True}
+     
+     def save_config(self):
+         with open(self.config_file, 'w', encoding='utf-8') as f:
+             json.dump(self.data, f, indent=2, ensure_ascii=False)
+     
+     def load_language(self):
+         lang = self.data.get("language", "ru")
+         lang_file = Path(__file__).parent.parent / "assets" / f"{lang}.json"
+         if lang_file.exists():
+             with open(lang_file, 'r', encoding='utf-8') as f:
+                 return json.load(f)
+         return {}
+     
+     def set_language(self, lang):
+         self.data["language"] = lang
+         self.save_config()
+         self.lang = self.load_language()
+     
+     def get_text(self, key):
+         return self.lang.get(key, key)
+     
+     def load_accounts(self):
+         if self.accounts_file.exists():
+             with open(self.accounts_file, 'r', encoding='utf-8') as f:
+                 return json.load(f).get("accounts", [])
+         return []
+     
+     def save_accounts(self, accounts):
+         with open(self.accounts_file, 'w', encoding='utf-8') as f:
+             json.dump({"accounts": accounts}, f, indent=2, ensure_ascii=False)
+     
+     def get_profile_path(self, account_id):
+         return self.profiles_dir / f"account_{account_id}"
++
++    def clear_runtime_data(self):
++        """Удаляет все рабочие данные приложения, не затрагивая сторонние файлы пользователя."""
++        for path in [self.accounts_file, self.profiles_dir, self.logs_dir, self.browsers_dir]:
++            if path.is_file():
++                path.unlink(missing_ok=True)
++            elif path.is_dir():
++                shutil.rmtree(path, ignore_errors=True)
++
++        self.profiles_dir.mkdir(exist_ok=True)
++        self.logs_dir.mkdir(exist_ok=True)
++        self.browsers_dir.mkdir(exist_ok=True)
+diff --git a/src/logger.py b/src/logger.py
+index 5b46fe158090ec263647254648a5835efcbdbb75..c3246e6dcfc3a32d3b7af81fa9e66ceecadaaf5c 100644
+--- a/src/logger.py
++++ b/src/logger.py
+@@ -46,51 +46,53 @@ class LoggerWindow(QDialog):
+         layout.addLayout(btn_layout)
+         
+         self.setLayout(layout)
+     
+     def append_log(self, message):
+         self.text_edit.append(message)
+     
+     def clear_logs(self):
+         self.text_edit.clear()
+ 
+ 
+ class Logger:
+     _instance = None
+     
+     @classmethod
+     def get_instance(cls):
+         if cls._instance is None:
+             cls._instance = Logger()
+         return cls._instance
+     
+     def __init__(self):
+         self.logger = logging.getLogger("Multiaccount")
+         self.logger.setLevel(logging.DEBUG)
+         
+         # File handler
+-        log_file = Path("Multiaccount/logs") / f"{datetime.now().strftime('%Y-%m-%d')}.log"
++        logs_dir = Path.home() / "Multiaccount" / "logs"
++        logs_dir.mkdir(parents=True, exist_ok=True)
++        log_file = logs_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
+         file_handler = logging.FileHandler(log_file, encoding='utf-8')
+         file_handler.setLevel(logging.DEBUG)
+         
+         # Qt handler
+         self.qt_handler = LogHandler()
+         
+         self.logger.addHandler(file_handler)
+         self.logger.addHandler(self.qt_handler)
+         
+         self.window = LoggerWindow()
+         self.qt_handler.new_record.connect(self.window.append_log)
+     
+     def info(self, msg):
+         self.logger.info(msg)
+     
+     def error(self, msg):
+         self.logger.error(msg)
+     
+     def debug(self, msg):
+         self.logger.debug(msg)
+     
+     def show_window(self):
+         self.window.show()
+         self.window.raise_()
+     
