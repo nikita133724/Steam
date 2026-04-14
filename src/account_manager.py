@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from src.logger import Logger
 
 
 class AccountManager:
@@ -85,4 +86,3 @@ class AccountManager:
         self.accounts = []
         self.next_id = 1
 
-from src.logger import Logger

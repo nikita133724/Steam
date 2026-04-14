@@ -2,6 +2,7 @@ import asyncio
 from playwright.async_api import async_playwright
 import sys
 import os
+from src.logger import Logger
 
 class BrowserEngine:
     def __init__(self, config):
@@ -156,5 +157,4 @@ class BrowserEngine:
             return False
 
 
-# Импорт логгера здесь чтобы избежать циклического импорта
-from src.logger import Logger
+
