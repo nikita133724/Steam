@@ -5,7 +5,6 @@ import sys
 
 EXE_PATH = Path("dist/Multiaccount.exe")
 
-
 def sha256(file_path):
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
