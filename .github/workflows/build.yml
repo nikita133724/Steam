@@ -36,8 +36,8 @@ jobs:
         run: python build.py
 
       - name: Generate manifest
-        run: python manifest.py ${{ github.ref_name }}
-
+        run: python manifest.py ${{ github.ref_name }} ${{ github.repository }}
+        
       - name: Build installer
         run: python build1.py
 
