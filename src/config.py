@@ -2,6 +2,8 @@ from pathlib import Path
 import json
 import sys
 import os
+import shutil
+
 
 class Config:
     def __init__(self):
@@ -22,11 +24,23 @@ class Config:
         self.data = self.load_config()
         self.lang = self.load_language()
 
+    # 🔥 FIX: PyInstaller-safe путь
     def resource_path(self, relative):
-        # 🔥 FIX: works for PyInstaller onefile
         base = getattr(sys, "_MEIPASS", Path(__file__).parent.parent)
         return Path(base) / relative
 
+    def load_config(self):
+        if self.config_file.exists():
+            return json.loads(self.config_file.read_text(encoding="utf-8"))
+        return {"language": None, "first_run": True}
+
+    def save_config(self):
+        self.config_file.write_text(
+            json.dumps(self.data, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
+
+    # 🔥 FIXED VERSION (единственная!)
     def load_language(self):
         lang = self.data.get("language", "ru")
 
@@ -37,41 +51,21 @@ class Config:
 
         return {}
 
-    def load_config(self):
-        if self.config_file.exists():
-            with open(self.config_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {"language": None, "first_run": True}
-
-    def save_config(self):
-        with open(self.config_file, 'w', encoding='utf-8') as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
-
-    def load_language(self):
-        lang = self.data.get("language", "ru")
-        lang_file = Path(__file__).parent.parent / "assets" / f"{lang}.json"
-        if lang_file.exists():
-            with open(lang_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {}
-
     def set_language(self, lang):
         self.data["language"] = lang
         self.save_config()
         self.lang = self.load_language()
 
-    def get_text(self, key):
-        return self.lang.get(key, key)
-
     def load_accounts(self):
         if self.accounts_file.exists():
-            with open(self.accounts_file, 'r', encoding='utf-8') as f:
-                return json.load(f).get("accounts", [])
+            return json.loads(self.accounts_file.read_text(encoding="utf-8")).get("accounts", [])
         return []
 
     def save_accounts(self, accounts):
-        with open(self.accounts_file, 'w', encoding='utf-8') as f:
-            json.dump({"accounts": accounts}, f, indent=2, ensure_ascii=False)
+        self.accounts_file.write_text(
+            json.dumps({"accounts": accounts}, indent=2, ensure_ascii=False),
+            encoding="utf-8"
+        )
 
     def get_profile_path(self, account_id):
         return self.profiles_dir / f"account_{account_id}"

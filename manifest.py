@@ -4,6 +4,9 @@ from pathlib import Path
 import sys
 
 
+EXE_NAME = "Multiaccount.exe"
+
+
 def sha256(file_path: Path):
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
@@ -13,8 +16,7 @@ def sha256(file_path: Path):
 
 
 def find_exe():
-    # 🔥 FIX: onefile = всегда один файл
-    exe_path = Path("dist") / "Multiaccount.exe"
+    exe_path = Path("dist") / EXE_NAME
     return exe_path if exe_path.exists() else None
 
 
@@ -22,7 +24,7 @@ def main(version, url):
     exe_path = find_exe()
 
     if not exe_path:
-        raise FileNotFoundError("Missing dist/Multiaccount.exe")
+        raise FileNotFoundError(f"Missing dist/{EXE_NAME}")
 
     manifest = {
         "version": version,
@@ -39,5 +41,5 @@ if __name__ == "__main__":
 
     main(
         version=version,
-        url=f"https://github.com/nikita133724/Steam/releases/download/{version}/Multiaccount.exe"
+        url=f"https://github.com/nikita133724/Steam/releases/download/{version}/{EXE_NAME}"
     )

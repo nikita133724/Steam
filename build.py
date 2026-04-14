@@ -1,9 +1,10 @@
 import PyInstaller.__main__
 from pathlib import Path
 import os
+
 BASE_DIR = Path(__file__).resolve().parent
 MAIN_FILE = BASE_DIR / "main.py"
-assets_path = str(BASE_DIR / "assets")
+assets_path = BASE_DIR / "assets"
 
 PyInstaller.__main__.run([
     str(MAIN_FILE),
@@ -19,10 +20,8 @@ PyInstaller.__main__.run([
     "--workpath=build",
     "--specpath=spec",
 
+    f"--add-data={assets_path.resolve()}{os.pathsep}assets",
 
-    f"--add-data={assets_path}{os.pathsep}assets",
-
-    # PyQt6 + Playwright сборка
     "--collect-all=PyQt6",
     "--collect-all=playwright",
 

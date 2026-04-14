@@ -314,10 +314,14 @@ class MainWindow(QMainWindow):
             f"{self.config.lang.get('cleanup_done')} {self.config.lang.get('cleanup_restart')}"
         )
     
+   
     def run_async(self, coro):
-        self.worker = AsyncWorker(coro)
-        self.worker.finished.connect(lambda _: None)
-        self.worker.start()
+        try:
+            self.worker = AsyncWorker(coro)
+            self.worker.finished.connect(lambda _: None)
+            self.worker.start()
+        except Exception as e:
+            self.logger.error(f"Async error: {e}")
     
     def refresh_table(self):
         lang = self.config.lang
@@ -446,14 +450,13 @@ class MainWindow(QMainWindow):
         self.logger.info(f"Account {account_id} closed by user")
     
     def closeEvent(self, event):
-        # Мягкое закрытие всех браузеров
-        if self.browser_engine:
-            async def close_all():
-                await self.browser_engine.shutdown()
-            
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(close_all())
-        
+        try:
+            if self.browser_engine:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(self.browser_engine.shutdown())
+        except Exception as e:
+            self.logger.error(f"Shutdown error: {e}")
+
         self.logger.info("Application closed")
         event.accept()

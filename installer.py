@@ -158,6 +158,7 @@ class InstallerWindow(QWidget):
     def cancel(self):
         self.worker.stop()
         self.status.setText("Cancelling...")
+        self.close()
 
     def on_error(self, msg):
         self.status.setText(f"Error: {msg}")
