@@ -20,9 +20,6 @@ TEMP_EXE = APP_EXE + ".part"
 MANIFEST_URL = "https://github.com/nikita133724/Steam/releases/latest/download/manifest.json"
 
 
-# =========================
-# SESSION WITH RETRY
-# =========================
 def create_session():
     session = requests.Session()
 
@@ -42,9 +39,6 @@ def create_session():
     return session
 
 
-# =========================
-# WORKER
-# =========================
 class DownloadWorker(QThread):
     progress = pyqtSignal(int, float)
     status = pyqtSignal(str)
@@ -66,8 +60,8 @@ class DownloadWorker(QThread):
 
             r = session.get(MANIFEST_URL, timeout=15)
             r.raise_for_status()
-
             data = r.json()
+
             url = data["url"]
             expected_hash = data.get("sha256")
 
@@ -77,8 +71,6 @@ class DownloadWorker(QThread):
                 r.raise_for_status()
 
                 total = int(r.headers.get("content-length", 0))
-                if total < 1_000_000:
-                    raise ValueError("Invalid file size")
 
                 downloaded = 0
                 start = time.time()
@@ -95,13 +87,11 @@ class DownloadWorker(QThread):
 
                             elapsed = time.time() - start
                             speed = (downloaded / 1024 / 1024) / max(elapsed, 0.1)
-                            percent = int(downloaded * 100 / total)
+                            percent = int(downloaded * 100 / max(total, 1))
 
                             self.progress.emit(percent, speed)
 
-            # =========================
             # VERIFY
-            # =========================
             if expected_hash:
                 self.status.emit("Verifying...")
 
@@ -114,6 +104,11 @@ class DownloadWorker(QThread):
                     raise ValueError("SHA256 mismatch")
 
             os.makedirs(APP_DIR, exist_ok=True)
+
+            # 🔥 FIX: безопасная замена
+            if os.path.exists(APP_EXE):
+                os.remove(APP_EXE)
+
             os.replace(TEMP_EXE, APP_EXE)
 
             self.done.emit()
@@ -122,9 +117,6 @@ class DownloadWorker(QThread):
             self.error.emit(str(e))
 
 
-# =========================
-# UI
-# =========================
 class InstallerWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -158,31 +150,6 @@ class InstallerWindow(QWidget):
         self.worker.error.connect(self.on_error)
         self.worker.done.connect(self.finish)
         self.worker.start()
-
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #121212;
-                color: white;
-                font-size: 13px;
-            }
-            QProgressBar {
-                border: 1px solid #333;
-                border-radius: 6px;
-                text-align: center;
-                height: 18px;
-            }
-            QProgressBar::chunk {
-                background-color: #4CAF50;
-            }
-            QPushButton {
-                background-color: #2a2a2a;
-                padding: 6px;
-                border-radius: 6px;
-            }
-            QPushButton:hover {
-                background-color: #3a3a3a;
-            }
-        """)
 
     def on_progress(self, p, speed):
         self.bar.setValue(p)

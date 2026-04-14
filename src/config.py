@@ -1,7 +1,7 @@
-import json
 from pathlib import Path
-import shutil
-
+import json
+import sys
+import os
 
 class Config:
     def __init__(self):
@@ -10,6 +10,7 @@ class Config:
 
         self.config_file = self.base_dir / "config.json"
         self.accounts_file = self.base_dir / "accounts.json"
+
         self.profiles_dir = self.base_dir / "profiles"
         self.logs_dir = self.base_dir / "logs"
         self.browsers_dir = self.base_dir / "browsers"
@@ -20,6 +21,21 @@ class Config:
 
         self.data = self.load_config()
         self.lang = self.load_language()
+
+    def resource_path(self, relative):
+        # 🔥 FIX: works for PyInstaller onefile
+        base = getattr(sys, "_MEIPASS", Path(__file__).parent.parent)
+        return Path(base) / relative
+
+    def load_language(self):
+        lang = self.data.get("language", "ru")
+
+        lang_file = self.resource_path(f"assets/{lang}.json")
+
+        if lang_file.exists():
+            return json.loads(lang_file.read_text(encoding="utf-8"))
+
+        return {}
 
     def load_config(self):
         if self.config_file.exists():

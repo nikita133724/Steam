@@ -37,10 +37,11 @@ class BrowserEngine:
 
         try:
             args = ['--disable-blink-features=AutomationControlled']
-            if sys.platform == 'linux':
-                args.extend(['--no-sandbox', '--disable-dev-shm-usage'])
-            elif sys.platform == 'win32':
-                args.append('--disable-gpu')
+
+            if sys.platform == "win32":
+                args.append("--disable-gpu")
+            elif sys.platform == "linux":
+                args += ["--no-sandbox", "--disable-dev-shm-usage"]
 
             proxy_settings = account.get("proxy") or {}
             proxy = None

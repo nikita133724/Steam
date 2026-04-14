@@ -3,10 +3,8 @@ import json
 from pathlib import Path
 import sys
 
-EXE_PATH = Path("dist/Multiaccount.exe")
 
-
-def sha256(file_path):
+def sha256(file_path: Path):
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -14,14 +12,22 @@ def sha256(file_path):
     return h.hexdigest()
 
 
+def find_exe():
+    # 🔥 FIX: onefile = всегда один файл
+    exe_path = Path("dist") / "Multiaccount.exe"
+    return exe_path if exe_path.exists() else None
+
+
 def main(version, url):
-    if not EXE_PATH.exists():
-        raise FileNotFoundError("Missing build output")
+    exe_path = find_exe()
+
+    if not exe_path:
+        raise FileNotFoundError("Missing dist/Multiaccount.exe")
 
     manifest = {
         "version": version,
         "url": url,
-        "sha256": sha256(EXE_PATH)
+        "sha256": sha256(exe_path)
     }
 
     with open("manifest.json", "w", encoding="utf-8") as f:
