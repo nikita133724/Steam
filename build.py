@@ -1,6 +1,6 @@
 import PyInstaller.__main__
 from pathlib import Path
-
+import os
 BASE_DIR = Path(__file__).resolve().parent
 MAIN_FILE = BASE_DIR / "main.py"
 assets_path = str(BASE_DIR / "assets")
