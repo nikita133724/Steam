@@ -1,19 +1,21 @@
 import json
-import os
 from pathlib import Path
+import shutil
 
 class Config:
     def __init__(self):
-        self.base_dir = Path.home("Multiaccount")
+        self.base_dir = Path.home() / "Multiaccount"
         self.base_dir.mkdir(exist_ok=True)
         
         self.config_file = self.base_dir / "config.json"
         self.accounts_file = self.base_dir / "accounts.json"
         self.profiles_dir = self.base_dir / "profiles"
         self.logs_dir = self.base_dir / "logs"
+        self.browsers_dir = self.base_dir / "browsers"
         
         self.profiles_dir.mkdir(exist_ok=True)
         self.logs_dir.mkdir(exist_ok=True)
+        self.browsers_dir.mkdir(exist_ok=True)
         
         self.data = self.load_config()
         self.lang = self.load_language()
@@ -56,3 +58,15 @@ class Config:
     
     def get_profile_path(self, account_id):
         return self.profiles_dir / f"account_{account_id}"
+
+    def clear_runtime_data(self):
+        """Удаляет все рабочие данные приложения, не затрагивая сторонние файлы пользователя."""
+        for path in [self.accounts_file, self.profiles_dir, self.logs_dir, self.browsers_dir]:
+            if path.is_file():
+                path.unlink(missing_ok=True)
+            elif path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+
+        self.profiles_dir.mkdir(exist_ok=True)
+        self.logs_dir.mkdir(exist_ok=True)
+        self.browsers_dir.mkdir(exist_ok=True)
