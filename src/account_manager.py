@@ -71,6 +71,7 @@ class AccountManager:
                 Logger.get_instance().info(f"Updated proxy for {account['name']}")
                 return True
         return False
+
     
     def _generate_user_agent(self):
         """Генерирует реальный User-Agent"""
@@ -79,5 +80,9 @@ class AccountManager:
         
         return f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.0"
 
+    def reset_accounts(self):
+        """Очищает аккаунты в памяти (после удаления data-файлов)."""
+        self.accounts = []
+        self.next_id = 1
 
 from src.logger import Logger

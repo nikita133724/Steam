@@ -246,6 +246,10 @@ class MainWindow(QMainWindow):
         self.logs_btn = QPushButton(lang.get("logs"))
         self.logs_btn.clicked.connect(self.logger.show_window)
         btn_layout.addWidget(self.logs_btn)
+
+        self.cleanup_btn = QPushButton(lang.get("cleanup_data"))
+        self.cleanup_btn.clicked.connect(self.cleanup_data)
+        btn_layout.addWidget(self.cleanup_btn)
         
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
@@ -267,7 +271,7 @@ class MainWindow(QMainWindow):
     
     def init_browser(self):
         async def setup():
-            self.browser_engine = BrowserEngine()
+            self.browser_engine = BrowserEngine(self.config)
             await self.browser_engine.init()
             
             # Проверяем Chromium
@@ -278,6 +282,37 @@ class MainWindow(QMainWindow):
             self.logger.info("Browser engine ready")
         
         self.run_async(setup())
+
+    def cleanup_data(self):
+        lang = self.config.lang
+        reply = QMessageBox.question(
+            self,
+            lang.get("cleanup_data"),
+            lang.get("cleanup_confirm"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        async def do_cleanup():
+            if self.browser_engine:
+                await self.browser_engine.shutdown()
+            return True
+
+        self.cleanup_worker = AsyncWorker(do_cleanup())
+        self.cleanup_worker.finished.connect(self._finish_cleanup)
+        self.cleanup_worker.start()
+
+    def _finish_cleanup(self, _):
+        self.config.clear_runtime_data()
+        self.account_manager.reset_accounts()
+        self.browser_engine = None
+        self.refresh_table()
+        QMessageBox.information(
+            self,
+            self.config.lang.get("cleanup_data"),
+            f"{self.config.lang.get('cleanup_done')} {self.config.lang.get('cleanup_restart')}"
+        )
     
     def run_async(self, coro):
         self.worker = AsyncWorker(coro)
@@ -373,6 +408,10 @@ class MainWindow(QMainWindow):
     
     def open_account(self, account):
         lang = self.config.lang
+
+        if not self.browser_engine:
+            QMessageBox.information(self, "Info", lang.get("cleanup_restart"))
+            return
         
         # Проверяем домен
         if not account.get("domain"):
@@ -410,7 +449,7 @@ class MainWindow(QMainWindow):
         # Мягкое закрытие всех браузеров
         if self.browser_engine:
             async def close_all():
-                await self.browser_engine.close_all()
+                await self.browser_engine.shutdown()
             
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)

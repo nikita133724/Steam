@@ -1,13 +1,16 @@
 import asyncio
 from playwright.async_api import async_playwright
 import sys
+import os
 
 class BrowserEngine:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.playwright = None
         self.browsers = {}  # account_id -> browser_context
     
     async def init(self):
+        os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.config.browsers_dir)
         self.playwright = await async_playwright().start()
     
     async def open_account(self, account, config, on_close=None):
@@ -113,6 +116,13 @@ class BrowserEngine:
         """Мягкое закрытие всех браузеров"""
         for account_id, browser in list(self.browsers.items()):
             await self.close_account(account_id)
+
+    async def shutdown(self):
+        """Полная остановка движка"""
+        await self.close_all()
+        if self.playwright:
+            await self.playwright.stop()
+            self.playwright = None
     
     async def check_chromium(self):
         """Проверяет установлен ли Chromium"""
