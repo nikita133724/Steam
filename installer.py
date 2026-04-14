@@ -10,11 +10,13 @@ TEMP_EXE = APP_EXE + ".tmp"
 
 MANIFEST_URL = "https://github.com/nikita133724/Steam/releases/latest/download/manifest.json"
 
+
 def ensure_dir():
     os.makedirs(APP_DIR, exist_ok=True)
 
+
 def get_download_url():
-    r = requests.get(MANIFEST_URL, timeout=10)
+    r = requests.get(MANIFEST_URL, timeout=15)
     r.raise_for_status()
 
     data = r.json()
@@ -24,6 +26,7 @@ def get_download_url():
 
     return data["url"], data.get("sha256")
 
+
 def verify_sha256(file_path, expected_hash):
     sha256 = hashlib.sha256()
 
@@ -32,13 +35,14 @@ def verify_sha256(file_path, expected_hash):
             sha256.update(chunk)
 
     return sha256.hexdigest().lower() == expected_hash.lower()
-    
+
+
 def download_exe():
     print("Downloading exe...")
 
     url, expected_hash = get_download_url()
 
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, timeout=30)
     r.raise_for_status()
 
     with open(TEMP_EXE, "wb") as f:
@@ -53,6 +57,7 @@ def download_exe():
 
     os.replace(TEMP_EXE, APP_EXE)
 
+
 def is_installed():
     return os.path.exists(APP_EXE)
 
@@ -60,6 +65,7 @@ def is_installed():
 def run_app():
     print("Running app...")
     subprocess.Popen([APP_EXE], cwd=APP_DIR, shell=False)
+
 
 def main():
     try:
@@ -73,6 +79,7 @@ def main():
     except Exception as e:
         print(f"Installer error: {e}")
         input("Press Enter to exit...")
+
 
 if __name__ == "__main__":
     main()

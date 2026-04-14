@@ -17,4 +17,9 @@ PyInstaller.__main__.run([
 
     '--distpath=dist',
     '--workpath=build',
+    '--specpath=spec',
+
+    '--collect-submodules=PyQt6',
+    '--collect-submodules=playwright',
+    '--hidden-import=requests',
 ])

@@ -28,12 +28,15 @@ jobs:
       - name: Clean build folders
         shell: pwsh
         run: |
-         Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
-         Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
-         Remove-Item -Recurse -Force spec -ErrorAction SilentlyContinue
-         
+          Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force spec -ErrorAction SilentlyContinue
+
       - name: Build app
         run: python build.py
+
+      - name: Generate manifest
+        run: python manifest.py ${{ github.ref_name }}
 
       - name: Build installer
         run: python build1.py
@@ -44,3 +47,4 @@ jobs:
           files: |
             dist/Multiaccount.exe
             dist/MultiaccountInstaller.exe
+            manifest.json

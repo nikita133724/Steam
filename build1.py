@@ -1,4 +1,3 @@
-# build_installer.py
 import PyInstaller.__main__
 import os
 
@@ -8,7 +7,6 @@ PyInstaller.__main__.run([
     os.path.join(BASE_DIR, 'installer.py'),
 
     '--onefile',
-    '--windowed',
     '--clean',
     '--noconfirm',
 

@@ -1,8 +1,10 @@
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 EXE_PATH = Path("dist/Multiaccount.exe")
+
 
 def sha256(file_path):
     h = hashlib.sha256()
@@ -11,7 +13,11 @@ def sha256(file_path):
             h.update(chunk)
     return h.hexdigest()
 
+
 def main(version, url):
+    if not EXE_PATH.exists():
+        raise FileNotFoundError(f"Missing build output: {EXE_PATH}")
+
     manifest = {
         "version": version,
         "url": url,
@@ -21,12 +27,11 @@ def main(version, url):
     with open("manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
-if __name__ == "__main__":
-    import sys
 
-    version = sys.argv[1] if len(sys.argv) > 1 else "dev"
+if __name__ == "__main__":
+    version = sys.argv[1]  # ВАЖНО: без lstrip("v")
 
     main(
         version=version,
-        url=f"https://github.com/nikita133724/Steam/releases/download/v{version}/Multiaccount.exe"
+        url=f"https://github.com/nikita133724/Steam/releases/download/{version}/Multiaccount.exe"
     )
