@@ -7,13 +7,14 @@ import subprocess
 
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel,
-    QProgressBar, QPushButton
+    QProgressBar, QPushButton, QCheckBox
 )
 from PyQt6.QtCore import QThread, pyqtSignal
 
 
 APP_NAME = "Multiaccount"
-APP_DIR = os.path.join(os.getenv("LOCALAPPDATA"), APP_NAME)
+SYSTEM_DRIVE = os.getenv("SystemDrive", "C:")
+APP_DIR = os.path.join(SYSTEM_DRIVE + os.sep, APP_NAME)
 APP_EXE = os.path.join(APP_DIR, "Multiaccount.exe")
 TEMP_EXE = APP_EXE + ".part"
 
@@ -122,12 +123,49 @@ class InstallerWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("Multiaccount Installer")
-        self.setFixedSize(420, 220)
+        self.setFixedSize(520, 300)
+        self.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #0f1117, stop:1 #182033);
+                color: #ebf1ff;
+                font-size: 13px;
+            }
+            QLabel#title { font-size: 24px; font-weight: 700; color: #f4f8ff; }
+            QLabel#hint { color: #9eafce; }
+            QProgressBar {
+                border: 1px solid #31415d;
+                border-radius: 9px;
+                background: #121a2a;
+                text-align: center;
+                min-height: 20px;
+            }
+            QProgressBar::chunk {
+                border-radius: 8px;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4b78ff,stop:1 #00d0ff);
+            }
+            QPushButton {
+                background: #2f63ff;
+                border: none;
+                border-radius: 10px;
+                color: #ffffff;
+                font-weight: 600;
+                padding: 9px 14px;
+            }
+            QPushButton:hover { background: #4c79ff; }
+            QCheckBox { color: #d8e4ff; }
+        """)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(10)
 
-        self.title = QLabel("Installing Multiaccount...")
+        self.title = QLabel("Multiaccount")
+        self.title.setObjectName("title")
         layout.addWidget(self.title)
+
+        self.hint = QLabel("Installing latest version. Please wait until setup completes.")
+        self.hint.setObjectName("hint")
+        layout.addWidget(self.hint)
 
         self.bar = QProgressBar()
         layout.addWidget(self.bar)
@@ -137,6 +175,10 @@ class InstallerWindow(QWidget):
 
         self.status = QLabel("Starting...")
         layout.addWidget(self.status)
+
+        self.desktop_shortcut = QCheckBox("Create desktop shortcut")
+        self.desktop_shortcut.setChecked(True)
+        layout.addWidget(self.desktop_shortcut)
 
         self.btn = QPushButton("Cancel")
         self.btn.clicked.connect(self.cancel)
@@ -164,9 +206,28 @@ class InstallerWindow(QWidget):
         self.status.setText(f"Error: {msg}")
 
     def finish(self):
+        if self.desktop_shortcut.isChecked():
+            self._create_desktop_shortcut()
         self.status.setText("Launching...")
         subprocess.Popen([APP_EXE], cwd=APP_DIR)
         self.close()
+
+    def _create_desktop_shortcut(self):
+        desktop = os.path.join(os.path.expanduser("~"), "Desktop", "Multiaccount.lnk")
+        powershell_script = (
+            "$WshShell = New-Object -ComObject WScript.Shell; "
+            f"$Shortcut = $WshShell.CreateShortcut('{desktop}'); "
+            f"$Shortcut.TargetPath = '{APP_EXE}'; "
+            f"$Shortcut.WorkingDirectory = '{APP_DIR}'; "
+            "$Shortcut.Save();"
+        )
+        try:
+            subprocess.run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", powershell_script],
+                check=True
+            )
+        except Exception:
+            self.status.setText("Installed, but shortcut creation failed")
 
 
 def main():
