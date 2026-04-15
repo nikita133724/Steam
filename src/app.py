@@ -1,11 +1,12 @@
 import asyncio
 import sys
+import re
 from urllib.parse import urlparse
 import requests
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
-    QLabel, QMessageBox, QComboBox, QTextEdit
+    QLabel, QMessageBox, QComboBox, QTextEdit, QFrame
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
@@ -117,9 +118,9 @@ class ProxyDialog(QDialog):
         layout.addWidget(QLabel(lang.get("enter_proxy")))
 
         self.proxy_input = QLineEdit()
-        self.proxy_input.setPlaceholderText("socks5://user:pass@host:port")
+        self.proxy_input.setPlaceholderText(self.lang.get("proxy_placeholder", "socks5://user:pass@host:port"))
         current_proxy = account.get("proxy") or {}
-        self.proxy_input.setText(current_proxy.get("server", ""))
+        self.proxy_input.setText(account.get("proxy_raw") or current_proxy.get("server", ""))
         layout.addWidget(self.proxy_input)
 
         self.tz_label = QLabel(f"{lang.get('timezone')}: {self.detected_timezone}")
@@ -140,7 +141,7 @@ class ProxyDialog(QDialog):
 
         self.setLayout(layout)
 
-    def _parse_proxy(self, value):
+    def _parse_proxy_url(self, value):
         parsed = urlparse(value)
         if parsed.scheme.lower() not in {"socks5", "socks5h", "http", "https"}:
             raise ValueError("Unsupported proxy scheme")
@@ -152,11 +153,44 @@ class ProxyDialog(QDialog):
             "password": parsed.password
         }
 
+    def _normalize_compact_proxy(self, value):
+        # Поддерживаем форматы:
+        # host port
+        # host port login password
+        # login password port host
+        # host:port[:login:password]
+        tokens = [token for token in re.split(r"[\s:;,\|]+", value.strip()) if token]
+        if len(tokens) == 2:
+            host, port = tokens
+            username = password = None
+        elif len(tokens) == 4 and tokens[1].isdigit():
+            host, port, username, password = tokens
+        elif len(tokens) == 4 and tokens[2].isdigit():
+            username, password, port, host = tokens
+        else:
+            raise ValueError("Unsupported compact proxy format")
+
+        if not str(port).isdigit():
+            raise ValueError("Invalid proxy port")
+
+        return {
+            "server": f"socks5://{host}:{int(port)}",
+            "username": username,
+            "password": password
+        }
+
+    def _parse_proxy(self, value):
+        if "://" in value:
+            return self._parse_proxy_url(value)
+        return self._normalize_compact_proxy(value)
+
     def get_proxy(self):
         raw = self.proxy_input.text().strip()
         if not raw:
             return None
-        return self._parse_proxy(raw)
+        proxy = self._parse_proxy(raw)
+        proxy["raw"] = raw
+        return proxy
 
     def detect_timezone(self):
         try:
@@ -219,6 +253,7 @@ class MainWindow(QMainWindow):
         self.config = Config()
         self.account_manager = AccountManager(self.config)
         self.browser_engine = None
+        self.browser_ready = False
         self.logger = Logger.get_instance()
         self._workers = []
         
@@ -241,14 +276,107 @@ class MainWindow(QMainWindow):
         lang = self.config.lang
         
         self.setWindowTitle(lang.get("window_title", "Multiaccount"))
-        self.setMinimumSize(800, 500)
+        self.setMinimumSize(1080, 680)
         
         central = QWidget()
+        central.setObjectName("central")
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
-        
-        # Кнопки управления
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(14)
+
+        self.setStyleSheet("""
+            QMainWindow, QWidget#central {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #0f1117,stop:1 #171c28);
+                color: #f2f5ff;
+                font-size: 13px;
+            }
+            QFrame#topCard, QFrame#tableCard {
+                background: rgba(24, 29, 40, 0.94);
+                border: 1px solid #2b3446;
+                border-radius: 14px;
+            }
+            QLabel#title {
+                font-size: 26px;
+                font-weight: 700;
+                color: #f5f8ff;
+            }
+            QLabel#subtitle {
+                color: #94a4c3;
+                font-size: 13px;
+            }
+            QLabel#statusBadge {
+                background: #3b4461;
+                border: 1px solid #576386;
+                border-radius: 10px;
+                padding: 5px 10px;
+                color: #e5ecff;
+                font-weight: 600;
+            }
+            QTableWidget {
+                background: #151b28;
+                alternate-background-color: #1a2232;
+                border: 1px solid #2a3750;
+                border-radius: 10px;
+                gridline-color: #273246;
+                selection-background-color: #2f63ff;
+                selection-color: #ffffff;
+            }
+            QHeaderView::section {
+                background: #20293a;
+                color: #d9e4ff;
+                padding: 8px;
+                border: none;
+                border-bottom: 1px solid #2d3a52;
+            }
+            QPushButton {
+                background: #2f63ff;
+                border: none;
+                border-radius: 10px;
+                padding: 9px 14px;
+                color: #f8fbff;
+                font-weight: 600;
+            }
+            QPushButton:hover { background: #4b78ff; }
+            QPushButton:pressed { background: #2754de; }
+            QPushButton:disabled { background: #495978; color: #b9c4da; }
+            QLineEdit, QComboBox {
+                background: #182131;
+                border: 1px solid #2e3e5a;
+                border-radius: 8px;
+                padding: 7px;
+                color: #ecf1ff;
+            }
+        """)
+
+        top_card = QFrame()
+        top_card.setObjectName("topCard")
+        top_layout = QHBoxLayout(top_card)
+        top_layout.setContentsMargins(16, 14, 16, 14)
+
+        title_layout = QVBoxLayout()
+        title = QLabel(lang.get("window_title", "Multiaccount"))
+        title.setObjectName("title")
+        subtitle = QLabel(lang.get("subtitle", "Manage isolated multi-account browser sessions"))
+        subtitle.setObjectName("subtitle")
+        title_layout.addWidget(title)
+        title_layout.addWidget(subtitle)
+        top_layout.addLayout(title_layout)
+
+        top_layout.addStretch()
+        self.browser_status = QLabel(lang.get("browser_status_init", "Browser initializing..."))
+        self.browser_status.setObjectName("statusBadge")
+        self.browser_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        top_layout.addWidget(self.browser_status)
+        layout.addWidget(top_card)
+
+        controls_card = QFrame()
+        controls_card.setObjectName("topCard")
+        controls_layout = QVBoxLayout(controls_card)
+        controls_layout.setContentsMargins(16, 12, 16, 12)
+
         btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
         
         self.add_btn = QPushButton(lang.get("add_account"))
         self.add_btn.clicked.connect(self.add_account)
@@ -263,11 +391,20 @@ class MainWindow(QMainWindow):
         btn_layout.addWidget(self.cleanup_btn)
         
         btn_layout.addStretch()
-        layout.addLayout(btn_layout)
+        controls_layout.addLayout(btn_layout)
+        layout.addWidget(controls_card)
         
         # Таблица аккаунтов
+        table_card = QFrame()
+        table_card.setObjectName("tableCard")
+        table_layout = QVBoxLayout(table_card)
+        table_layout.setContentsMargins(14, 14, 14, 14)
+
         self.table = QTableWidget()
         self.table.setColumnCount(5)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(46)
         self.table.setHorizontalHeaderLabels([
             "ID", 
             lang.get("account_name"), 
@@ -276,7 +413,8 @@ class MainWindow(QMainWindow):
             ""
         ])
         self.table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.table)
+        table_layout.addWidget(self.table)
+        layout.addWidget(table_card, 1)
         
         self.refresh_table()
     
@@ -290,16 +428,31 @@ class MainWindow(QMainWindow):
                 self.logger.info("Chromium not found, installing...")
                 installed = await self.browser_engine.install_chromium()
                 if not installed:
-                    return {"error": "Chromium install failed"}
+                    return {"error": "Chromium install failed", "ready": False}
             
             self.logger.info("Browser engine ready")
-            return {"success": True}
+            return {"success": True, "ready": True}
         
         self.run_async(setup(), on_success=self._on_init_browser_done)
 
     def _on_init_browser_done(self, result):
         if result and result.get("error"):
+            self.browser_ready = False
+            self.browser_status.setText(self.config.lang.get("browser_status_error", "Browser init error"))
             QMessageBox.warning(self, "Browser", result["error"])
+            self.refresh_table()
+            return
+        self.browser_ready = bool(result and result.get("ready"))
+        self.browser_status.setText(
+            self.config.lang.get("browser_status_ready", "Browser ready")
+            if self.browser_ready
+            else self.config.lang.get("browser_status_error", "Browser init error")
+        )
+        if self.browser_ready:
+            self.browser_status.setStyleSheet("background:#1f5b46;border:1px solid #2f8768;color:#d4ffe8;border-radius:10px;padding:5px 10px;font-weight:600;")
+        else:
+            self.browser_status.setStyleSheet("background:#5d2834;border:1px solid #8e3f4f;color:#ffe3e8;border-radius:10px;padding:5px 10px;font-weight:600;")
+        self.refresh_table()
 
     def cleanup_data(self):
         lang = self.config.lang
@@ -375,6 +528,7 @@ class MainWindow(QMainWindow):
             actions_layout.setContentsMargins(5, 0, 5, 0)
             
             open_btn = QPushButton(lang.get("open_account"))
+            open_btn.setEnabled(self.browser_ready)
             open_btn.clicked.connect(lambda _, a=acc: self.open_account(a))
             
             edit_proxy_btn = QPushButton(lang.get("proxy"))
@@ -430,6 +584,7 @@ class MainWindow(QMainWindow):
                     timezone=dialog.detected_timezone if proxy else None
                 )
                 account["proxy"] = proxy
+                account["proxy_raw"] = (proxy or {}).get("raw")
                 if proxy:
                     account["timezone"] = dialog.detected_timezone
                 self.refresh_table()
