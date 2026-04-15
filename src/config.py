@@ -1,18 +1,17 @@
 from pathlib import Path
 import json
 import sys
-import os
 import shutil
+
+from src.paths import get_data_dir
 
 
 class Config:
     def __init__(self):
-        if sys.platform == "win32":
-            system_drive = os.getenv("SystemDrive", "C:")
-            self.base_dir = Path(system_drive) / "Multiaccount"
-        else:
-            self.base_dir = Path.home() / "Multiaccount"
-        self.base_dir.mkdir(exist_ok=True)
+        self.base_dir = get_data_dir()
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+
+        self._migrate_legacy_windows_dir()
 
         self.config_file = self.base_dir / "config.json"
         self.accounts_file = self.base_dir / "accounts.json"
@@ -28,7 +27,20 @@ class Config:
         self.data = self.load_config()
         self.lang = self.load_language()
 
-    # 🔥 FIX: PyInstaller-safe путь
+    def _migrate_legacy_windows_dir(self):
+        if sys.platform != "win32":
+            return
+
+        legacy_dir = Path("C:/Multiaccount")
+        if not legacy_dir.exists() or legacy_dir.resolve() == self.base_dir.resolve():
+            return
+
+        for filename in ("config.json", "accounts.json"):
+            old_file = legacy_dir / filename
+            new_file = self.base_dir / filename
+            if old_file.exists() and not new_file.exists():
+                shutil.copy2(old_file, new_file)
+
     def resource_path(self, relative):
         base = getattr(sys, "_MEIPASS", Path(__file__).parent.parent)
         return Path(base) / relative
@@ -44,9 +56,8 @@ class Config:
             encoding="utf-8"
         )
 
-    # 🔥 FIXED VERSION (единственная!)
     def load_language(self):
-        lang = self.data.get("language", "ru")
+        lang = self.data.get("language") or "ru"
 
         lang_file = self.resource_path(f"assets/{lang}.json")
 

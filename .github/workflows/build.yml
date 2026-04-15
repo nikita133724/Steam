@@ -37,14 +37,10 @@ jobs:
 
       - name: Generate manifest
         run: python manifest.py ${{ github.ref_name }} ${{ github.repository }}
-        
-      - name: Build installer
-        run: python build1.py
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/Multiaccount.exe
-            dist/MultiaccountInstaller.exe
             manifest.json

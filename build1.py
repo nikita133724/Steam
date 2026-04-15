@@ -1,27 +1,27 @@
 from pathlib import Path
-import PyInstaller.__main__
-import os
+import subprocess
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent
-assets_path = BASE_DIR / "assets"
+INSTALLER_FILE = BASE_DIR / "installer.py"
 
-PyInstaller.__main__.run([
-    str(BASE_DIR / "installer.py"),
 
-    "--onefile",
-    "--windowed",
-    "--clean",
-    "--noconfirm",
+def main() -> int:
+    cmd = [
+        sys.executable,
+        "-m",
+        "nuitka",
+        "--onefile",
+        "--windows-console-mode=disable",
+        "--enable-plugin=pyqt6",
+        "--include-data-dir=assets=assets",
+        "--include-package=requests",
+        "--output-dir=dist",
+        "--output-filename=MultiaccountInstaller.exe",
+        str(INSTALLER_FILE),
+    ]
+    return subprocess.call(cmd, cwd=BASE_DIR)
 
-    "--name=MultiaccountInstaller",
 
-    "--distpath=dist",
-    "--workpath=build",
-    "--specpath=spec",
-
-    f"--add-data={assets_path.resolve()}{os.pathsep}assets",
-
-    "--collect-all=PyQt6",
-    "--hidden-import=requests",
-    "--hidden-import=urllib3",
-])
+if __name__ == "__main__":
+    raise SystemExit(main())

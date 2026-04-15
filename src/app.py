@@ -1,19 +1,16 @@
-import asyncio
-import sys
 import re
 from urllib.parse import urlparse
-import requests
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
-    QLabel, QMessageBox, QComboBox, QTextEdit, QFrame
+    QLabel, QMessageBox, QComboBox, QFrame
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, pyqtSignal
 
+from src.account_overlay import AccountOverlay
 from src.config import Config
 from src.account_manager import AccountManager
-from src.browser_engine import BrowserEngine
+from src.browser_runtime import BrowserRuntime
 from src.logger import Logger
 
 
@@ -105,6 +102,8 @@ class AddAccountDialog(QDialog):
 
 
 class ProxyDialog(QDialog):
+    detect_requested = pyqtSignal()
+
     def __init__(self, lang, account, parent=None):
         super().__init__(parent)
         self.lang = lang
@@ -127,7 +126,7 @@ class ProxyDialog(QDialog):
         layout.addWidget(self.tz_label)
 
         detect_btn = QPushButton(lang.get("detect_timezone"))
-        detect_btn.clicked.connect(self.detect_timezone)
+        detect_btn.clicked.connect(self.detect_requested.emit)
         layout.addWidget(detect_btn)
 
         btn_layout = QHBoxLayout()
@@ -192,72 +191,19 @@ class ProxyDialog(QDialog):
         proxy["raw"] = raw
         return proxy
 
-    def detect_timezone(self):
-        try:
-            proxy = self.get_proxy()
-            if not proxy:
-                QMessageBox.warning(self, "Proxy", self.lang.get("proxy_required"))
-                return
-
-            proxy_url = proxy["server"]
-            if proxy.get("username") and proxy.get("password"):
-                parsed = urlparse(proxy_url)
-                proxy_url = (
-                    f"{parsed.scheme}://{proxy['username']}:{proxy['password']}"
-                    f"@{parsed.hostname}:{parsed.port}"
-                )
-
-            response = requests.get(
-                "https://ipapi.co/timezone/",
-                proxies={"http": proxy_url, "https": proxy_url},
-                timeout=8
-            )
-            timezone = response.text.strip()
-            if "/" in timezone:
-                self.detected_timezone = timezone
-                self.tz_label.setText(f"{self.lang.get('timezone')}: {timezone}")
-            else:
-                raise ValueError("Timezone not detected")
-        except Exception as e:
-            QMessageBox.warning(self, "Timezone", f"{self.lang.get('timezone_error')}: {e}")
-
-
-class AsyncWorker(QThread):
-    finished = pyqtSignal(object)
-    failed = pyqtSignal(str)
-    
-    def __init__(self, coro):
-        super().__init__()
-        self.coro = coro
-    
-    def run(self):
-        loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(self.coro)
-            self.finished.emit(result)
-        except Exception as e:
-            self.failed.emit(str(e))
-        finally:
-            try:
-                loop.run_until_complete(loop.shutdown_asyncgens())
-            except Exception:
-                pass
-            loop.close()
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
         self.config = Config()
         self.account_manager = AccountManager(self.config)
-        self.browser_engine = None
+        self.browser_runtime = BrowserRuntime(self.config, Logger.get_instance())
         self.browser_ready = False
         self.logger = Logger.get_instance()
-        self._workers = []
+        self.browser_runtime.browser_closed.connect(self.on_browser_close)
+        self.open_account_ids = set()
+        self.overlays = {}
         
-        # Проверяем первый запуск
         if self.config.data.get("first_run", True):
             self.show_language_dialog()
         
@@ -419,21 +365,10 @@ class MainWindow(QMainWindow):
         self.refresh_table()
     
     def init_browser(self):
-        async def setup():
-            self.browser_engine = BrowserEngine(self.config)
-            await self.browser_engine.init()
-            
-            # Проверяем Chromium
-            if not await self.browser_engine.check_chromium():
-                self.logger.info("Chromium not found, installing...")
-                installed = await self.browser_engine.install_chromium()
-                if not installed:
-                    return {"error": "Chromium install failed", "ready": False}
-            
-            self.logger.info("Browser engine ready")
-            return {"success": True, "ready": True}
-        
-        self.run_async(setup(), on_success=self._on_init_browser_done)
+        self.browser_runtime.initialize(
+            on_success=self._on_init_browser_done,
+            on_error=self._on_async_error,
+        )
 
     def _on_init_browser_done(self, result):
         if result and result.get("error"):
@@ -465,43 +400,25 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        async def do_cleanup():
-            if self.browser_engine:
-                await self.browser_engine.shutdown()
-            return True
-
-        self.cleanup_worker = AsyncWorker(do_cleanup())
-        self.cleanup_worker.finished.connect(self._finish_cleanup)
-        self.cleanup_worker.start()
+        self.browser_runtime.shutdown_sync()
+        self._finish_cleanup(True)
 
     def _finish_cleanup(self, _):
         self.config.clear_runtime_data()
         self.account_manager.reset_accounts()
-        self.browser_engine = None
+        self.browser_ready = False
+        self.open_account_ids.clear()
+        self._clear_overlays()
+        self.browser_runtime = BrowserRuntime(self.config, self.logger)
+        self.browser_runtime.browser_closed.connect(self.on_browser_close)
+        self.browser_status.setText(self.config.lang.get("cleanup_restart"))
+        self.browser_status.setStyleSheet("background:#5d2834;border:1px solid #8e3f4f;color:#ffe3e8;border-radius:10px;padding:5px 10px;font-weight:600;")
         self.refresh_table()
         QMessageBox.information(
             self,
             self.config.lang.get("cleanup_data"),
             f"{self.config.lang.get('cleanup_done')} {self.config.lang.get('cleanup_restart')}"
         )
-    
-   
-    def run_async(self, coro, on_success=None, on_error=None):
-        try:
-            worker = AsyncWorker(coro)
-            self._workers.append(worker)
-
-            def cleanup():
-                if worker in self._workers:
-                    self._workers.remove(worker)
-
-            worker.finished.connect(on_success or (lambda _: None))
-            worker.failed.connect(on_error or self._on_async_error)
-            worker.finished.connect(lambda _: cleanup())
-            worker.failed.connect(lambda _: cleanup())
-            worker.start()
-        except Exception as e:
-            self.logger.error(f"Async error: {e}")
 
     def _on_async_error(self, message):
         self.logger.error(f"Async worker failed: {message}")
@@ -519,7 +436,8 @@ class MainWindow(QMainWindow):
             domain = acc.get("domain") or "—"
             self.table.setItem(i, 2, QTableWidgetItem(domain))
             proxy_data = acc.get("proxy") or {}
-            proxy_title = proxy_data.get("server", "—")
+            status = lang.get("status_active") if acc["id"] in self.open_account_ids else lang.get("status_inactive")
+            proxy_title = f"{status} | {proxy_data.get('server', '—')}"
             self.table.setItem(i, 3, QTableWidgetItem(proxy_title))
             
             # Кнопки действий
@@ -530,6 +448,10 @@ class MainWindow(QMainWindow):
             open_btn = QPushButton(lang.get("open_account"))
             open_btn.setEnabled(self.browser_ready)
             open_btn.clicked.connect(lambda _, a=acc: self.open_account(a))
+
+            close_btn = QPushButton(lang.get("close_account"))
+            close_btn.setEnabled(acc["id"] in self.open_account_ids)
+            close_btn.clicked.connect(lambda _, aid=acc["id"]: self.close_account(aid))
             
             edit_proxy_btn = QPushButton(lang.get("proxy"))
             edit_proxy_btn.clicked.connect(lambda _, a=acc: self.edit_proxy(a))
@@ -538,6 +460,7 @@ class MainWindow(QMainWindow):
             delete_btn.clicked.connect(lambda _, a=acc: self.delete_account(a))
             
             actions_layout.addWidget(open_btn)
+            actions_layout.addWidget(close_btn)
             actions_layout.addWidget(edit_proxy_btn)
             actions_layout.addWidget(delete_btn)
             actions_layout.addStretch()
@@ -565,16 +488,33 @@ class MainWindow(QMainWindow):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            # Закрываем браузер если открыт
-            if self.browser_engine:
-                self.run_async(self.browser_engine.close_account(account["id"]))
-            
-            self.account_manager.delete_account(account["id"])
-            self.refresh_table()
+            self.browser_runtime.close_account(
+                account["id"],
+                on_success=lambda _result, aid=account["id"]: self._finalize_delete_account(aid),
+                on_error=lambda message, aid=account["id"]: self._delete_after_error(aid, message),
+            )
+
+    def close_account(self, account_id):
+        self.browser_runtime.close_account(
+            account_id,
+            on_success=lambda _result: None,
+            on_error=lambda message: self.logger.warning(f"Close account failed: {message}"),
+        )
+
+    def _finalize_delete_account(self, account_id):
+        self.open_account_ids.discard(account_id)
+        self._close_overlay(account_id)
+        self.account_manager.delete_account(account_id)
+        self.refresh_table()
+
+    def _delete_after_error(self, account_id, message):
+        self.logger.warning(f"Account close before delete failed: {message}")
+        self._finalize_delete_account(account_id)
 
     def edit_proxy(self, account):
         lang = self.config.lang
         dialog = ProxyDialog(lang, account, self)
+        dialog.detect_requested.connect(lambda: self._detect_timezone_for_dialog(dialog))
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
                 proxy = dialog.get_proxy()
@@ -598,7 +538,7 @@ class MainWindow(QMainWindow):
     def open_account(self, account):
         lang = self.config.lang
 
-        if not self.browser_engine:
+        if not self.browser_ready:
             QMessageBox.information(self, "Info", lang.get("cleanup_restart"))
             return
         
@@ -614,40 +554,116 @@ class MainWindow(QMainWindow):
                 else:
                     return
 
-        # Открываем браузер
-        async def do_open():
-            return await self.browser_engine.open_account(
-                account, 
-                self.config,
-                on_close=lambda aid: self.on_browser_close(aid)
-            )
-
-        self.run_async(
-            do_open(),
-            on_success=lambda result: self._handle_open_result(result),
-            on_error=lambda message: QMessageBox.critical(self, "Error", message)
-        )
         self.logger.info(f"Opening account: {account['name']}")
+        if account.get("proxy"):
+            self.browser_runtime.detect_timezone(
+                account["proxy"],
+                on_success=lambda timezone, acc=account: self._open_account_with_timezone(acc, timezone),
+                on_error=lambda message, acc=account: self._open_account_without_timezone(acc, message),
+            )
+            return
+
+        self._submit_open_account(account)
+
+    def _open_account_with_timezone(self, account, timezone):
+        if timezone:
+            self.account_manager.update_proxy(account["id"], account.get("proxy"), timezone=timezone)
+            account["timezone"] = timezone
+        self._submit_open_account(account)
+
+    def _open_account_without_timezone(self, account, message):
+        self.logger.warning(f"Timezone sync failed for account {account['name']}: {message}")
+        self._submit_open_account(account)
+
+    def _submit_open_account(self, account):
+        self.browser_runtime.open_account(
+            dict(account),
+            on_success=self._handle_open_result,
+            on_error=lambda message: QMessageBox.critical(self, "Error", message),
+        )
 
     def _handle_open_result(self, result):
         if result and result.get("error"):
             QMessageBox.critical(self, "Error", result["error"])
+            return
+        if result and result.get("success"):
+            account_id = result.get("account_id")
+            if account_id is not None:
+                self.open_account_ids.add(account_id)
+                self._show_overlay(account_id, result.get("overlay") or {})
+                self.refresh_table()
     
     def on_browser_close(self, account_id):
+        self.open_account_ids.discard(account_id)
+        self._close_overlay(account_id)
+        self.refresh_table()
         self.logger.info(f"Account {account_id} closed by user")
+
+    def _overlay_details(self, overlay):
+        return [
+            (self.config.lang.get("overlay_ip", "IP"), overlay.get("ip", "unknown")),
+            (self.config.lang.get("overlay_timezone", "Timezone"), overlay.get("timezone", "unknown")),
+            (self.config.lang.get("overlay_location", "Location"), f"{overlay.get('city', 'unknown')}, {overlay.get('country', 'unknown')}"),
+            (self.config.lang.get("overlay_device", "Device"), overlay.get("device", "unknown")),
+            (self.config.lang.get("overlay_os", "OS"), overlay.get("os", "unknown")),
+            (self.config.lang.get("overlay_browser", "Browser"), overlay.get("browser", "unknown")),
+        ]
+
+    def _show_overlay(self, account_id, overlay):
+        self._close_overlay(account_id)
+        title = f"{overlay.get('account_name', 'Account')} #{account_id}"
+        widget = AccountOverlay(title, self._overlay_details(overlay), slot_index=len(self.overlays))
+        self.overlays[account_id] = widget
+        self._reposition_overlays()
+        widget.show()
+
+    def _close_overlay(self, account_id):
+        widget = self.overlays.pop(account_id, None)
+        if widget:
+            widget.close()
+        self._reposition_overlays()
+
+    def _clear_overlays(self):
+        for account_id in list(self.overlays.keys()):
+            self._close_overlay(account_id)
+
+    def _reposition_overlays(self):
+        for index, account_id in enumerate(sorted(self.overlays.keys())):
+            self.overlays[account_id].reposition(index)
+
+    def _detect_timezone_for_dialog(self, dialog):
+        try:
+            proxy = dialog.get_proxy()
+        except ValueError:
+            QMessageBox.warning(self, "Proxy", self.config.lang.get("proxy_invalid"))
+            return
+
+        if not proxy:
+            QMessageBox.warning(self, "Proxy", self.config.lang.get("proxy_required"))
+            return
+
+        dialog.tz_label.setText(f"{self.config.lang.get('timezone')}: ...")
+        self.browser_runtime.detect_timezone(
+            proxy,
+            on_success=lambda timezone, dlg=dialog: self._apply_dialog_timezone(dlg, timezone),
+            on_error=lambda message, dlg=dialog: self._show_dialog_timezone_error(dlg, message),
+        )
+
+    def _apply_dialog_timezone(self, dialog, timezone):
+        if timezone:
+            dialog.detected_timezone = timezone
+            dialog.tz_label.setText(f"{self.config.lang.get('timezone')}: {timezone}")
+
+    def _show_dialog_timezone_error(self, dialog, message):
+        dialog.tz_label.setText(f"{self.config.lang.get('timezone')}: {dialog.detected_timezone}")
+        QMessageBox.warning(self, "Timezone", f"{self.config.lang.get('timezone_error')}: {message}")
     
     def closeEvent(self, event):
-        loop = None
         try:
-            if self.browser_engine:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(self.browser_engine.shutdown())
+            self._clear_overlays()
+            self.browser_runtime.shutdown_sync()
         except Exception as e:
             self.logger.error(f"Shutdown error: {e}")
-        finally:
-            if loop is not None:
-                loop.close()
 
         self.logger.info("Application closed")
         event.accept()

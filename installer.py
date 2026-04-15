@@ -13,8 +13,12 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 
 APP_NAME = "Multiaccount"
-SYSTEM_DRIVE = os.getenv("SystemDrive", "C:")
-APP_DIR = os.path.join(SYSTEM_DRIVE + os.sep, APP_NAME)
+LOCALAPPDATA = os.getenv("LOCALAPPDATA")
+if LOCALAPPDATA:
+    APP_DIR = os.path.join(LOCALAPPDATA, "Programs", APP_NAME)
+else:
+    SYSTEM_DRIVE = os.getenv("SystemDrive", "C:")
+    APP_DIR = os.path.join(SYSTEM_DRIVE + os.sep, APP_NAME)
 APP_EXE = os.path.join(APP_DIR, "Multiaccount.exe")
 TEMP_EXE = APP_EXE + ".part"
 
@@ -55,6 +59,11 @@ class DownloadWorker(QThread):
 
     def run(self):
         try:
+            os.makedirs(APP_DIR, exist_ok=True)
+
+            if os.path.exists(TEMP_EXE):
+                os.remove(TEMP_EXE)
+
             session = create_session()
 
             self.status.emit("Loading manifest...")
@@ -92,7 +101,6 @@ class DownloadWorker(QThread):
 
                             self.progress.emit(percent, speed)
 
-            # VERIFY
             if expected_hash:
                 self.status.emit("Verifying...")
 
@@ -102,11 +110,8 @@ class DownloadWorker(QThread):
                         h.update(chunk)
 
                 if h.hexdigest().lower() != expected_hash.lower():
-                    raise ValueError("SHA256 mismatch")
+                    raise ValueError("Downloaded file verification failed")
 
-            os.makedirs(APP_DIR, exist_ok=True)
-
-            # 🔥 FIX: безопасная замена
             if os.path.exists(APP_EXE):
                 os.remove(APP_EXE)
 
@@ -114,8 +119,18 @@ class DownloadWorker(QThread):
 
             self.done.emit()
 
+        except requests.RequestException:
+            self.error.emit("Network error while downloading update")
+        except PermissionError:
+            self.error.emit("Access denied. Run installer as administrator")
         except Exception as e:
             self.error.emit(str(e))
+        finally:
+            if os.path.exists(TEMP_EXE):
+                try:
+                    os.remove(TEMP_EXE)
+                except OSError:
+                    pass
 
 
 class InstallerWindow(QWidget):
