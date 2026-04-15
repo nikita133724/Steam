@@ -19,6 +19,7 @@ def main() -> int:
         "--include-package=requests",
         "--output-dir=dist",
         "--output-filename=Multiaccount.exe",
+        "--assume-yes-for-downloads",
         str(MAIN_FILE),
     ]
     return subprocess.call(cmd, cwd=BASE_DIR)
