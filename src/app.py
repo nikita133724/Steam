@@ -1,9 +1,11 @@
 import re
+import sys
+from pathlib import Path
 from urllib.parse import urlparse
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
-    QLabel, QMessageBox, QComboBox, QFrame
+    QLabel, QMessageBox, QComboBox, QFrame, QProgressBar
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -12,6 +14,7 @@ from src.config import Config
 from src.account_manager import AccountManager
 from src.browser_runtime import BrowserRuntime
 from src.logger import Logger
+from src.update_manager import UpdateManager
 
 
 class LanguageDialog(QDialog):
@@ -200,9 +203,10 @@ class MainWindow(QMainWindow):
         self.browser_runtime = BrowserRuntime(self.config, Logger.get_instance())
         self.browser_ready = False
         self.logger = Logger.get_instance()
-        self.browser_runtime.browser_closed.connect(self.on_browser_close)
+        self._attach_browser_runtime(self.browser_runtime)
         self.open_account_ids = set()
         self.overlays = {}
+        self.app_version = self._load_app_version()
         
         if self.config.data.get("first_run", True):
             self.show_language_dialog()
@@ -258,6 +262,22 @@ class MainWindow(QMainWindow):
                 padding: 5px 10px;
                 color: #e5ecff;
                 font-weight: 600;
+            }
+            QLabel#statusHint, QLabel#footerLabel {
+                color: #94a4c3;
+                font-size: 12px;
+            }
+            QProgressBar#browserProgress {
+                border: 1px solid #31415d;
+                border-radius: 8px;
+                background: #121a2a;
+                min-height: 12px;
+                max-height: 12px;
+                text-align: center;
+            }
+            QProgressBar#browserProgress::chunk {
+                border-radius: 7px;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #4b78ff,stop:1 #00d0ff);
             }
             QTableWidget {
                 background: #151b28;
@@ -316,6 +336,25 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self.browser_status)
         layout.addWidget(top_card)
 
+        browser_info_card = QFrame()
+        browser_info_card.setObjectName("topCard")
+        browser_info_layout = QVBoxLayout(browser_info_card)
+        browser_info_layout.setContentsMargins(16, 12, 16, 12)
+        browser_info_layout.setSpacing(8)
+
+        self.browser_status_hint = QLabel(lang.get("browser_status_wait", "Preparing browser runtime..."))
+        self.browser_status_hint.setObjectName("statusHint")
+        self.browser_status_hint.setWordWrap(True)
+        browser_info_layout.addWidget(self.browser_status_hint)
+
+        self.browser_progress = QProgressBar()
+        self.browser_progress.setObjectName("browserProgress")
+        self.browser_progress.setTextVisible(False)
+        self.browser_progress.setVisible(False)
+        browser_info_layout.addWidget(self.browser_progress)
+
+        layout.addWidget(browser_info_card)
+
         controls_card = QFrame()
         controls_card.setObjectName("topCard")
         controls_layout = QVBoxLayout(controls_card)
@@ -361,10 +400,21 @@ class MainWindow(QMainWindow):
         self.table.horizontalHeader().setStretchLastSection(True)
         table_layout.addWidget(self.table)
         layout.addWidget(table_card, 1)
+
+        footer = QHBoxLayout()
+        footer.setContentsMargins(4, 0, 4, 0)
+        self.version_label = QLabel(
+            f"{lang.get('version_label', 'Version')}: {self.app_version}"
+        )
+        self.version_label.setObjectName("footerLabel")
+        footer.addWidget(self.version_label)
+        footer.addStretch()
+        layout.addLayout(footer)
         
         self.refresh_table()
     
     def init_browser(self):
+        self._set_browser_busy(True, self.config.lang.get("browser_status_init", "Browser initializing..."))
         self.browser_runtime.initialize(
             on_success=self._on_init_browser_done,
             on_error=self._on_async_error,
@@ -374,6 +424,8 @@ class MainWindow(QMainWindow):
         if result and result.get("error"):
             self.browser_ready = False
             self.browser_status.setText(self.config.lang.get("browser_status_error", "Browser init error"))
+            self.browser_status_hint.setText(result["error"])
+            self._set_browser_busy(False)
             QMessageBox.warning(self, "Browser", result["error"])
             self.refresh_table()
             return
@@ -385,8 +437,10 @@ class MainWindow(QMainWindow):
         )
         if self.browser_ready:
             self.browser_status.setStyleSheet("background:#1f5b46;border:1px solid #2f8768;color:#d4ffe8;border-radius:10px;padding:5px 10px;font-weight:600;")
+            self.browser_status_hint.setText(self.config.lang.get("browser_status_ready_hint", "Chromium is installed and account launch is available."))
         else:
             self.browser_status.setStyleSheet("background:#5d2834;border:1px solid #8e3f4f;color:#ffe3e8;border-radius:10px;padding:5px 10px;font-weight:600;")
+        self._set_browser_busy(False)
         self.refresh_table()
 
     def cleanup_data(self):
@@ -410,18 +464,22 @@ class MainWindow(QMainWindow):
         self.open_account_ids.clear()
         self._clear_overlays()
         self.browser_runtime = BrowserRuntime(self.config, self.logger)
-        self.browser_runtime.browser_closed.connect(self.on_browser_close)
-        self.browser_status.setText(self.config.lang.get("cleanup_restart"))
-        self.browser_status.setStyleSheet("background:#5d2834;border:1px solid #8e3f4f;color:#ffe3e8;border-radius:10px;padding:5px 10px;font-weight:600;")
+        self._attach_browser_runtime(self.browser_runtime)
+        self.browser_status.setText(self.config.lang.get("browser_status_init", "Browser initializing..."))
+        self.browser_status.setStyleSheet("background:#3b4461;border:1px solid #576386;color:#e5ecff;border-radius:10px;padding:5px 10px;font-weight:600;")
+        self.browser_status_hint.setText(self.config.lang.get("browser_status_wait", "Preparing browser runtime..."))
         self.refresh_table()
+        self.init_browser()
         QMessageBox.information(
             self,
             self.config.lang.get("cleanup_data"),
-            f"{self.config.lang.get('cleanup_done')} {self.config.lang.get('cleanup_restart')}"
+            self.config.lang.get("cleanup_done")
         )
 
     def _on_async_error(self, message):
         self.logger.error(f"Async worker failed: {message}")
+        self.browser_status_hint.setText(message)
+        self._set_browser_busy(False)
     
     def refresh_table(self):
         lang = self.config.lang
@@ -667,3 +725,28 @@ class MainWindow(QMainWindow):
 
         self.logger.info("Application closed")
         event.accept()
+
+    def _attach_browser_runtime(self, runtime):
+        runtime.browser_closed.connect(self.on_browser_close)
+        runtime.browser_status.connect(self._on_browser_runtime_status)
+        runtime.browser_installing.connect(self._on_browser_installing_changed)
+
+    def _on_browser_runtime_status(self, message):
+        self.browser_status_hint.setText(message)
+
+    def _on_browser_installing_changed(self, installing):
+        self._set_browser_busy(installing, self.browser_status_hint.text())
+
+    def _set_browser_busy(self, busy, message=None):
+        if message:
+            self.browser_status_hint.setText(message)
+        self.browser_progress.setVisible(busy)
+        if busy:
+            self.browser_progress.setRange(0, 0)
+        else:
+            self.browser_progress.setRange(0, 1)
+            self.browser_progress.setValue(1)
+
+    def _load_app_version(self):
+        manager = UpdateManager(current_exe=Path(sys.executable))
+        return manager.read_local_version()

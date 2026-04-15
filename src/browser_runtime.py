@@ -16,6 +16,8 @@ class TaskRelay(QObject):
 
 class BrowserRuntime(QThread):
     browser_closed = pyqtSignal(int)
+    browser_status = pyqtSignal(str)
+    browser_installing = pyqtSignal(bool)
 
     def __init__(self, config, logger):
         super().__init__()
@@ -25,6 +27,9 @@ class BrowserRuntime(QThread):
         self.engine: BrowserEngine | None = None
         self._started = threading.Event()
         self._relays: list[TaskRelay] = []
+
+    def _lang(self, key, default):
+        return self.config.lang.get(key, default)
 
     def run(self):
         self.loop = asyncio.new_event_loop()
@@ -77,13 +82,38 @@ class BrowserRuntime(QThread):
 
     def initialize(self, on_success=None, on_error=None):
         async def setup():
+            self.browser_status.emit(self._lang("browser_status_wait", "Preparing browser runtime..."))
             await self.engine.init()
+            if not self.engine or not self.engine._ensure_ready():
+                return {
+                    "error": self._lang(
+                        "browser_engine_failed",
+                        "Browser engine failed to initialize",
+                    ),
+                    "ready": False,
+                }
+
+            self.browser_status.emit(self._lang("browser_status_check", "Checking Chromium..."))
             if not await self.engine.check_chromium():
                 self.logger.info("Chromium not found, installing...")
-                installed = await self.engine.install_chromium()
+                self.browser_installing.emit(True)
+                installed = await self.engine.install_chromium(
+                    status_callback=self.browser_status.emit,
+                )
+                self.browser_installing.emit(False)
                 if not installed:
-                    return {"error": "Chromium install failed", "ready": False}
+                    return {"error": self._lang("browser_install_failed", "Chromium install failed"), "ready": False}
+                self.browser_status.emit(self._lang("browser_status_recheck", "Rechecking Chromium..."))
+                if not await self.engine.check_chromium():
+                    return {
+                        "error": self._lang(
+                            "browser_install_recheck_failed",
+                            "Chromium was installed, but browser startup check still fails",
+                        ),
+                        "ready": False,
+                    }
             self.logger.info("Browser engine ready")
+            self.browser_status.emit(self._lang("browser_status_ready_hint", "Chromium is installed and account launch is available."))
             return {"success": True, "ready": True}
 
         return self.submit(setup(), on_success=on_success, on_error=on_error)

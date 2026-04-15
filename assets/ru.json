@@ -32,11 +32,19 @@
   "browser_status_init": "Браузер инициализируется...",
   "browser_status_ready": "Браузер готов",
   "browser_status_error": "Ошибка инициализации браузера",
+  "browser_status_wait": "Подготовка браузерного рантайма...",
+  "browser_status_check": "Проверка Chromium...",
+  "browser_status_recheck": "Повторная проверка Chromium...",
+  "browser_status_ready_hint": "Chromium установлен, запуск аккаунтов доступен.",
+  "browser_engine_failed": "Не удалось инициализировать браузерный движок.",
+  "browser_install_failed": "Не удалось установить Chromium.",
+  "browser_install_recheck_failed": "Chromium установился, но контрольный запуск браузера все еще падает.",
   "detect_timezone": "Определить тайм-зону через прокси",
   "timezone": "Тайм-зона",
   "timezone_error": "Не удалось определить тайм-зону",
   "cleanup_data": "Очистить данные",
   "cleanup_confirm": "Удалить все рабочие данные приложения (профили, логи, скачанный браузер)? Личные файлы вне Multiaccount не затрагиваются.",
   "cleanup_done": "Рабочие данные приложения очищены.",
-  "cleanup_restart": "Перезапустите приложение для повторной инициализации браузера."
+  "cleanup_restart": "Перезапустите приложение для повторной инициализации браузера.",
+  "version_label": "Версия"
 }

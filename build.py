@@ -17,6 +17,7 @@ def main() -> int:
         "--include-data-dir=assets=assets",
         "--include-package=playwright",
         "--include-package=requests",
+        "--include-package=socks",
         "--output-dir=dist",
         "--output-filename=Multiaccount.exe",
         "--assume-yes-for-downloads",

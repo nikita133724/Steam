@@ -32,11 +32,19 @@
   "browser_status_init": "Browser is initializing...",
   "browser_status_ready": "Browser ready",
   "browser_status_error": "Browser initialization error",
+  "browser_status_wait": "Preparing browser runtime...",
+  "browser_status_check": "Checking Chromium...",
+  "browser_status_recheck": "Rechecking Chromium...",
+  "browser_status_ready_hint": "Chromium is installed and account launch is available.",
+  "browser_engine_failed": "Browser engine failed to initialize.",
+  "browser_install_failed": "Chromium install failed.",
+  "browser_install_recheck_failed": "Chromium was installed, but browser startup check still fails.",
   "detect_timezone": "Detect timezone via proxy",
   "timezone": "Timezone",
   "timezone_error": "Failed to detect timezone",
   "cleanup_data": "Cleanup data",
   "cleanup_confirm": "Delete all app runtime data (profiles, logs, downloaded browser)? Personal files outside Multiaccount are not touched.",
   "cleanup_done": "App runtime data has been cleaned.",
-  "cleanup_restart": "Restart the app to initialize browser runtime again."
+  "cleanup_restart": "Restart the app to initialize browser runtime again.",
+  "version_label": "Version"
 }

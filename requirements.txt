@@ -3,4 +3,5 @@ PyInstaller==6.19.0
 playwright==1.58.0
 screeninfo==0.8.1
 requests==2.32.3
+PySocks==1.7.1
 Nuitka==2.8.3
