@@ -21,9 +21,7 @@ PyInstaller.__main__.run([
 
     f"--add-data={assets_path.resolve()}{os.pathsep}assets",
 
+    "--collect-all=PyQt6",
     "--hidden-import=requests",
     "--hidden-import=urllib3",
-    "--hidden-import=PyQt6.QtCore",
-    "--hidden-import=PyQt6.QtWidgets",
-    "--hidden-import=PyQt6.QtGui",
 ])

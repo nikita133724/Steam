@@ -190,6 +190,7 @@ class ProxyDialog(QDialog):
 
 class AsyncWorker(QThread):
     finished = pyqtSignal(object)
+    failed = pyqtSignal(str)
     
     def __init__(self, coro):
         super().__init__()
@@ -197,9 +198,18 @@ class AsyncWorker(QThread):
     
     def run(self):
         loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(self.coro)
-        self.finished.emit(result)
+        try:
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(self.coro)
+            self.finished.emit(result)
+        except Exception as e:
+            self.failed.emit(str(e))
+        finally:
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            except Exception:
+                pass
+            loop.close()
 
 
 class MainWindow(QMainWindow):
@@ -210,6 +220,7 @@ class MainWindow(QMainWindow):
         self.account_manager = AccountManager(self.config)
         self.browser_engine = None
         self.logger = Logger.get_instance()
+        self._workers = []
         
         # Проверяем первый запуск
         if self.config.data.get("first_run", True):
@@ -277,11 +288,18 @@ class MainWindow(QMainWindow):
             # Проверяем Chromium
             if not await self.browser_engine.check_chromium():
                 self.logger.info("Chromium not found, installing...")
-                await self.browser_engine.install_chromium()
+                installed = await self.browser_engine.install_chromium()
+                if not installed:
+                    return {"error": "Chromium install failed"}
             
             self.logger.info("Browser engine ready")
+            return {"success": True}
         
-        self.run_async(setup())
+        self.run_async(setup(), on_success=self._on_init_browser_done)
+
+    def _on_init_browser_done(self, result):
+        if result and result.get("error"):
+            QMessageBox.warning(self, "Browser", result["error"])
 
     def cleanup_data(self):
         lang = self.config.lang
@@ -315,13 +333,25 @@ class MainWindow(QMainWindow):
         )
     
    
-    def run_async(self, coro):
+    def run_async(self, coro, on_success=None, on_error=None):
         try:
-            self.worker = AsyncWorker(coro)
-            self.worker.finished.connect(lambda _: None)
-            self.worker.start()
+            worker = AsyncWorker(coro)
+            self._workers.append(worker)
+
+            def cleanup():
+                if worker in self._workers:
+                    self._workers.remove(worker)
+
+            worker.finished.connect(on_success or (lambda _: None))
+            worker.failed.connect(on_error or self._on_async_error)
+            worker.finished.connect(lambda _: cleanup())
+            worker.failed.connect(lambda _: cleanup())
+            worker.start()
         except Exception as e:
             self.logger.error(f"Async error: {e}")
+
+    def _on_async_error(self, message):
+        self.logger.error(f"Async worker failed: {message}")
     
     def refresh_table(self):
         lang = self.config.lang
@@ -431,25 +461,28 @@ class MainWindow(QMainWindow):
 
         # Открываем браузер
         async def do_open():
-            result = await self.browser_engine.open_account(
+            return await self.browser_engine.open_account(
                 account, 
                 self.config,
                 on_close=lambda aid: self.on_browser_close(aid)
             )
-            
-            if result and result.get("need_domain"):
-                # Не должно произойти, но на всякий случай
-                pass
-            elif result and result.get("error"):
-                QMessageBox.critical(self, "Error", result["error"])
-        
-        self.run_async(do_open())
+
+        self.run_async(
+            do_open(),
+            on_success=lambda result: self._handle_open_result(result),
+            on_error=lambda message: QMessageBox.critical(self, "Error", message)
+        )
         self.logger.info(f"Opening account: {account['name']}")
+
+    def _handle_open_result(self, result):
+        if result and result.get("error"):
+            QMessageBox.critical(self, "Error", result["error"])
     
     def on_browser_close(self, account_id):
         self.logger.info(f"Account {account_id} closed by user")
     
     def closeEvent(self, event):
+        loop = None
         try:
             if self.browser_engine:
                 loop = asyncio.new_event_loop()
@@ -457,6 +490,9 @@ class MainWindow(QMainWindow):
                 loop.run_until_complete(self.browser_engine.shutdown())
         except Exception as e:
             self.logger.error(f"Shutdown error: {e}")
+        finally:
+            if loop is not None:
+                loop.close()
 
         self.logger.info("Application closed")
         event.accept()
