@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
+import os
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QTextEdit, QPushButton,
@@ -93,6 +94,8 @@ class LoggerWindow(QDialog):
 
 class Logger:
     _instance = None
+    MAX_LOG_FILES = 12
+    MAX_LOG_FILE_BYTES = 1_500_000
 
     @classmethod
     def get_instance(cls):
@@ -112,9 +115,13 @@ class Logger:
         config = Config()
         logs_dir = config.logs_dir
         logs_dir.mkdir(parents=True, exist_ok=True)
+        self._prune_old_logs(logs_dir)
 
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = logs_dir / f"{today}.log"
+        if log_file.exists() and log_file.stat().st_size >= self.MAX_LOG_FILE_BYTES:
+            timestamp = datetime.now().strftime("%H%M%S")
+            log_file = logs_dir / f"{today}-{timestamp}.log"
 
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
@@ -126,6 +133,18 @@ class Logger:
 
         self.window = None
         self.qt_handler.new_record.connect(self._on_new_log)
+
+    def _prune_old_logs(self, logs_dir: Path):
+        log_files = sorted(
+            (path for path in logs_dir.glob("*.log") if path.is_file()),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        for path in log_files[self.MAX_LOG_FILES:]:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
     def _on_new_log(self, msg, tag):
         if self.window:

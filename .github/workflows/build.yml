@@ -25,6 +25,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Generate icon
+        run: python tools/make_ico.py source.png assets/icon.ico
+
+      - name: Download VC++ Redistributable (x64)
+        shell: pwsh
+        run: |
+          $out = "assets/VC_redist.x64.exe"
+          if (!(Test-Path $out)) {
+            Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $out
+          }
+
       - name: Clean build folders
         shell: pwsh
         run: |
@@ -32,11 +43,29 @@ jobs:
           Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force spec -ErrorAction SilentlyContinue
 
+      - name: Write build version
+        shell: pwsh
+        run: |
+          Set-Content -Path assets/version.txt -Value "${{ github.ref_name }}" -NoNewline
+          Set-Content -Path assets/repository.txt -Value "${{ github.repository }}" -NoNewline
+
       - name: Build app
         run: python build.py
 
       - name: Generate manifest
         run: python manifest.py ${{ github.ref_name }} ${{ github.repository }}
+
+      - name: Verify release artifacts
+        shell: pwsh
+        run: |
+          if (!(Test-Path dist/Multiaccount.exe)) { throw "dist/Multiaccount.exe is missing" }
+          if (!(Test-Path manifest.json)) { throw "manifest.json is missing" }
+          if (!(Test-Path assets/icon.ico)) { throw "assets/icon.ico is missing" }
+          if (!(Test-Path assets/repository.txt)) { throw "assets/repository.txt is missing" }
+          if (!(Test-Path assets/VC_redist.x64.exe)) { throw "assets/VC_redist.x64.exe is missing" }
+          $manifest = Get-Content manifest.json | ConvertFrom-Json
+          if ($manifest.version -ne "${{ github.ref_name }}") { throw "manifest version mismatch" }
+          if ($manifest.url -notlike "https://github.com/${{ github.repository }}/releases/download/*/Multiaccount.exe") { throw "manifest url mismatch" }
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2

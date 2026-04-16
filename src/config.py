@@ -48,7 +48,7 @@ class Config:
     def load_config(self):
         if self.config_file.exists():
             return json.loads(self.config_file.read_text(encoding="utf-8"))
-        return {"language": None, "first_run": True}
+        return {"language": None, "theme": "dark", "first_run": True}
 
     def save_config(self):
         self.config_file.write_text(
@@ -70,6 +70,16 @@ class Config:
         self.data["language"] = lang
         self.save_config()
         self.lang = self.load_language()
+
+    def get_theme(self):
+        theme = self.data.get("theme") or "dark"
+        if theme not in {"dark", "light", "neutral"}:
+            theme = "dark"
+        return theme
+
+    def set_theme(self, theme):
+        self.data["theme"] = theme
+        self.save_config()
 
     def load_accounts(self):
         if self.accounts_file.exists():

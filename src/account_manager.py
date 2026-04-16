@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from src.device_profiles import get_random_device_profile, normalize_device_profile
 from src.logger import Logger
 
@@ -38,6 +39,9 @@ class AccountManager:
             if not account.get("timezone"):
                 account["timezone"] = "Europe/Moscow"
                 changed = True
+            if "proxy_status" not in account:
+                account["proxy_status"] = {}
+                changed = True
         if changed:
             self.config.save_accounts(self.accounts)
 
@@ -47,6 +51,7 @@ class AccountManager:
             "name": name,
             "domain": None,
             "proxy": None,
+            "proxy_status": {},
             "created_at": datetime.now().isoformat(),
             "device_profile": get_random_device_profile(),
             "user_agent": None,
@@ -88,12 +93,35 @@ class AccountManager:
             if account["id"] == account_id:
                 account["proxy"] = proxy
                 account["proxy_raw"] = (proxy or {}).get("raw")
+                if not proxy:
+                    account["proxy_status"] = {}
                 if timezone:
                     account["timezone"] = timezone
                 self.config.save_accounts(self.accounts)
                 self.logger.info(f"Updated proxy for {account['name']}")
                 return True
         return False
+
+    def update_proxy_status(self, account_id, status):
+        for account in self.accounts:
+            if account["id"] == account_id:
+                account["proxy_status"] = status or {}
+                timezone = (status or {}).get("timezone")
+                if timezone:
+                    account["timezone"] = timezone
+                self.config.save_accounts(self.accounts)
+                return True
+        return False
+
+    def regenerate_device_profile(self, account_id):
+        for account in self.accounts:
+            if account["id"] == account_id:
+                account["device_profile"] = get_random_device_profile()
+                account["user_agent"] = account["device_profile"]["user_agent"]
+                self.config.save_accounts(self.accounts)
+                self.logger.info(f"Regenerated device profile for {account['name']}")
+                return account["device_profile"]
+        return None
 
     def _generate_user_agent(self):
         return get_random_device_profile()["user_agent"]
@@ -102,3 +130,46 @@ class AccountManager:
         """Очищает аккаунты в памяти (после удаления data-файлов)."""
         self.accounts = []
         self.next_id = 1
+
+    def export_accounts(self, destination):
+        payload = {"accounts": self.accounts}
+        with open(destination, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+        self.logger.info(f"Exported accounts to {destination}")
+
+    def import_accounts(self, source):
+        with open(source, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+
+        imported = payload.get("accounts")
+        if not isinstance(imported, list):
+            raise ValueError("accounts payload is invalid")
+
+        normalized_accounts = []
+        next_id = 1
+        for raw in imported:
+            if not isinstance(raw, dict):
+                continue
+            account = {
+                "id": next_id,
+                "name": str(raw.get("name") or f"Account {next_id}"),
+                "domain": raw.get("domain"),
+                "proxy": raw.get("proxy"),
+                "proxy_raw": raw.get("proxy_raw"),
+                "proxy_status": raw.get("proxy_status") or {},
+                "created_at": raw.get("created_at") or datetime.now().isoformat(),
+                "device_profile": normalize_device_profile(raw.get("device_profile")),
+                "user_agent": raw.get("user_agent"),
+                "locale": raw.get("locale") or "ru-RU",
+                "timezone": raw.get("timezone") or "Europe/Moscow",
+            }
+            if not account["user_agent"]:
+                account["user_agent"] = account["device_profile"]["user_agent"]
+            normalized_accounts.append(account)
+            next_id += 1
+
+        self.accounts = normalized_accounts
+        self.next_id = self._get_next_id()
+        self.config.save_accounts(self.accounts)
+        self.logger.info(f"Imported {len(self.accounts)} accounts from {source}")
+        return len(self.accounts)

@@ -5,6 +5,7 @@ import sys
 
 
 EXE_NAME = "Multiaccount.exe"
+DEFAULT_REPOSITORY = "nikita133724/Steam"
 
 
 def sha256(file_path: Path):
@@ -20,7 +21,7 @@ def find_exe():
     return exe_path if exe_path.exists() else None
 
 
-def main(version, url):
+def main(version, repository):
     exe_path = find_exe()
 
     if not exe_path:
@@ -28,7 +29,7 @@ def main(version, url):
 
     manifest = {
         "version": version,
-        "url": url,
+        "url": f"https://github.com/{repository}/releases/download/{version}/{EXE_NAME}",
         "sha256": sha256(exe_path)
     }
 
@@ -38,8 +39,5 @@ def main(version, url):
 
 if __name__ == "__main__":
     version = sys.argv[1]
-
-    main(
-        version=version,
-        url=f"https://github.com/nikita133724/Steam/releases/download/{version}/{EXE_NAME}"
-    )
+    repository = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_REPOSITORY
+    main(version=version, repository=repository)

@@ -1,0 +1,3202 @@
+{
+  "profiles": [
+    {
+      "id": "galaxy_a35_chrome_136",
+      "label": "Samsung Galaxy A35",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A35",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A356B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 6,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_a35_chrome_136_alt1",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A356B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_a35_chrome_136_alt2",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A356B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_a55_chrome_136",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_a55_chrome_136_alt1",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_a55_chrome_136_alt2",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-A556B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_chrome_136",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_chrome_136_alt1",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_chrome_136_alt2",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_plus_chrome_136",
+      "label": "Samsung Galaxy S24+",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24+",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S926B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_plus_chrome_136_alt1",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S926B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_plus_chrome_136_alt2",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S926B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_ultra_chrome_136",
+      "label": "Samsung Galaxy S24 Ultra",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 480,
+        "height": 1067
+      },
+      "screen": {
+        "width": 480,
+        "height": 1067
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_ultra_chrome_136_alt1",
+      "label": "Samsung Galaxy S24",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy S24",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 480,
+        "height": 1067
+      },
+      "screen": {
+        "width": 480,
+        "height": 1067
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "galaxy_s24_ultra_chrome_136_alt2",
+      "label": "Samsung Galaxy A55",
+      "kind": "mobile",
+      "brand": "Samsung",
+      "model": "Galaxy A55",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 480,
+        "height": 1067
+      },
+      "screen": {
+        "width": 480,
+        "height": 1067
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_air_safari_18",
+      "label": "iPad Air 11",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Air 11",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "screen": {
+        "width": 820,
+        "height": 1180
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_air_safari_18_alt1",
+      "label": "iPad Air",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Air",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "screen": {
+        "width": 820,
+        "height": 1180
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_air_safari_18_alt2",
+      "label": "iPad Pro 11",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Pro 11",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "screen": {
+        "width": 820,
+        "height": 1180
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_pro_safari_18",
+      "label": "iPad Pro 13",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Pro 13",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 1024,
+        "height": 1366
+      },
+      "screen": {
+        "width": 1024,
+        "height": 1366
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_pro_safari_18_alt1",
+      "label": "iPad Air",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Air",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 1024,
+        "height": 1366
+      },
+      "screen": {
+        "width": 1024,
+        "height": 1366
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ipad_pro_safari_18_alt2",
+      "label": "iPad Pro 11",
+      "kind": "tablet",
+      "brand": "Apple",
+      "model": "iPad Pro 11",
+      "os": "iPadOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 1024,
+        "height": 1366
+      },
+      "screen": {
+        "width": 1024,
+        "height": 1366
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPad",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_13_safari_18",
+      "label": "iPhone 13",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 13",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 4,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_13_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_13_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_14_safari_18",
+      "label": "iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 6,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_14_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_14_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.0",
+      "browser": "Mobile Safari 18.0",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_plus_safari_18",
+      "label": "iPhone 15 Plus",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Plus",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 6,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_plus_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_plus_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_max_safari_18",
+      "label": "iPhone 15 Pro Max",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro Max",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_max_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_max_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 430,
+        "height": 932
+      },
+      "screen": {
+        "width": 430,
+        "height": 932
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_safari_18",
+      "label": "iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_pro_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_safari_18",
+      "label": "iPhone 15",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 6,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_15_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.1",
+      "browser": "Mobile Safari 18.1",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_16_safari_18",
+      "label": "iPhone 16",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 16",
+      "os": "iOS 18.2",
+      "browser": "Mobile Safari 18.2",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 6,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_16_safari_18_alt1",
+      "label": "Apple iPhone 14",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 14",
+      "os": "iOS 18.2",
+      "browser": "Mobile Safari 18.2",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "iphone_16_safari_18_alt2",
+      "label": "Apple iPhone 15 Pro",
+      "kind": "mobile",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "os": "iOS 18.2",
+      "browser": "Mobile Safari 18.2",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "screen": {
+        "width": 393,
+        "height": 852
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "iPhone",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_chrome_136_1728",
+      "label": "MacBook Pro 16",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 16",
+      "os": "macOS 14.7",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1728,
+        "height": 1117
+      },
+      "screen": {
+        "width": 1728,
+        "height": 1117
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_chrome_136_1728_alt1",
+      "label": "macOS 14.7 MacBook Air",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Air",
+      "os": "macOS 14.7",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_chrome_136_1728_alt2",
+      "label": "macOS 14.7 MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_edge_135_1440",
+      "label": "MacBook Air 15",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Air 15",
+      "os": "macOS 14.7",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1440,
+        "height": 932
+      },
+      "screen": {
+        "width": 1440,
+        "height": 932
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_edge_135_1440_alt1",
+      "label": "macOS 14.7 MacBook Air",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Air",
+      "os": "macOS 14.7",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_edge_135_1440_alt2",
+      "label": "macOS 14.7 MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_firefox_137_1512",
+      "label": "MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1512,
+        "height": 982
+      },
+      "screen": {
+        "width": 1512,
+        "height": 982
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_firefox_137_1512_alt1",
+      "label": "macOS 14.7 MacBook Air",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Air",
+      "os": "macOS 14.7",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_firefox_137_1512_alt2",
+      "label": "macOS 14.7 MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_safari_18_1512",
+      "label": "MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Safari 18.0",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+      "viewport": {
+        "width": 1512,
+        "height": 982
+      },
+      "screen": {
+        "width": 1512,
+        "height": 982
+      },
+      "device_scale_factor": 2.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_safari_18_1512_alt1",
+      "label": "macOS 14.7 MacBook Air",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Air",
+      "os": "macOS 14.7",
+      "browser": "Safari 18.0",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "mac_sonoma_safari_18_1512_alt2",
+      "label": "macOS 14.7 MacBook Pro 14",
+      "kind": "desktop",
+      "brand": "Apple",
+      "model": "MacBook Pro 14",
+      "os": "macOS 14.7",
+      "browser": "Safari 18.0",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "MacIntel",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "motorola_edge_50_pro_chrome_136",
+      "label": "Motorola Edge 50 Pro",
+      "kind": "mobile",
+      "brand": "Motorola",
+      "model": "Edge 50 Pro",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; moto edge 50 pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 430,
+        "height": 956
+      },
+      "screen": {
+        "width": 430,
+        "height": 956
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "motorola_edge_50_pro_chrome_136_alt1",
+      "label": "Motorola Edge 50 Pro",
+      "kind": "mobile",
+      "brand": "Motorola",
+      "model": "Edge 50 Pro",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; moto edge 50 pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 430,
+        "height": 956
+      },
+      "screen": {
+        "width": 430,
+        "height": 956
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "motorola_edge_50_pro_chrome_136_alt2",
+      "label": "Motorola Edge 50 Pro",
+      "kind": "mobile",
+      "brand": "Motorola",
+      "model": "Edge 50 Pro",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; moto edge 50 pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 430,
+        "height": 956
+      },
+      "screen": {
+        "width": 430,
+        "height": 956
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "nothing_phone_2_chrome_136",
+      "label": "Nothing Phone (2)",
+      "kind": "mobile",
+      "brand": "Nothing",
+      "model": "Phone (2)",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; A065) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "nothing_phone_2_chrome_136_alt1",
+      "label": "Nothing Phone (2)",
+      "kind": "mobile",
+      "brand": "Nothing",
+      "model": "Phone (2)",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; A065) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "nothing_phone_2_chrome_136_alt2",
+      "label": "Nothing Phone (2)",
+      "kind": "mobile",
+      "brand": "Nothing",
+      "model": "Phone (2)",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; A065) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "oneplus_12_chrome_136",
+      "label": "OnePlus 12",
+      "kind": "mobile",
+      "brand": "OnePlus",
+      "model": "OnePlus 12",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "oneplus_12_chrome_136_alt1",
+      "label": "OnePlus OnePlus 12R",
+      "kind": "mobile",
+      "brand": "OnePlus",
+      "model": "OnePlus 12R",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "oneplus_12_chrome_136_alt2",
+      "label": "OnePlus OnePlus Nord 4",
+      "kind": "mobile",
+      "brand": "OnePlus",
+      "model": "OnePlus Nord 4",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; CPH2581) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_chrome_136",
+      "label": "Google Pixel 8",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_chrome_136_alt1",
+      "label": "Google Pixel 8a",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8a",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_chrome_136_alt2",
+      "label": "Google Pixel 9",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_pro_chrome_136",
+      "label": "Google Pixel 8 Pro",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8 Pro",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_pro_chrome_136_alt1",
+      "label": "Google Pixel 8a",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8a",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_8_pro_chrome_136_alt2",
+      "label": "Google Pixel 9",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_chrome_136",
+      "label": "Google Pixel 9",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_chrome_136_alt1",
+      "label": "Google Pixel 8a",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8a",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_chrome_136_alt2",
+      "label": "Google Pixel 9",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_pro_xl_chrome_136",
+      "label": "Google Pixel 9 Pro XL",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9 Pro XL",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_pro_xl_chrome_136_alt1",
+      "label": "Google Pixel 8a",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 8a",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "pixel_9_pro_xl_chrome_136_alt2",
+      "label": "Google Pixel 9",
+      "kind": "mobile",
+      "brand": "Google",
+      "model": "Pixel 9",
+      "os": "Android 15",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 448,
+        "height": 998
+      },
+      "screen": {
+        "width": 448,
+        "height": 998
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "redmi_note_13_pro_chrome_136",
+      "label": "Redmi Note 13 Pro",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13 Pro",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 2312DRA50G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "redmi_note_13_pro_chrome_136_alt1",
+      "label": "Xiaomi Redmi Note 13",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 2312DRA50G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "redmi_note_13_pro_chrome_136_alt2",
+      "label": "Xiaomi Xiaomi 14",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Xiaomi 14",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 2312DRA50G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "screen": {
+        "width": 412,
+        "height": 915
+      },
+      "device_scale_factor": 2.625,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "sony_xperia_1_vi_chrome_136",
+      "label": "Sony Xperia 1 VI",
+      "kind": "mobile",
+      "brand": "Sony",
+      "model": "Xperia 1 VI",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; XQ-EC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 960
+      },
+      "screen": {
+        "width": 412,
+        "height": 960
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "sony_xperia_1_vi_chrome_136_alt1",
+      "label": "Sony Xperia 1 VI",
+      "kind": "mobile",
+      "brand": "Sony",
+      "model": "Xperia 1 VI",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; XQ-EC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 960
+      },
+      "screen": {
+        "width": 412,
+        "height": 960
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "sony_xperia_1_vi_chrome_136_alt2",
+      "label": "Sony Xperia 1 VI",
+      "kind": "mobile",
+      "brand": "Sony",
+      "model": "Xperia 1 VI",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; XQ-EC72) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 412,
+        "height": 960
+      },
+      "screen": {
+        "width": 412,
+        "height": 960
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_chrome_136_1920",
+      "label": "Ubuntu Workstation",
+      "kind": "desktop",
+      "brand": "Custom",
+      "model": "Workstation",
+      "os": "Ubuntu 24.04",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screen": {
+        "width": 1920,
+        "height": 1080
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_chrome_136_1920_alt1",
+      "label": "Ubuntu Workstation",
+      "kind": "desktop",
+      "brand": "Custom",
+      "model": "Workstation",
+      "os": "Ubuntu 24.04",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_chrome_136_1920_alt2",
+      "label": "Ubuntu Workstation",
+      "kind": "desktop",
+      "brand": "Custom",
+      "model": "Workstation",
+      "os": "Ubuntu 24.04",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_firefox_137_1600",
+      "label": "Ubuntu Laptop",
+      "kind": "desktop",
+      "brand": "ThinkPad",
+      "model": "T14",
+      "os": "Ubuntu 24.04",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_firefox_137_1600_alt1",
+      "label": "Ubuntu Laptop",
+      "kind": "desktop",
+      "brand": "ThinkPad",
+      "model": "T14",
+      "os": "Ubuntu 24.04",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "ubuntu_firefox_137_1600_alt2",
+      "label": "Ubuntu Laptop",
+      "kind": "desktop",
+      "brand": "ThinkPad",
+      "model": "T14",
+      "os": "Ubuntu 24.04",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Linux x86_64",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_chrome_136_1366",
+      "label": "Windows 10 Laptop",
+      "kind": "desktop",
+      "brand": "Dell",
+      "model": "Inspiron",
+      "os": "Windows 10",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_chrome_136_1366_alt1",
+      "label": "Windows 10 XPS 13",
+      "kind": "desktop",
+      "brand": "Dell",
+      "model": "XPS 13",
+      "os": "Windows 10",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_chrome_136_1366_alt2",
+      "label": "Windows 10 Latitude 7440",
+      "kind": "desktop",
+      "brand": "Dell",
+      "model": "Latitude 7440",
+      "os": "Windows 10",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_edge_135_1920",
+      "label": "Windows 10 PC",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Desktop",
+      "os": "Windows 10",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screen": {
+        "width": 1920,
+        "height": 1080
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_edge_135_1920_alt1",
+      "label": "Windows 10 Surface Laptop",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Laptop",
+      "os": "Windows 10",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_edge_135_1920_alt2",
+      "label": "Windows 10 Surface Pro",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Pro",
+      "os": "Windows 10",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_firefox_137_1366",
+      "label": "Windows 10 Laptop",
+      "kind": "desktop",
+      "brand": "Acer",
+      "model": "Aspire",
+      "os": "Windows 10",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 4,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_firefox_137_1366_alt1",
+      "label": "Windows 10 Swift Go 14",
+      "kind": "desktop",
+      "brand": "Acer",
+      "model": "Swift Go 14",
+      "os": "Windows 10",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 4,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win10_firefox_137_1366_alt2",
+      "label": "Windows 10 Aspire 5",
+      "kind": "desktop",
+      "brand": "Acer",
+      "model": "Aspire 5",
+      "os": "Windows 10",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 4,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1280",
+      "label": "Windows 11 Compact Laptop",
+      "kind": "desktop",
+      "brand": "HP",
+      "model": "Pavilion",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screen": {
+        "width": 1280,
+        "height": 720
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1280_alt1",
+      "label": "Windows 11 EliteBook 840",
+      "kind": "desktop",
+      "brand": "HP",
+      "model": "EliteBook 840",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1280_alt2",
+      "label": "Windows 11 Pavilion 15",
+      "kind": "desktop",
+      "brand": "HP",
+      "model": "Pavilion 15",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1440",
+      "label": "Windows 11 Ultrabook",
+      "kind": "desktop",
+      "brand": "Lenovo",
+      "model": "Yoga",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screen": {
+        "width": 1440,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": true,
+      "platform": "Win32",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 10,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1440_alt1",
+      "label": "Windows 11 ThinkPad X1",
+      "kind": "desktop",
+      "brand": "Lenovo",
+      "model": "ThinkPad X1",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": true,
+      "platform": "Win32",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 10,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1440_alt2",
+      "label": "Windows 11 IdeaPad Slim",
+      "kind": "desktop",
+      "brand": "Lenovo",
+      "model": "IdeaPad Slim",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": true,
+      "platform": "Win32",
+      "hardware_concurrency": 12,
+      "device_memory": 16,
+      "max_touch_points": 10,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1600",
+      "label": "Windows 11 PC",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1600_alt1",
+      "label": "Windows 11 Surface Laptop",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Laptop",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1600_alt2",
+      "label": "Windows 11 Surface Pro",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Pro",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1920",
+      "label": "Windows 11 PC",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "screen": {
+        "width": 1920,
+        "height": 1080
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1920_alt1",
+      "label": "Windows 11 Surface Laptop",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Laptop",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_chrome_136_1920_alt2",
+      "label": "Windows 11 Surface Pro",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Pro",
+      "os": "Windows 11",
+      "browser": "Chrome 136",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Safari/537.36",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_1536",
+      "label": "Windows 11 PC",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.25,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_1536_alt1",
+      "label": "Windows 11 Surface Laptop",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Laptop",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_1536_alt2",
+      "label": "Windows 11 Surface Pro",
+      "kind": "desktop",
+      "brand": "Microsoft",
+      "model": "Surface Pro",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_2560",
+      "label": "Windows 11 Desktop",
+      "kind": "desktop",
+      "brand": "MSI",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 2560,
+        "height": 1440
+      },
+      "screen": {
+        "width": 2560,
+        "height": 1440
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 32,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_2560_alt1",
+      "label": "Windows 11 Desktop",
+      "kind": "desktop",
+      "brand": "MSI",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 32,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_edge_135_2560_alt2",
+      "label": "Windows 11 Desktop",
+      "kind": "desktop",
+      "brand": "MSI",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Edge 135",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.85 Safari/537.36 Edg/135.0.3179.73",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 16,
+      "device_memory": 32,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_firefox_137_1600",
+      "label": "Windows 11 PC",
+      "kind": "desktop",
+      "brand": "ASUS",
+      "model": "Desktop",
+      "os": "Windows 11",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "screen": {
+        "width": 1600,
+        "height": 900
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_firefox_137_1600_alt1",
+      "label": "Windows 11 Zenbook 14",
+      "kind": "desktop",
+      "brand": "ASUS",
+      "model": "Zenbook 14",
+      "os": "Windows 11",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "win11_firefox_137_1600_alt2",
+      "label": "Windows 11 Vivobook 15",
+      "kind": "desktop",
+      "brand": "ASUS",
+      "model": "Vivobook 15",
+      "os": "Windows 11",
+      "browser": "Firefox 137",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "screen": {
+        "width": 1536,
+        "height": 864
+      },
+      "device_scale_factor": 1.0,
+      "is_mobile": false,
+      "has_touch": false,
+      "platform": "Win32",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 0,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_chrome_136",
+      "label": "Xiaomi 14",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Xiaomi 14",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 424,
+        "height": 942
+      },
+      "screen": {
+        "width": 424,
+        "height": 942
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_chrome_136_alt1",
+      "label": "Xiaomi Redmi Note 13",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 424,
+        "height": 942
+      },
+      "screen": {
+        "width": 424,
+        "height": 942
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_chrome_136_alt2",
+      "label": "Xiaomi Xiaomi 14",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Xiaomi 14",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 23127PN0CC) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 424,
+        "height": 942
+      },
+      "screen": {
+        "width": 424,
+        "height": 942
+      },
+      "device_scale_factor": 2.75,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_ultra_chrome_136",
+      "label": "Xiaomi 14 Ultra",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Xiaomi 14 Ultra",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 24030PN60G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 16,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_ultra_chrome_136_alt1",
+      "label": "Xiaomi Redmi Note 13",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Redmi Note 13",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 24030PN60G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 8,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    },
+    {
+      "id": "xiaomi_14_ultra_chrome_136_alt2",
+      "label": "Xiaomi Xiaomi 14",
+      "kind": "mobile",
+      "brand": "Xiaomi",
+      "model": "Xiaomi 14",
+      "os": "Android 14",
+      "browser": "Chrome Mobile 136",
+      "user_agent": "Mozilla/5.0 (Linux; Android 14; 24030PN60G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.114 Mobile Safari/537.36",
+      "viewport": {
+        "width": 450,
+        "height": 1000
+      },
+      "screen": {
+        "width": 450,
+        "height": 1000
+      },
+      "device_scale_factor": 3.0,
+      "is_mobile": true,
+      "has_touch": true,
+      "platform": "Linux armv8l",
+      "hardware_concurrency": 8,
+      "device_memory": 12,
+      "max_touch_points": 5,
+      "color_scheme": "light"
+    }
+  ]
+}

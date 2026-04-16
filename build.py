@@ -4,25 +4,37 @@ import sys
 
 BASE_DIR = Path(__file__).resolve().parent
 MAIN_FILE = BASE_DIR / "main.py"
+ICON_FILE = BASE_DIR / "assets" / "icon.ico"
 
 
 def main() -> int:
+    data_sep = ";" if sys.platform == "win32" else ":"
     cmd = [
         sys.executable,
         "-m",
-        "nuitka",
+        "PyInstaller",
+        "--noconfirm",
+        "--clean",
         "--onefile",
-        "--windows-console-mode=disable",
-        "--enable-plugin=pyqt6",
-        "--include-data-dir=assets=assets",
-        "--include-package=playwright",
-        "--include-package=requests",
-        "--include-package=socks",
-        "--output-dir=dist",
-        "--output-filename=Multiaccount.exe",
-        "--assume-yes-for-downloads",
+        "--name",
+        "Multiaccount",
+        "--distpath",
+        str(BASE_DIR / "dist"),
+        "--workpath",
+        str(BASE_DIR / "build"),
+        "--specpath",
+        str(BASE_DIR / "spec"),
+        f"--add-data=assets{data_sep}assets",
+        "--collect-all",
+        "playwright",
         str(MAIN_FILE),
     ]
+
+    if sys.platform == "win32":
+        cmd.append("--noconsole")
+
+    if ICON_FILE.exists():
+        cmd.extend(["--icon", str(ICON_FILE)])
     return subprocess.call(cmd, cwd=BASE_DIR)
 
 

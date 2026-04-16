@@ -22,7 +22,32 @@ else:
 APP_EXE = os.path.join(APP_DIR, "Multiaccount.exe")
 TEMP_EXE = APP_EXE + ".part"
 
-MANIFEST_URL = "https://github.com/nikita133724/Steam/releases/latest/download/manifest.json"
+DEFAULT_REPOSITORY = "nikita133724/Steam"
+
+
+def _resource_path(relative: str) -> str:
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, relative)
+
+
+def _read_bundled_repository() -> str | None:
+    try:
+        path = _resource_path(os.path.join("assets", "repository.txt"))
+        if not os.path.exists(path):
+            return None
+        value = open(path, "r", encoding="utf-8").read().strip()
+        return value or None
+    except Exception:
+        return None
+
+
+def manifest_url() -> str:
+    repository = (
+        os.getenv("MULTIACCOUNT_REPOSITORY")
+        or _read_bundled_repository()
+        or DEFAULT_REPOSITORY
+    )
+    return f"https://github.com/{repository}/releases/latest/download/manifest.json"
 
 
 def create_session():
@@ -68,7 +93,7 @@ class DownloadWorker(QThread):
 
             self.status.emit("Loading manifest...")
 
-            r = session.get(MANIFEST_URL, timeout=15)
+            r = session.get(manifest_url(), timeout=15)
             r.raise_for_status()
             data = r.json()
 

@@ -1,17 +1,21 @@
 import asyncio
 import contextlib
+from datetime import datetime, timezone
 import io
 import json
 import os
+import socket
 import sys
 from pathlib import Path
-from urllib.parse import quote
+import time
+from urllib.parse import quote, urlparse
 
 import requests
 from playwright.async_api import async_playwright
 from playwright.__main__ import main as playwright_cli_main
 from src.device_profiles import normalize_device_profile
 from src.logger import Logger
+from src.url_utils import normalize_target_url
 
 DEFAULT_TIMEZONE = "Europe/Moscow"
 PROFILE_LOCK_FILES = ("SingletonCookie", "SingletonLock", "SingletonSocket")
@@ -39,7 +43,18 @@ class BrowserEngine:
         return self.playwright is not None and self._ready
 
     def default_launch_args(self):
-        args = ["--disable-blink-features=AutomationControlled"]
+        args = [
+            "--disable-blink-features=AutomationControlled",
+            "--disable-background-networking",
+            "--disable-default-apps",
+            "--disable-features=Translate,msEdgeSidebarV2,OptimizationGuideModelDownloading,MediaRouter,AutofillServerCommunication",
+            "--disable-popup-blocking",
+            "--disable-renderer-backgrounding",
+            "--disable-sync",
+            "--hide-crash-restore-bubble",
+            "--no-default-browser-check",
+            "--no-first-run",
+        ]
         if sys.platform == "win32":
             args.append("--disable-gpu")
         elif sys.platform == "linux":
@@ -90,6 +105,15 @@ class BrowserEngine:
             return timezone
         return DEFAULT_TIMEZONE
 
+    def _proxy_endpoint(self, proxy_settings):
+        server = (proxy_settings or {}).get("server", "")
+        if not server:
+            return None, None
+        parsed = urlparse(server)
+        if not parsed.hostname or not parsed.port:
+            return None, None
+        return parsed.hostname, int(parsed.port)
+
     def _cleanup_stale_profile_locks(self, user_data_dir):
         for filename in PROFILE_LOCK_FILES:
             try:
@@ -107,6 +131,32 @@ class BrowserEngine:
             )
         return message
 
+    def _browser_brand_version(self, browser_name):
+        value = (browser_name or "").strip()
+        if value.startswith("Mobile Safari "):
+            return "Safari", value.replace("Mobile Safari ", "", 1)
+        if value.startswith("Safari "):
+            return "Safari", value.replace("Safari ", "", 1)
+        if value.startswith("Chrome Mobile "):
+            return "Google Chrome", value.replace("Chrome Mobile ", "", 1)
+        if value.startswith("Chrome "):
+            return "Google Chrome", value.replace("Chrome ", "", 1)
+        if value.startswith("Edge "):
+            return "Microsoft Edge", value.replace("Edge ", "", 1)
+        if value.startswith("Firefox "):
+            return "Firefox", value.replace("Firefox ", "", 1)
+        head, _, tail = value.partition(" ")
+        return head or "Unknown", tail or "0"
+
+    def _with_window_size_arg(self, args, screen):
+        if any(arg.startswith("--window-size=") for arg in args):
+            return list(args)
+        width = int(screen.get("width", 1280))
+        height = int(screen.get("height", 720))
+        width = max(width, 1)
+        height = max(height, 1)
+        return [*args, f"--window-size={width},{height}"]
+
     def _emit_install_status(self, status_callback, message):
         if not status_callback or not message:
             return
@@ -115,32 +165,175 @@ class BrowserEngine:
         except Exception:
             pass
 
+    def _is_disposable_page(self, page):
+        try:
+            current_url = (page.url or "").strip().lower()
+        except Exception:
+            return False
+        return current_url in {"", "about:blank", "chrome://newtab/", "edge://newtab/"}
+
+    async def _pick_primary_page(self, browser):
+        for page in browser.pages:
+            if page.is_closed():
+                continue
+            if not self._is_disposable_page(page):
+                return page
+        for page in browser.pages:
+            if page.is_closed():
+                continue
+            return page
+        return await browser.new_page()
+
+    async def _cleanup_extra_pages(self, browser, primary_page):
+        for page in list(browser.pages):
+            if page is primary_page or page.is_closed():
+                continue
+            if self._is_disposable_page(page):
+                try:
+                    await page.close()
+                except Exception:
+                    pass
+
+    def _parse_ipinfo(self, proxy_settings):
+        response = self._request_with_proxy("https://ipinfo.io/json", proxy_settings, timeout=8)
+        if response.status_code == 429:
+            raise RuntimeError("IPinfo rate limit")
+        response.raise_for_status()
+        data = response.json()
+        return {
+            "ip": data.get("ip") or "unknown",
+            "timezone": data.get("timezone") or "unknown",
+            "country": data.get("country") or "unknown",
+            "city": data.get("city") or "unknown",
+            "region": data.get("region") or "unknown",
+            "org": data.get("org") or "unknown",
+            "source": "ipinfo",
+        }
+
+    def _parse_ipapi_co(self, proxy_settings):
+        response = self._request_with_proxy("https://ipapi.co/json/", proxy_settings, timeout=8)
+        response.raise_for_status()
+        data = response.json()
+        if data.get("error"):
+            raise RuntimeError(data.get("reason") or "ipapi.co failed")
+        return {
+            "ip": data.get("ip") or "unknown",
+            "timezone": data.get("timezone") or "unknown",
+            "country": data.get("country_name") or data.get("country") or "unknown",
+            "city": data.get("city") or "unknown",
+            "region": data.get("region") or "unknown",
+            "org": data.get("org") or data.get("asn") or "unknown",
+            "source": "ipapi.co",
+        }
+
+    def _parse_ip_api(self, proxy_settings):
+        response = self._request_with_proxy(
+            "http://ip-api.com/json/?fields=status,message,query,country,city,regionName,timezone,org,isp",
+            proxy_settings,
+            timeout=8,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if data.get("status") != "success":
+            raise RuntimeError(data.get("message") or "ip-api failed")
+        return {
+            "ip": data.get("query") or "unknown",
+            "timezone": data.get("timezone") or "unknown",
+            "country": data.get("country") or "unknown",
+            "city": data.get("city") or "unknown",
+            "region": data.get("regionName") or "unknown",
+            "org": data.get("org") or data.get("isp") or "unknown",
+            "source": "ip-api",
+        }
+
+    def _resolve_network_info_sync(self, proxy_settings):
+        providers = (
+            ("ipinfo", self._parse_ipinfo),
+            ("ipapi.co", self._parse_ipapi_co),
+            ("ip-api", self._parse_ip_api),
+        )
+        errors = []
+        for name, provider in providers:
+            try:
+                info = provider(proxy_settings)
+                info["alive"] = True
+                return info
+            except Exception as exc:
+                errors.append(f"{name}: {exc}")
+        return {
+            "ip": "unknown",
+            "timezone": "unknown",
+            "country": "unknown",
+            "city": "unknown",
+            "region": "unknown",
+            "org": "unknown",
+            "source": "none",
+            "alive": False,
+            "error": "; ".join(errors),
+        }
+
+    def _ping_proxy_sync(self, proxy_settings, timeout=3.0, attempts=2):
+        host, port = self._proxy_endpoint(proxy_settings)
+        if not host or not port:
+            return {"alive": False, "ping_ms": None, "error": "proxy endpoint is invalid"}
+
+        samples = []
+        for _ in range(max(1, attempts)):
+            started = time.perf_counter()
+            try:
+                with socket.create_connection((host, port), timeout=timeout):
+                    elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
+                    samples.append(elapsed_ms)
+            except OSError as exc:
+                last_error = str(exc)
+                continue
+        if not samples:
+            return {"alive": False, "ping_ms": None, "error": last_error if "last_error" in locals() else "timeout"}
+
+        avg = round(sum(samples) / len(samples), 1)
+        return {"alive": True, "ping_ms": avg, "samples": len(samples)}
+
     async def detect_timezone(self, proxy_settings):
         if not proxy_settings or not proxy_settings.get("server"):
             return None
         return await asyncio.to_thread(self._detect_timezone_sync, proxy_settings)
 
     def _detect_timezone_sync(self, proxy_settings):
-        response = self._request_with_proxy("https://ipapi.co/timezone/", proxy_settings, timeout=8)
-        response.raise_for_status()
-        timezone = response.text.strip()
+        info = self._resolve_network_info_sync(proxy_settings)
+        timezone = info.get("timezone", "")
         if "/" not in timezone:
             raise ValueError("Timezone not detected")
         return timezone
 
     def _fetch_network_info_sync(self, proxy_settings):
-        response = self._request_with_proxy("https://ipapi.co/json/", proxy_settings, timeout=8)
-        response.raise_for_status()
-        data = response.json()
-        return {
-            "ip": data.get("ip") or "unknown",
-            "timezone": data.get("timezone") or "unknown",
-            "country": data.get("country_name") or "unknown",
-            "city": data.get("city") or "unknown",
-        }
+        return self._resolve_network_info_sync(proxy_settings)
 
     async def get_network_info(self, proxy_settings):
         return await asyncio.to_thread(self._fetch_network_info_sync, proxy_settings)
+
+    def _probe_proxy_sync(self, proxy_settings):
+        checked_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        network_info = self._resolve_network_info_sync(proxy_settings)
+        ping_info = self._ping_proxy_sync(proxy_settings)
+        return {
+            "alive": bool(network_info.get("alive")),
+            "checked_at": checked_at,
+            "ip": network_info.get("ip", "unknown"),
+            "timezone": network_info.get("timezone", "unknown"),
+            "country": network_info.get("country", "unknown"),
+            "city": network_info.get("city", "unknown"),
+            "region": network_info.get("region", "unknown"),
+            "org": network_info.get("org", "unknown"),
+            "source": network_info.get("source", "none"),
+            "error": network_info.get("error", ""),
+            "ping_ms": ping_info.get("ping_ms"),
+        }
+
+    async def probe_proxy(self, proxy_settings):
+        return await asyncio.to_thread(self._probe_proxy_sync, proxy_settings)
+
+    async def ping_proxy(self, proxy_settings):
+        return await asyncio.to_thread(self._ping_proxy_sync, proxy_settings)
 
     async def _apply_device_profile(self, browser, device_profile):
         profile_json = json.dumps(device_profile)
@@ -190,12 +383,23 @@ class BrowserEngine:
         account_id = account["id"]
 
         if account_id in self.browsers:
-            self.logger.info(f"Account {account['name']} already open")
-            return None
+            browser = self.browsers[account_id]
+            page = await self._pick_primary_page(browser)
+            try:
+                await page.bring_to_front()
+            except Exception:
+                pass
+            self.logger.info(f"Account {account['name']} already open, focused existing window")
+            return {"success": True, "account_id": account_id, "already_open": True}
 
         domain = account.get("domain")
         if not domain:
             return {"need_domain": True}
+        try:
+            domain = normalize_target_url(domain)
+        except ValueError as exc:
+            return {"error": f"Invalid account domain: {exc}"}
+        account["domain"] = domain
 
         try:
             device_profile = normalize_device_profile(account.get("device_profile"))
@@ -213,6 +417,7 @@ class BrowserEngine:
 
             viewport = device_profile["viewport"]
             screen = device_profile.get("screen", viewport)
+            args = self._with_window_size_arg(args, screen)
             user_data_dir = str(config.get_profile_path(account_id))
             requested_timezone = self._normalize_timezone(account.get("timezone"))
 
@@ -263,9 +468,12 @@ class BrowserEngine:
 
                 if retry_timezone != requested_timezone:
                     account["timezone"] = retry_timezone
+            browser_brand, browser_version = self._browser_brand_version(device_profile["browser"])
             await self._apply_device_profile(
                 browser,
                 {
+                    "browserBrand": browser_brand,
+                    "browserVersion": browser_version,
                     "platform": device_profile["platform"],
                     "maxTouchPoints": device_profile["max_touch_points"],
                     "hardwareConcurrency": device_profile["hardware_concurrency"],
@@ -274,17 +482,22 @@ class BrowserEngine:
                     "model": device_profile["model"],
                     "os": device_profile["os"],
                     "osVersion": device_profile["os"].split(" ", 1)[-1],
-                    "browserBrand": device_profile["browser"].split(" ", 1)[0],
-                    "browserVersion": device_profile["browser"].split(" ", 1)[-1],
                 },
             )
 
-            page = browser.pages[0] if browser.pages else await browser.new_page()
+            page = await self._pick_primary_page(browser)
 
             try:
-                await page.goto(domain, timeout=30000)
+                await page.goto(domain, timeout=30000, wait_until="domcontentloaded")
+                await page.wait_for_load_state("domcontentloaded", timeout=15000)
             except Exception as e:
                 self.logger.warning(f"Navigation issue: {e}")
+
+            await self._cleanup_extra_pages(browser, page)
+            try:
+                await page.bring_to_front()
+            except Exception:
+                pass
 
             self.browsers[account_id] = browser
 
@@ -343,6 +556,71 @@ class BrowserEngine:
         except Exception as e:
             self.logger.error(f"Close account error: {e}")
             raise
+
+    async def _primary_page_for_account(self, account_id):
+        browser = self.browsers.get(account_id)
+        if not browser or browser.is_closed():
+            return None
+        return await self._pick_primary_page(browser)
+
+    async def get_account_url(self, account_id):
+        page = await self._primary_page_for_account(account_id)
+        if not page:
+            return None
+        try:
+            return page.url
+        except Exception:
+            return None
+
+    async def navigate_account(self, account_id, url: str):
+        page = await self._primary_page_for_account(account_id)
+        if not page:
+            return False
+        try:
+            target = normalize_target_url(url)
+        except ValueError:
+            return False
+        try:
+            await page.goto(target, timeout=30000, wait_until="domcontentloaded")
+            await self._cleanup_extra_pages(self.browsers[account_id], page)
+            await page.bring_to_front()
+            return True
+        except Exception as exc:
+            self.logger.warning(f"Account navigation failed: {exc}")
+            return False
+
+    async def back_account(self, account_id):
+        page = await self._primary_page_for_account(account_id)
+        if not page:
+            return False
+        try:
+            await page.go_back(timeout=15000, wait_until="domcontentloaded")
+            await page.bring_to_front()
+            return True
+        except Exception:
+            return False
+
+    async def forward_account(self, account_id):
+        page = await self._primary_page_for_account(account_id)
+        if not page:
+            return False
+        try:
+            await page.go_forward(timeout=15000, wait_until="domcontentloaded")
+            await page.bring_to_front()
+            return True
+        except Exception:
+            return False
+
+    async def reload_account(self, account_id):
+        page = await self._primary_page_for_account(account_id)
+        if not page:
+            return False
+        try:
+            await page.reload(timeout=30000, wait_until="domcontentloaded")
+            await page.bring_to_front()
+            return True
+        except Exception:
+            return False
 
     async def close_all(self):
         for account_id in list(self.browsers.keys()):

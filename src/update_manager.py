@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import sys
 import requests
 
 from src.paths import get_data_dir
 
-MANIFEST_URL = "https://github.com/nikita133724/Steam/releases/latest/download/manifest.json"
+DEFAULT_REPOSITORY = "nikita133724/Steam"
 
 
 class UpdateManager:
@@ -19,14 +21,44 @@ class UpdateManager:
         self.version_file = self.data_dir / "version.json"
         self.pending_file = self.data_dir / "pending_update.json"
 
+    def _read_bundled_version(self) -> str | None:
+        try:
+            base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+            version_file = base / "assets" / "version.txt"
+            if not version_file.exists():
+                return None
+            value = version_file.read_text(encoding="utf-8").strip()
+            return value or None
+        except Exception:
+            return None
+
+    def _read_bundled_repository(self) -> str | None:
+        try:
+            base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+            repository_file = base / "assets" / "repository.txt"
+            if not repository_file.exists():
+                return None
+            value = repository_file.read_text(encoding="utf-8").strip()
+            return value or None
+        except Exception:
+            return None
+
+    def manifest_url(self) -> str:
+        repository = (
+            os.getenv("MULTIACCOUNT_REPOSITORY")
+            or self._read_bundled_repository()
+            or DEFAULT_REPOSITORY
+        )
+        return f"https://github.com/{repository}/releases/latest/download/manifest.json"
+
     def read_local_version(self) -> str:
         if not self.version_file.exists():
-            return self.current_version
+            return self._read_bundled_version() or self.current_version
         try:
             data = json.loads(self.version_file.read_text(encoding="utf-8"))
-            return data.get("version") or self.current_version
+            return data.get("version") or self._read_bundled_version() or self.current_version
         except Exception:
-            return self.current_version
+            return self._read_bundled_version() or self.current_version
 
     def write_local_version(self, version: str):
         self.version_file.write_text(
@@ -59,7 +91,7 @@ class UpdateManager:
         return bool(pending.get("version")) and self.get_staged_exe().exists()
 
     def fetch_manifest(self, timeout: int = 8) -> dict:
-        response = requests.get(MANIFEST_URL, timeout=timeout)
+        response = requests.get(self.manifest_url(), timeout=timeout)
         response.raise_for_status()
         return response.json()
 

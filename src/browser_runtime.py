@@ -113,7 +113,7 @@ class BrowserRuntime(QThread):
                         "ready": False,
                     }
             self.logger.info("Browser engine ready")
-            self.browser_status.emit(self._lang("browser_status_ready_hint", "Chromium is installed and account launch is available."))
+            self.browser_status.emit("")
             return {"success": True, "ready": True}
 
         return self.submit(setup(), on_success=on_success, on_error=on_error)
@@ -142,6 +142,55 @@ class BrowserRuntime(QThread):
     def get_network_info(self, proxy_settings, on_success=None, on_error=None):
         return self.submit(
             self.engine.get_network_info(proxy_settings),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def probe_proxy(self, proxy_settings, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.probe_proxy(proxy_settings),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def ping_proxy(self, proxy_settings, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.ping_proxy(proxy_settings),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def get_account_url(self, account_id, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.get_account_url(account_id),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def navigate_account(self, account_id, url, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.navigate_account(account_id, url),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def back_account(self, account_id, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.back_account(account_id),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def forward_account(self, account_id, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.forward_account(account_id),
+            on_success=on_success,
+            on_error=on_error,
+        )
+
+    def reload_account(self, account_id, on_success=None, on_error=None):
+        return self.submit(
+            self.engine.reload_account(account_id),
             on_success=on_success,
             on_error=on_error,
         )

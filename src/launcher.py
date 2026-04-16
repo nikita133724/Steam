@@ -8,10 +8,11 @@ import sys
 import time
 import uuid
 
-from src.paths import get_data_dir, get_install_dir, get_installed_exe
+from src.paths import APP_NAME, get_data_dir, get_install_dir, get_installed_exe
 from src.update_manager import UpdateManager
 
 APPLY_UPDATE_ARG = "--apply-update"
+VCRUNTIME_FILES = ("vcruntime140.dll", "msvcp140.dll")
 
 
 def _is_frozen() -> bool:
@@ -20,6 +21,87 @@ def _is_frozen() -> bool:
 
 def _restart(exe: Path) -> None:
     subprocess.Popen([str(exe)], cwd=str(exe.parent))
+
+
+def _desktop_dir_candidates() -> list[Path]:
+    candidates: list[Path] = []
+    public_desktop = os.getenv("PUBLIC")
+    if public_desktop:
+        candidates.append(Path(public_desktop) / "Desktop")
+    user_profile = os.getenv("USERPROFILE")
+    if user_profile:
+        candidates.append(Path(user_profile) / "Desktop")
+    one_drive = os.getenv("OneDrive")
+    if one_drive:
+        candidates.append(Path(one_drive) / "Desktop")
+    candidates.append(Path.home() / "Desktop")
+    unique: list[Path] = []
+    seen = set()
+    for candidate in candidates:
+        key = str(candidate).lower()
+        if key not in seen:
+            unique.append(candidate)
+            seen.add(key)
+    return unique
+
+
+def _find_vc_runtime_installer() -> Path | None:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    for relative in ("assets/vcredist_x64.exe", "assets/VC_redist.x64.exe"):
+        candidate = base / relative
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _has_vc_runtime() -> bool:
+    if sys.platform != "win32":
+        return True
+    system_root = Path(os.getenv("SystemRoot", r"C:\Windows"))
+    search_dirs = [Path(sys.executable).resolve().parent, system_root / "System32", system_root / "SysWOW64"]
+    for dll_name in VCRUNTIME_FILES:
+        if not any((directory / dll_name).exists() for directory in search_dirs):
+            return False
+    return True
+
+
+def ensure_windows_runtime() -> dict:
+    if sys.platform != "win32":
+        return {"ok": True, "checked": False}
+
+    if _has_vc_runtime():
+        return {"ok": True, "checked": True}
+
+    installer = _find_vc_runtime_installer()
+    if installer is None:
+        return {
+            "ok": False,
+            "checked": True,
+            "message": "Microsoft VC++ Redistributable is missing.",
+            "manual_installer": None,
+        }
+
+    try:
+        completed = subprocess.run(
+            [str(installer), "/install", "/quiet", "/norestart"],
+            check=False,
+            timeout=180,
+        )
+        if completed.returncode in {0, 1638, 3010} and _has_vc_runtime():
+            return {"ok": True, "checked": True, "installed": True}
+        return {
+            "ok": False,
+            "checked": True,
+            "message": f"VC++ Redistributable silent install failed with code {completed.returncode}.",
+            "manual_installer": str(installer),
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "checked": True,
+            "message": f"VC++ Redistributable install error: {exc}",
+            "manual_installer": str(installer),
+        }
 
 
 def _cleanup_bootstrap_dir(data_dir: Path) -> Path:
@@ -65,6 +147,53 @@ def _apply_staged_update(target_exe: Path, staged_exe: Path) -> bool:
                     pass
             break
     return False
+
+
+def _ensure_desktop_shortcut(target_exe: Path) -> None:
+    if sys.platform != "win32" or not _is_frozen():
+        return
+
+    try:
+        import winshell  # type: ignore[import-not-found]
+        from win32com.client import Dispatch  # type: ignore[import-not-found]
+    except Exception:
+        return
+
+    try:
+        desktop_dir = None
+        for candidate in [Path(winshell.desktop()), *_desktop_dir_candidates()]:
+            if candidate.exists():
+                desktop_dir = candidate
+                break
+        if desktop_dir is None:
+            desktop_dir = Path(winshell.desktop())
+            desktop_dir.mkdir(parents=True, exist_ok=True)
+        shortcut_path = desktop_dir / f"{APP_NAME}.lnk"
+        shell = Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(str(shortcut_path))
+
+        current_target = getattr(shortcut, "TargetPath", "") or getattr(shortcut, "Targetpath", "")
+        current_workdir = getattr(shortcut, "WorkingDirectory", "") or getattr(shortcut, "Workingdirectory", "")
+        current_icon = getattr(shortcut, "IconLocation", "") or getattr(shortcut, "Iconlocation", "")
+
+        desired_target = str(target_exe)
+        desired_workdir = str(target_exe.parent)
+        desired_icon = str(target_exe)
+
+        if (
+            str(current_target) != desired_target
+            or str(current_workdir) != desired_workdir
+            or str(current_icon) != desired_icon
+        ):
+            shortcut.TargetPath = str(target_exe)
+            shortcut.WorkingDirectory = str(target_exe.parent)
+            # Prefer the embedded EXE icon (set by build flags).
+            shortcut.IconLocation = str(target_exe)
+            shortcut.Save()
+        print(f"Desktop shortcut ready: {shortcut_path}")
+    except Exception:
+        # Ярлык не должен блокировать запуск приложения.
+        return
 
 
 def _run_update_helper(argv: list[str]) -> int:
@@ -129,4 +258,5 @@ def bootstrap_startup(argv: list[str] | None = None) -> int | None:
         # Сетевые/релизные проблемы не должны блокировать запуск UI.
         pass
 
+    _ensure_desktop_shortcut(installed_exe)
     return None
