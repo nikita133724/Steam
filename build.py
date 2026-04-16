@@ -9,6 +9,7 @@ ICON_FILE = BASE_DIR / "assets" / "icon.ico"
 
 def main() -> int:
     data_sep = ";" if sys.platform == "win32" else ":"
+    assets_src = str((BASE_DIR / "assets").resolve())
     cmd = [
         sys.executable,
         "-m",
@@ -24,7 +25,7 @@ def main() -> int:
         str(BASE_DIR / "build"),
         "--specpath",
         str(BASE_DIR / "spec"),
-        f"--add-data=assets{data_sep}assets",
+        f"--add-data={assets_src}{data_sep}assets",
         "--collect-all",
         "playwright",
         str(MAIN_FILE),
