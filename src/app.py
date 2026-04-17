@@ -16,64 +16,84 @@ from src.account_manager import AccountManager
 from src.browser_runtime import BrowserRuntime
 from src.logger import Logger
 from src.update_manager import UpdateManager
+from src.ui_theme import apply_dialog_chrome, style_dialog_layout, mark_secondary_button
 from src.url_utils import normalize_target_url
 from src.launcher import launch_staged_update
 
 
+def _dialog_title(text):
+    label = QLabel(text)
+    label.setObjectName("dialogTitle")
+    label.setWordWrap(True)
+    return label
+
+
+def _dialog_hint(text):
+    label = QLabel(text)
+    label.setObjectName("dialogHint")
+    label.setWordWrap(True)
+    return label
+
+
 class LanguageDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, lang, theme, current_language="ru", parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Welcome / Добро пожаловать")
-        self.setFixedSize(300, 150)
-        
-        layout = QVBoxLayout()
-        
-        layout.addWidget(QLabel("Select language / Выберите язык:"))
-        
+        self.lang = lang
+        self.setWindowTitle(lang.get("language_welcome", "Welcome / Добро пожаловать"))
+        apply_dialog_chrome(self, theme, 400, 210, min_width=360, min_height=190)
+
+        layout = QVBoxLayout(self)
+        style_dialog_layout(layout)
+        layout.addWidget(_dialog_title(lang.get("language_welcome", "Welcome / Добро пожаловать")))
+        layout.addWidget(_dialog_hint(lang.get(
+            "language_select_hint",
+            "Select the interface language before the first launch.",
+        )))
+
         self.combo = QComboBox()
         self.combo.addItem("Русский", "ru")
         self.combo.addItem("English", "en")
+        index = self.combo.findData(current_language)
+        self.combo.setCurrentIndex(index if index >= 0 else 0)
         layout.addWidget(self.combo)
-        
-        btn = QPushButton("OK")
+
+        btn = QPushButton(lang.get("language_continue", "Continue"))
         btn.clicked.connect(self.accept)
-        layout.addWidget(btn)
-        
-        self.setLayout(layout)
+        layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignRight)
     
     def get_language(self):
         return self.combo.currentData()
 
 
 class DomainDialog(QDialog):
-    def __init__(self, account_name, lang, current_domain="", parent=None):
+    def __init__(self, account_name, lang, theme, current_domain="", parent=None):
         super().__init__(parent)
         self.lang = lang
         self._normalized_domain = ""
         self.setWindowTitle(lang.get("enter_domain"))
-        self.setFixedSize(400, 150)
-        
-        layout = QVBoxLayout()
-        
-        layout.addWidget(QLabel(f"{lang.get('account_name')}: {account_name}"))
-        layout.addWidget(QLabel(lang.get("enter_domain")))
-        
+        apply_dialog_chrome(self, theme, 480, 210, min_width=420, min_height=190)
+
+        layout = QVBoxLayout(self)
+        style_dialog_layout(layout)
+        layout.addWidget(_dialog_title(lang.get("enter_domain")))
+        layout.addWidget(_dialog_hint(f"{lang.get('account_name')}: {account_name}"))
+
         self.domain_input = QLineEdit()
         self.domain_input.setPlaceholderText("https://example.com")
         self.domain_input.setText(current_domain or "")
+        self.domain_input.returnPressed.connect(self._on_save)
         layout.addWidget(self.domain_input)
-        
+
         btn_layout = QHBoxLayout()
         save_btn = QPushButton(lang.get("remember"))
         save_btn.clicked.connect(self._on_save)
         cancel_btn = QPushButton(lang.get("cancel"))
+        mark_secondary_button(cancel_btn)
         cancel_btn.clicked.connect(self.reject)
-        
+
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
-        
-        self.setLayout(layout)
 
     def _on_save(self):
         try:
@@ -92,62 +112,58 @@ class DomainDialog(QDialog):
 
 
 class AddAccountDialog(QDialog):
-    def __init__(self, lang, parent=None):
+    def __init__(self, lang, theme, parent=None):
         super().__init__(parent)
         self.lang = lang
         self.setWindowTitle(lang.get("add_account"))
-        self.setFixedSize(300, 150)
-        
-        layout = QVBoxLayout()
-        
-        layout.addWidget(QLabel(lang.get("account_name")))
-        
+        apply_dialog_chrome(self, theme, 380, 200, min_width=340, min_height=180)
+
+        layout = QVBoxLayout(self)
+        style_dialog_layout(layout)
+        layout.addWidget(_dialog_title(lang.get("add_account")))
+        layout.addWidget(_dialog_hint(lang.get("account_name")))
+
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("Account 1")
+        self.name_input.returnPressed.connect(self.accept)
         layout.addWidget(self.name_input)
-        
+
         btn_layout = QHBoxLayout()
         save_btn = QPushButton(lang.get("save"))
         save_btn.clicked.connect(self.accept)
         cancel_btn = QPushButton(lang.get("cancel"))
+        mark_secondary_button(cancel_btn)
         cancel_btn.clicked.connect(self.reject)
-        
+
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
-        
-        self.setLayout(layout)
     
     def get_name(self):
-        return self.name_input.text() or "Unnamed"
+        return self.name_input.text() or self.lang.get("account_name_default", "Unnamed")
 
 
 class DeleteConfirmDialog(QDialog):
-    def __init__(self, lang, account_name, parent=None):
+    def __init__(self, lang, theme, account_name, parent=None):
         super().__init__(parent)
         self.lang = lang
         self.setWindowTitle(lang.get("delete_account"))
-        self.setFixedSize(440, 170)
+        apply_dialog_chrome(self, theme, 480, 220, min_width=440, min_height=200)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-
-        title = QLabel(lang.get("delete_confirm_title", "Подтвердите удаление"))
-        title.setStyleSheet("font-size: 15px; font-weight: 700;")
-        layout.addWidget(title)
+        style_dialog_layout(layout)
+        layout.addWidget(_dialog_title(lang.get("delete_confirm_title", "Подтвердите удаление")))
 
         message = lang.get("delete_confirm_text", "Удалить аккаунт \"{account}\" без возможности отмены?")
-        body = QLabel(message.format(account=account_name))
-        body.setWordWrap(True)
-        layout.addWidget(body)
+        layout.addWidget(_dialog_hint(message.format(account=account_name)))
 
         buttons = QHBoxLayout()
         buttons.addStretch()
         no_btn = QPushButton(lang.get("confirm_no", "Нет"))
+        mark_secondary_button(no_btn)
         no_btn.clicked.connect(self.reject)
         yes_btn = QPushButton(lang.get("confirm_yes", "Да"))
         yes_btn.clicked.connect(self.accept)
@@ -177,19 +193,15 @@ class DeleteConfirmDialog(QDialog):
 
 
 class AccountInfoDialog(QDialog):
-    def __init__(self, lang, account_name, details, parent=None):
+    def __init__(self, lang, theme, account_name, details, parent=None):
         super().__init__(parent)
         self.setWindowTitle(lang.get("account_info_title", "Информация по аккаунту"))
-        self.resize(560, 420)
-        self.setMinimumSize(500, 340)
+        apply_dialog_chrome(self, theme, 620, 460, min_width=540, min_height=360)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(8)
+        style_dialog_layout(layout)
 
-        title = QLabel(account_name)
-        title.setStyleSheet("font-size: 16px; font-weight: 700;")
-        layout.addWidget(title)
+        layout.addWidget(_dialog_title(account_name))
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
@@ -210,6 +222,7 @@ class AccountInfoDialog(QDialog):
         layout.addWidget(scroll, 1)
 
         close_btn = QPushButton(lang.get("close_account_info", "Закрыть"))
+        mark_secondary_button(close_btn)
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -217,22 +230,24 @@ class AccountInfoDialog(QDialog):
 class ProxyDialog(QDialog):
     detect_requested = pyqtSignal()
 
-    def __init__(self, lang, account, parent=None):
+    def __init__(self, lang, theme, account, parent=None):
         super().__init__(parent)
         self.lang = lang
         self.account = account
         self.detected_timezone = account.get("timezone", "Europe/Moscow")
         self.setWindowTitle(lang.get("proxy_settings"))
-        self.setFixedSize(520, 250)
+        apply_dialog_chrome(self, theme, 580, 300, min_width=520, min_height=280)
 
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(f"{lang.get('account_name')}: {account['name']}"))
-        layout.addWidget(QLabel(lang.get("enter_proxy")))
+        layout = QVBoxLayout(self)
+        style_dialog_layout(layout)
+        layout.addWidget(_dialog_title(lang.get("proxy_settings")))
+        layout.addWidget(_dialog_hint(f"{lang.get('account_name')}: {account['name']}"))
 
         self.proxy_input = QLineEdit()
         self.proxy_input.setPlaceholderText(self.lang.get("proxy_placeholder", "socks5://user:pass@host:port"))
         current_proxy = account.get("proxy") or {}
         self.proxy_input.setText(account.get("proxy_raw") or current_proxy.get("server", ""))
+        self.proxy_input.returnPressed.connect(self.accept)
         layout.addWidget(self.proxy_input)
 
         self.proxy_type = QComboBox()
@@ -248,6 +263,7 @@ class ProxyDialog(QDialog):
         layout.addWidget(self.tz_label)
 
         detect_btn = QPushButton(lang.get("detect_timezone"))
+        mark_secondary_button(detect_btn)
         detect_btn.clicked.connect(self.detect_requested.emit)
         layout.addWidget(detect_btn)
 
@@ -255,12 +271,11 @@ class ProxyDialog(QDialog):
         save_btn = QPushButton(lang.get("save"))
         save_btn.clicked.connect(self.accept)
         cancel_btn = QPushButton(lang.get("cancel"))
+        mark_secondary_button(cancel_btn)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(cancel_btn)
         layout.addLayout(btn_layout)
-
-        self.setLayout(layout)
 
     def _detect_proxy_scheme(self, account):
         proxy = account.get("proxy") or {}
@@ -492,6 +507,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.config = Config()
+        self.current_theme = self.config.get_theme()
+        self._prompt_first_run_language()
         self.account_manager = AccountManager(self.config)
         self.browser_runtime = BrowserRuntime(self.config, Logger.get_instance())
         self.browser_ready = False
@@ -511,13 +528,30 @@ class MainWindow(QMainWindow):
         self._startup_logs_visible = False
         self.app_version = self._load_app_version()
         self._tray_icon = None
-        self.current_theme = self.config.get_theme()
+        self._tray_action_show = None
+        self._tray_action_quit = None
 
         self._init_app_icon()
 
         self.setup_ui(apply_geometry=True)
         self._setup_startup_overlay()
         self._begin_startup_sequence()
+
+    def _prompt_first_run_language(self):
+        if not self.config.data.get("first_run", True):
+            return
+        selected_language = self.config.data.get("language") or "ru"
+        dialog = LanguageDialog(
+            self.config.lang,
+            self.THEME_STYLES[self.current_theme],
+            current_language=selected_language,
+            parent=self,
+        )
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_language = dialog.get_language()
+        self.config.set_language(selected_language)
+        self.config.data["first_run"] = False
+        self.config.save_config()
 
     def _init_app_icon(self) -> None:
         icon_path = self.config.resource_path("assets/icon.ico")
@@ -543,21 +577,29 @@ class MainWindow(QMainWindow):
             return
 
         tray = QSystemTrayIcon(icon, self)
-        tray.setToolTip("Multiaccount")
 
         menu = QMenu(self)
-        action_show = QAction("Show", self)
-        action_show.triggered.connect(self._show_from_tray)
-        menu.addAction(action_show)
+        self._tray_action_show = QAction(self)
+        self._tray_action_show.triggered.connect(self._show_from_tray)
+        menu.addAction(self._tray_action_show)
 
-        action_quit = QAction("Quit", self)
-        action_quit.triggered.connect(self._quit_from_tray)
-        menu.addAction(action_quit)
+        self._tray_action_quit = QAction(self)
+        self._tray_action_quit.triggered.connect(self._quit_from_tray)
+        menu.addAction(self._tray_action_quit)
 
         tray.setContextMenu(menu)
         tray.activated.connect(self._on_tray_activated)
         tray.show()
         self._tray_icon = tray
+        self._update_tray_texts()
+
+    def _update_tray_texts(self) -> None:
+        if self._tray_icon is not None:
+            self._tray_icon.setToolTip(self.config.lang.get("window_title", "Multiaccount"))
+        if self._tray_action_show is not None:
+            self._tray_action_show.setText(self.config.lang.get("tray_show", "Show"))
+        if self._tray_action_quit is not None:
+            self._tray_action_quit.setText(self.config.lang.get("tray_quit", "Quit"))
 
     def _on_tray_activated(self, reason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
@@ -576,7 +618,12 @@ class MainWindow(QMainWindow):
             QApplication.quit()
     
     def show_language_dialog(self):
-        dialog = LanguageDialog(self)
+        dialog = LanguageDialog(
+            self.config.lang,
+            self.THEME_STYLES[self.current_theme],
+            current_language=self.config.data.get("language") or "ru",
+            parent=self,
+        )
         if dialog.exec() == QDialog.DialogCode.Accepted:
             lang = dialog.get_language()
             self.config.set_language(lang)
@@ -589,6 +636,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(lang.get("window_title", "Multiaccount"))
         self.setMinimumSize(900, 600)
+        self._update_tray_texts()
 
         central = QWidget()
         central.setObjectName("central")
@@ -769,7 +817,7 @@ class MainWindow(QMainWindow):
         btn_layout.addWidget(self.add_btn)
 
         self.logs_btn = QPushButton(lang.get("logs"))
-        self.logs_btn.clicked.connect(self.logger.show_window)
+        self.logs_btn.clicked.connect(self._show_logs_window)
         btn_layout.addWidget(self.logs_btn)
 
         self.cleanup_btn = QPushButton(lang.get("cleanup_data"))
@@ -896,6 +944,12 @@ class MainWindow(QMainWindow):
         self.refresh_table()
         self._apply_table_metrics()
 
+    def _show_logs_window(self):
+        self.logger.show_window(
+            lang=self.config.lang,
+            theme=self.THEME_STYLES[self.current_theme],
+        )
+
     def _setup_startup_overlay(self):
         central = self.centralWidget()
         if central is None:
@@ -967,6 +1021,27 @@ class MainWindow(QMainWindow):
         self.config.set_default_launch_url("")
         if hasattr(self, "default_url_input"):
             self.default_url_input.clear()
+
+    def _show_info_message(self, message, title=None):
+        QMessageBox.information(
+            self,
+            title or self.config.lang.get("dialog_info_title", "Info"),
+            message,
+        )
+
+    def _show_warning_message(self, message, title=None):
+        QMessageBox.warning(
+            self,
+            title or self.config.lang.get("dialog_warning_title", "Warning"),
+            message,
+        )
+
+    def _show_error_message(self, message, title=None):
+        QMessageBox.critical(
+            self,
+            title or self.config.lang.get("dialog_error_title", "Error"),
+            message,
+        )
 
     def _show_startup_overlay(self, title, subtitle, badge=None):
         self._startup_overlay_active = True
@@ -1167,10 +1242,9 @@ class MainWindow(QMainWindow):
         self.browser_status_hint.setVisible(False)
         self.refresh_table()
         self._begin_startup_sequence(skip_update_check=True)
-        QMessageBox.information(
-            self,
-            self.config.lang.get("cleanup_data"),
-            self.config.lang.get("cleanup_done")
+        self._show_info_message(
+            self.config.lang.get("cleanup_done"),
+            title=self.config.lang.get("cleanup_data"),
         )
 
     def _on_async_error(self, message):
@@ -1217,6 +1291,11 @@ class MainWindow(QMainWindow):
         self._setup_startup_overlay()
         if not overlay_active:
             self.startup_overlay.hide()
+        if self.logger.window is not None:
+            self.logger.window.update_chrome(
+                lang=self.config.lang,
+                theme=self.THEME_STYLES[self.current_theme],
+            )
         if was_maximized:
             self.showMaximized()
         else:
@@ -1580,7 +1659,7 @@ class MainWindow(QMainWindow):
     
     def add_account(self):
         lang = self.config.lang
-        dialog = AddAccountDialog(lang, self)
+        dialog = AddAccountDialog(lang, self.THEME_STYLES[self.current_theme], self)
         
         if dialog.exec() == QDialog.DialogCode.Accepted:
             name = dialog.get_name()
@@ -1649,20 +1728,25 @@ class MainWindow(QMainWindow):
             (self.config.lang.get("proxy_source", "Source"), proxy_status.get("source", "none")),
             (self.config.lang.get("proxy_org", "Organization"), proxy_status.get("org", "unknown")),
         ]
-        dialog = AccountInfoDialog(self.config.lang, account["name"], details, self)
+        dialog = AccountInfoDialog(
+            self.config.lang,
+            self.THEME_STYLES[self.current_theme],
+            account["name"],
+            details,
+            self,
+        )
         dialog.exec()
 
     def regenerate_account_profile(self, account):
         if self._is_account_busy(account["id"]):
             return
         if account["id"] in self.open_account_ids:
-            QMessageBox.information(
-                self,
-                self.config.lang.get("profile_busy_title", "Профиль занят"),
+            self._show_info_message(
                 self.config.lang.get(
                     "profile_busy_text",
                     "Сначала закройте аккаунт, затем обновите профиль устройства.",
                 ),
+                title=self.config.lang.get("profile_busy_title", "Профиль занят"),
             )
             return
 
@@ -1677,7 +1761,12 @@ class MainWindow(QMainWindow):
     def delete_account(self, account):
         if self._is_account_busy(account["id"]):
             return
-        dialog = DeleteConfirmDialog(self.config.lang, account["name"], self)
+        dialog = DeleteConfirmDialog(
+            self.config.lang,
+            self.THEME_STYLES[self.current_theme],
+            account["name"],
+            self,
+        )
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._set_account_pending_action(account["id"], "deleting")
             self.refresh_table()
@@ -1725,7 +1814,12 @@ class MainWindow(QMainWindow):
         if self._is_account_busy(account["id"]) or account["id"] in self.open_account_ids:
             return
         lang = self.config.lang
-        dialog = ProxyDialog(lang, account, self)
+        dialog = ProxyDialog(
+            lang,
+            self.THEME_STYLES[self.current_theme],
+            account,
+            self,
+        )
         dialog.detect_requested.connect(lambda: self._detect_timezone_for_dialog(dialog))
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
@@ -1753,7 +1847,10 @@ class MainWindow(QMainWindow):
                 else:
                     self._apply_proxy_change(account, None, {})
             except ValueError:
-                QMessageBox.warning(self, "Proxy", lang.get("proxy_invalid"))
+                self._show_warning_message(
+                    lang.get("proxy_invalid"),
+                    title=self.config.lang.get("proxy", "Proxy"),
+                )
 
     def _apply_proxy_change(self, account, proxy, probe_result):
         status = dict(probe_result or {})
@@ -1780,10 +1877,9 @@ class MainWindow(QMainWindow):
             }
         self.refresh_table()
         if proxy and not status.get("alive", False):
-            QMessageBox.warning(
-                self,
-                self.config.lang.get("proxy", "Proxy"),
+            self._show_warning_message(
                 self.config.lang.get("proxy_unreachable", "Прокси сохранен, но проверка не пройдена."),
+                title=self.config.lang.get("proxy", "Proxy"),
             )
         self.logger.info(
             f"Proxy updated for account {account['name']} "
@@ -1797,6 +1893,7 @@ class MainWindow(QMainWindow):
         dialog = DomainDialog(
             account["name"],
             self.config.lang,
+            self.THEME_STYLES[self.current_theme],
             current_domain=current_domain,
             parent=self,
         )
@@ -1821,6 +1918,7 @@ class MainWindow(QMainWindow):
             domain_dialog = DomainDialog(
                 account["name"],
                 self.config.lang,
+                self.THEME_STYLES[self.current_theme],
                 current_domain=current_domain,
                 parent=self,
             )
@@ -1841,7 +1939,7 @@ class MainWindow(QMainWindow):
         if self._is_account_busy(account["id"]) or account["id"] in self.open_account_ids:
             return
         if not self.browser_ready:
-            QMessageBox.information(self, "Info", lang.get("cleanup_restart"))
+            self._show_info_message(lang.get("cleanup_restart"))
             return
         
         if not self._ensure_account_domain(account):
@@ -1855,10 +1953,9 @@ class MainWindow(QMainWindow):
             if alive is None:
                 alive = proxy_status.get("alive")
             if alive is False:
-                QMessageBox.warning(
-                    self,
-                    self.config.lang.get("proxy", "Proxy"),
+                self._show_warning_message(
                     self.config.lang.get("proxy_unreachable", "Прокси сохранен, но проверка не пройдена."),
+                    title=self.config.lang.get("proxy", "Proxy"),
                 )
                 return
             timezone = proxy_status.get("timezone")
@@ -1881,7 +1978,7 @@ class MainWindow(QMainWindow):
         if account_id is not None:
             self._clear_account_pending_action(account_id)
         if result and result.get("error"):
-            QMessageBox.critical(self, "Error", result["error"])
+            self._show_error_message(result["error"])
             self.refresh_table()
             return
         if result and result.get("success"):
@@ -1894,7 +1991,7 @@ class MainWindow(QMainWindow):
     def _handle_open_error(self, account_id, message):
         self._clear_account_pending_action(account_id)
         self.refresh_table()
-        QMessageBox.critical(self, "Error", message)
+        self._show_error_message(message)
     
     def on_browser_close(self, account_id):
         self._clear_account_pending_action(account_id)
@@ -1907,11 +2004,17 @@ class MainWindow(QMainWindow):
         try:
             proxy = dialog.get_proxy()
         except ValueError:
-            QMessageBox.warning(self, "Proxy", self.config.lang.get("proxy_invalid"))
+            self._show_warning_message(
+                self.config.lang.get("proxy_invalid"),
+                title=self.config.lang.get("proxy", "Proxy"),
+            )
             return
 
         if not proxy:
-            QMessageBox.warning(self, "Proxy", self.config.lang.get("proxy_required"))
+            self._show_warning_message(
+                self.config.lang.get("proxy_required"),
+                title=self.config.lang.get("proxy", "Proxy"),
+            )
             return
 
         dialog.tz_label.setText(f"{self.config.lang.get('timezone')}: ...")
@@ -1928,7 +2031,10 @@ class MainWindow(QMainWindow):
 
     def _show_dialog_timezone_error(self, dialog, message):
         dialog.tz_label.setText(f"{self.config.lang.get('timezone')}: {dialog.detected_timezone}")
-        QMessageBox.warning(self, "Timezone", f"{self.config.lang.get('timezone_error')}: {message}")
+        self._show_warning_message(
+            f"{self.config.lang.get('timezone_error')}: {message}",
+            title=self.config.lang.get("timezone", "Timezone"),
+        )
     
     def closeEvent(self, event):
         try:
