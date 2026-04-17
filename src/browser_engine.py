@@ -21,6 +21,9 @@ from src.url_utils import normalize_target_url
 
 DEFAULT_TIMEZONE = "Europe/Moscow"
 PROFILE_LOCK_FILES = ("SingletonCookie", "SingletonLock", "SingletonSocket")
+NAVIGATION_TIMEOUT_MS = 15000
+LOAD_STATE_TIMEOUT_MS = 8000
+PROXY_PREFLIGHT_TIMEOUT_S = 2.5
 
 
 class BrowserEngine:
@@ -30,6 +33,8 @@ class BrowserEngine:
         self.browsers = {}
         self.logger = Logger.get_instance()
         self._ready = False
+        self._browser_close_notified = set()
+        self._closed_context_ids = set()
 
     async def init(self):
         try:
@@ -48,14 +53,16 @@ class BrowserEngine:
         args = [
             "--disable-blink-features=AutomationControlled",
             "--disable-background-networking",
+            "--disable-component-update",
             "--disable-default-apps",
-            "--disable-features=Translate,msEdgeSidebarV2,OptimizationGuideModelDownloading,MediaRouter,AutofillServerCommunication",
+            "--disable-features=Translate,msEdgeSidebarV2,OptimizationGuideModelDownloading,MediaRouter,AutofillServerCommunication,InterestFeedContentSuggestions",
             "--disable-popup-blocking",
-            "--disable-renderer-backgrounding",
             "--disable-sync",
             "--hide-crash-restore-bubble",
+            "--metrics-recording-only",
             "--no-default-browser-check",
             "--no-first-run",
+            "--password-store=basic",
         ]
         if sys.platform == "win32":
             args.append("--disable-gpu")
@@ -159,6 +166,17 @@ class BrowserEngine:
         height = max(height, 1)
         return [*args, f"--window-size={width},{height}"]
 
+    def _launch_window_size(self, device_profile):
+        viewport = device_profile.get("viewport") or {}
+        width = int(viewport.get("width", 1280))
+        height = int(viewport.get("height", 720))
+        chrome_width = 16 if sys.platform == "win32" else 12
+        chrome_height = 96 if sys.platform == "win32" else 88
+        return {
+            "width": max(width + chrome_width, 360),
+            "height": max(height + chrome_height, 420),
+        }
+
     def _emit_install_status(self, status_callback, message):
         if not status_callback or not message:
             return
@@ -175,19 +193,27 @@ class BrowserEngine:
         return current_url in {"", "about:blank", "chrome://newtab/", "edge://newtab/"}
 
     async def _pick_primary_page(self, browser):
-        for page in browser.pages:
+        try:
+            pages = list(browser.pages)
+        except Exception:
+            return None
+        for page in pages:
             if page.is_closed():
                 continue
             if not self._is_disposable_page(page):
                 return page
-        for page in browser.pages:
+        for page in pages:
             if page.is_closed():
                 continue
             return page
         return await browser.new_page()
 
     async def _cleanup_extra_pages(self, browser, primary_page):
-        for page in list(browser.pages):
+        try:
+            pages = list(browser.pages)
+        except Exception:
+            return
+        for page in pages:
             if page is primary_page or page.is_closed():
                 continue
             if self._is_disposable_page(page):
@@ -274,7 +300,7 @@ class BrowserEngine:
             "error": "; ".join(errors),
         }
 
-    def _ping_proxy_sync(self, proxy_settings, timeout=3.0, attempts=2):
+    def _ping_proxy_sync(self, proxy_settings, timeout=3.0, attempts=1):
         host, port = self._proxy_endpoint(proxy_settings)
         if not host or not port:
             return {"alive": False, "ping_ms": None, "error": "proxy endpoint is invalid"}
@@ -301,6 +327,13 @@ class BrowserEngine:
         return await asyncio.to_thread(self._detect_timezone_sync, proxy_settings)
 
     def _detect_timezone_sync(self, proxy_settings):
+        ping_info = self._ping_proxy_sync(
+            proxy_settings,
+            timeout=PROXY_PREFLIGHT_TIMEOUT_S,
+            attempts=1,
+        )
+        if not ping_info.get("alive"):
+            raise RuntimeError(ping_info.get("error") or "proxy is offline")
         info = self._resolve_network_info_sync(proxy_settings)
         timezone = info.get("timezone", "")
         if "/" not in timezone:
@@ -308,6 +341,24 @@ class BrowserEngine:
         return timezone
 
     def _fetch_network_info_sync(self, proxy_settings):
+        ping_info = self._ping_proxy_sync(
+            proxy_settings,
+            timeout=PROXY_PREFLIGHT_TIMEOUT_S,
+            attempts=1,
+        )
+        if not ping_info.get("alive"):
+            return {
+                "ip": "unknown",
+                "timezone": "unknown",
+                "country": "unknown",
+                "city": "unknown",
+                "region": "unknown",
+                "org": "unknown",
+                "source": "none",
+                "alive": False,
+                "error": ping_info.get("error") or "proxy is offline",
+                "ping_ms": None,
+            }
         return self._resolve_network_info_sync(proxy_settings)
 
     async def get_network_info(self, proxy_settings):
@@ -315,8 +366,27 @@ class BrowserEngine:
 
     def _probe_proxy_sync(self, proxy_settings):
         checked_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        ping_info = self._ping_proxy_sync(
+            proxy_settings,
+            timeout=PROXY_PREFLIGHT_TIMEOUT_S,
+            attempts=1,
+        )
+        if not ping_info.get("alive"):
+            return {
+                "alive": False,
+                "checked_at": checked_at,
+                "ip": "unknown",
+                "timezone": "unknown",
+                "country": "unknown",
+                "city": "unknown",
+                "region": "unknown",
+                "org": "unknown",
+                "source": "none",
+                "error": ping_info.get("error") or "proxy is offline",
+                "ping_ms": None,
+            }
+
         network_info = self._resolve_network_info_sync(proxy_settings)
-        ping_info = self._ping_proxy_sync(proxy_settings)
         return {
             "alive": bool(network_info.get("alive")),
             "checked_at": checked_at,
@@ -351,7 +421,47 @@ class BrowserEngine:
           patch(Navigator.prototype, 'maxTouchPoints', profile.maxTouchPoints);
           patch(Navigator.prototype, 'hardwareConcurrency', profile.hardwareConcurrency);
           patch(Navigator.prototype, 'deviceMemory', profile.deviceMemory);
+          patch(Navigator.prototype, 'language', profile.language);
+          patch(Navigator.prototype, 'languages', profile.languages);
+          patch(Navigator.prototype, 'vendor', profile.vendor);
+          patch(Navigator.prototype, 'plugins', profile.plugins);
+          patch(Navigator.prototype, 'pdfViewerEnabled', true);
           patch(Navigator.prototype, 'webdriver', false);
+          patch(window, 'devicePixelRatio', profile.deviceScaleFactor);
+
+          if (window.screen) {
+            patch(window.screen, 'width', profile.screen.width);
+            patch(window.screen, 'height', profile.screen.height);
+            patch(window.screen, 'availWidth', profile.screen.width);
+            patch(window.screen, 'availHeight', profile.screen.height);
+            patch(window.screen, 'colorDepth', 24);
+            patch(window.screen, 'pixelDepth', 24);
+          }
+
+          if (window.screen && window.screen.orientation) {
+            patch(window.screen.orientation, 'type', profile.orientationType);
+            patch(window.screen.orientation, 'angle', profile.orientationAngle);
+          }
+
+          try {
+            const query = navigator.permissions?.query?.bind(navigator.permissions);
+            if (query) {
+              navigator.permissions.query = parameters => {
+                if (parameters && parameters.name === 'notifications') {
+                  return Promise.resolve({ state: Notification.permission });
+                }
+                return query(parameters);
+              };
+            }
+          } catch (e) {}
+
+          if (!window.chrome) {
+            Object.defineProperty(window, 'chrome', {
+              value: { runtime: {}, app: {} },
+              configurable: true
+            });
+          }
+
           if ('userAgentData' in Navigator.prototype) {
             patch(Navigator.prototype, 'userAgentData', {
               mobile: profile.isMobile,
@@ -378,6 +488,29 @@ class BrowserEngine:
         """.replace("__PROFILE_JSON__", profile_json)
         await browser.add_init_script(script=script)
 
+    async def _notify_browser_closed(self, account_id, on_close):
+        if account_id in self._browser_close_notified:
+            return
+        self._browser_close_notified.add(account_id)
+        try:
+            self._closed_context_ids.add(account_id)
+            self.browsers.pop(account_id, None)
+            if on_close:
+                on_close(account_id)
+        finally:
+            self._browser_close_notified.discard(account_id)
+
+    def _attach_close_listener(self, account_id, browser, on_close):
+        loop = asyncio.get_running_loop()
+
+        def _on_close(*_args):
+            loop.create_task(self._notify_browser_closed(account_id, on_close))
+
+        try:
+            browser.on("close", _on_close)
+        except Exception as exc:
+            self.logger.warning(f"Failed to attach browser close listener for {account_id}: {exc}")
+
     async def open_account(self, account, config, on_close=None):
         if not self._ensure_ready():
             return {"error": "Browser engine not initialized"}
@@ -387,6 +520,9 @@ class BrowserEngine:
         if account_id in self.browsers:
             browser = self.browsers[account_id]
             page = await self._pick_primary_page(browser)
+            if page is None:
+                await self._notify_browser_closed(account_id, on_close)
+                return {"error": "Browser window is no longer available. Try launching the account again."}
             try:
                 await page.bring_to_front()
             except Exception:
@@ -409,17 +545,32 @@ class BrowserEngine:
 
             proxy_settings = account.get("proxy") or {}
             proxy = None
+            allow_insecure_https = self.config.should_ignore_https_errors() and bool(proxy_settings.get("server"))
 
             if proxy_settings.get("server"):
+                preflight = self._ping_proxy_sync(
+                    proxy_settings,
+                    timeout=PROXY_PREFLIGHT_TIMEOUT_S,
+                    attempts=1,
+                )
+                if not preflight.get("alive"):
+                    return {
+                        "error": (
+                            "Proxy did not respond quickly enough. "
+                            f"Check it before launch. Details: {preflight.get('error') or 'timeout'}"
+                        )
+                    }
                 proxy = {"server": proxy_settings["server"]}
                 if proxy_settings.get("username"):
                     proxy["username"] = proxy_settings["username"]
                 if proxy_settings.get("password"):
                     proxy["password"] = proxy_settings["password"]
+            if allow_insecure_https:
+                args.append("--ignore-certificate-errors")
 
             viewport = device_profile["viewport"]
             screen = device_profile.get("screen", viewport)
-            args = self._with_window_size_arg(args, screen)
+            args = self._with_window_size_arg(args, self._launch_window_size(device_profile))
             user_data_dir = str(config.get_profile_path(account_id))
             requested_timezone = self._normalize_timezone(account.get("timezone"))
 
@@ -427,16 +578,13 @@ class BrowserEngine:
                 "user_data_dir": user_data_dir,
                 "headless": False,
                 "args": args,
-                "viewport": viewport,
-                "screen": screen,
+                "no_viewport": True,
                 "proxy": proxy,
                 "locale": account.get("locale", "ru-RU"),
                 "timezone_id": requested_timezone,
                 "user_agent": device_profile["user_agent"],
                 "color_scheme": device_profile.get("color_scheme", "light"),
-                "device_scale_factor": device_profile.get("device_scale_factor", 1),
-                "is_mobile": device_profile.get("is_mobile", False),
-                "has_touch": device_profile.get("has_touch", False),
+                "ignore_https_errors": allow_insecure_https,
             }
 
             try:
@@ -470,6 +618,8 @@ class BrowserEngine:
 
                 if retry_timezone != requested_timezone:
                     account["timezone"] = retry_timezone
+            self._closed_context_ids.discard(account_id)
+            self._attach_close_listener(account_id, browser, on_close)
             browser_brand, browser_version = self._browser_brand_version(device_profile["browser"])
             await self._apply_device_profile(
                 browser,
@@ -484,14 +634,22 @@ class BrowserEngine:
                     "model": device_profile["model"],
                     "os": device_profile["os"],
                     "osVersion": device_profile["os"].split(" ", 1)[-1],
+                    "screen": screen,
+                    "deviceScaleFactor": device_profile.get("device_scale_factor", 1),
+                    "language": account.get("locale", "ru-RU"),
+                    "languages": [account.get("locale", "ru-RU"), "en-US", "en"],
+                    "vendor": "Google Inc.",
+                    "plugins": [1, 2, 3, 4, 5],
+                    "orientationType": "portrait-primary" if device_profile.get("is_mobile") else "landscape-primary",
+                    "orientationAngle": 0,
                 },
             )
 
             page = await self._pick_primary_page(browser)
 
             try:
-                await page.goto(domain, timeout=30000, wait_until="domcontentloaded")
-                await page.wait_for_load_state("domcontentloaded", timeout=15000)
+                await page.goto(domain, timeout=NAVIGATION_TIMEOUT_MS, wait_until="domcontentloaded")
+                await page.wait_for_load_state("domcontentloaded", timeout=LOAD_STATE_TIMEOUT_MS)
             except Exception as e:
                 self.logger.warning(f"Navigation issue: {e}")
 
@@ -503,13 +661,19 @@ class BrowserEngine:
 
             self.browsers[account_id] = browser
 
-            asyncio.create_task(self._monitor_browser(account_id, browser, on_close))
-
-            try:
-                network_info = await self.get_network_info(proxy_settings)
-            except Exception as exc:
-                self.logger.warning(f"Network info lookup failed: {exc}")
-                network_info = {}
+            network_info = dict(account.get("proxy_status") or {})
+            needs_lookup = bool(proxy_settings) and (
+                not network_info.get("ip")
+                or network_info.get("ip") == "unknown"
+                or not network_info.get("timezone")
+                or network_info.get("timezone") == "unknown"
+            )
+            if needs_lookup:
+                try:
+                    network_info = await self.get_network_info(proxy_settings)
+                except Exception as exc:
+                    self.logger.warning(f"Network info lookup failed: {exc}")
+                    network_info = dict(account.get("proxy_status") or {})
             self.logger.info(f"Account {account['name']} opened")
             return {
                 "success": True,
@@ -531,28 +695,12 @@ class BrowserEngine:
             self.logger.error(f"Open account failed: {e}")
             return {"error": str(e)}
 
-    async def _monitor_browser(self, account_id, browser, on_close):
-        try:
-            while True:
-                if browser.is_closed():
-                    break
-                await asyncio.sleep(1)
-
-            if account_id in self.browsers:
-                del self.browsers[account_id]
-
-            if on_close:
-                on_close(account_id)
-
-        except Exception as e:
-            self.logger.error(f"Monitor error: {e}")
-
     async def close_account(self, account_id):
         try:
             browser = self.browsers.get(account_id)
             if browser:
                 await browser.close()
-                del self.browsers[account_id]
+                self.browsers.pop(account_id, None)
                 return True
             return False
         except Exception as e:
@@ -561,9 +709,13 @@ class BrowserEngine:
 
     async def _primary_page_for_account(self, account_id):
         browser = self.browsers.get(account_id)
-        if not browser or browser.is_closed():
+        if not browser or account_id in self._closed_context_ids:
             return None
-        return await self._pick_primary_page(browser)
+        try:
+            return await self._pick_primary_page(browser)
+        except Exception:
+            await self._notify_browser_closed(account_id, None)
+            return None
 
     async def get_account_url(self, account_id):
         page = await self._primary_page_for_account(account_id)
@@ -583,7 +735,7 @@ class BrowserEngine:
         except ValueError:
             return False
         try:
-            await page.goto(target, timeout=30000, wait_until="domcontentloaded")
+            await page.goto(target, timeout=NAVIGATION_TIMEOUT_MS, wait_until="domcontentloaded")
             await self._cleanup_extra_pages(self.browsers[account_id], page)
             await page.bring_to_front()
             return True
@@ -618,7 +770,7 @@ class BrowserEngine:
         if not page:
             return False
         try:
-            await page.reload(timeout=30000, wait_until="domcontentloaded")
+            await page.reload(timeout=NAVIGATION_TIMEOUT_MS, wait_until="domcontentloaded")
             await page.bring_to_front()
             return True
         except Exception:

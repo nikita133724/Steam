@@ -4,9 +4,18 @@ import sys
 import shutil
 
 from src.paths import get_data_dir
+from src.url_utils import normalize_target_url
 
 
 class Config:
+    DEFAULT_CONFIG = {
+        "language": None,
+        "theme": "dark",
+        "first_run": True,
+        "default_launch_url": "",
+        "ignore_https_errors": True,
+    }
+
     def __init__(self):
         self.base_dir = get_data_dir()
         self.base_dir.mkdir(parents=True, exist_ok=True)
@@ -47,8 +56,26 @@ class Config:
 
     def load_config(self):
         if self.config_file.exists():
-            return json.loads(self.config_file.read_text(encoding="utf-8"))
-        return {"language": None, "theme": "dark", "first_run": True}
+            try:
+                loaded = json.loads(self.config_file.read_text(encoding="utf-8"))
+            except Exception:
+                loaded = {}
+            if not isinstance(loaded, dict):
+                loaded = {}
+            merged = dict(self.DEFAULT_CONFIG)
+            merged.update(loaded)
+            theme = merged.get("theme")
+            if theme not in {"dark", "light"}:
+                merged["theme"] = "dark"
+            launch_url = str(merged.get("default_launch_url") or "").strip()
+            if launch_url:
+                try:
+                    merged["default_launch_url"] = normalize_target_url(launch_url)
+                except ValueError:
+                    merged["default_launch_url"] = ""
+            merged["ignore_https_errors"] = bool(merged.get("ignore_https_errors", True))
+            return merged
+        return dict(self.DEFAULT_CONFIG)
 
     def save_config(self):
         self.config_file.write_text(
@@ -73,13 +100,26 @@ class Config:
 
     def get_theme(self):
         theme = self.data.get("theme") or "dark"
-        if theme not in {"dark", "light", "neutral"}:
+        if theme not in {"dark", "light"}:
             theme = "dark"
         return theme
 
     def set_theme(self, theme):
+        if theme not in {"dark", "light"}:
+            theme = "dark"
         self.data["theme"] = theme
         self.save_config()
+
+    def get_default_launch_url(self):
+        return str(self.data.get("default_launch_url") or "").strip()
+
+    def set_default_launch_url(self, value):
+        raw = str(value or "").strip()
+        self.data["default_launch_url"] = normalize_target_url(raw) if raw else ""
+        self.save_config()
+
+    def should_ignore_https_errors(self):
+        return bool(self.data.get("ignore_https_errors", True))
 
     def load_accounts(self):
         if self.accounts_file.exists():

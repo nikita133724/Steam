@@ -3,12 +3,20 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QLockFile, QDir, QStandardPaths
 from src.app import MainWindow
 from src.launcher import bootstrap_startup, ensure_windows_runtime
+from src.paths import APP_ID
 
 
 def main() -> int:
     bootstrap_code = bootstrap_startup(sys.argv[1:])
     if bootstrap_code is not None:
         return bootstrap_code
+
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+        except Exception:
+            pass
 
     app = QApplication(sys.argv)
     runtime_status = ensure_windows_runtime()

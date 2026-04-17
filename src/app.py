@@ -6,19 +6,17 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
     QLabel, QMessageBox, QComboBox, QFrame, QProgressBar, QSystemTrayIcon, QMenu,
-    QApplication, QTextEdit
+    QApplication, QTextEdit, QHeaderView, QAbstractItemView, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 from PyQt6.QtGui import QIcon, QAction, QGuiApplication, QColor, QBrush
 
-from src.account_overlay import AccountOverlay
 from src.config import Config
 from src.account_manager import AccountManager
 from src.browser_runtime import BrowserRuntime
 from src.logger import Logger
 from src.update_manager import UpdateManager
 from src.url_utils import normalize_target_url
-from src.browser_bar import BrowserBarDialog
 from src.launcher import launch_staged_update
 
 
@@ -182,7 +180,8 @@ class AccountInfoDialog(QDialog):
     def __init__(self, lang, account_name, details, parent=None):
         super().__init__(parent)
         self.setWindowTitle(lang.get("account_info_title", "Информация по аккаунту"))
-        self.setFixedSize(430, 260)
+        self.resize(560, 420)
+        self.setMinimumSize(500, 340)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
@@ -192,11 +191,23 @@ class AccountInfoDialog(QDialog):
         title.setStyleSheet("font-size: 16px; font-weight: 700;")
         layout.addWidget(title)
 
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        body = QWidget()
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(8)
+
         for label, value in details:
             row = QLabel(f"<b>{label}:</b> {value}")
             row.setTextFormat(Qt.TextFormat.RichText)
             row.setWordWrap(True)
-            layout.addWidget(row)
+            body_layout.addWidget(row)
+
+        body_layout.addStretch()
+        scroll.setWidget(body)
+        layout.addWidget(scroll, 1)
 
         close_btn = QPushButton(lang.get("close_account_info", "Закрыть"))
         close_btn.clicked.connect(self.accept)
@@ -407,14 +418,21 @@ class StartupOverlay(QFrame):
             return
         self.logs.append(message)
 
-    def toggle_logs(self):
-        visible = not self.logs.isVisible()
-        self.logs.setVisible(visible)
+    def set_logs(self, entries):
+        self.logs.clear()
+        for entry in entries or []:
+            self.logs.append(entry)
+
+    def set_logs_visible(self, visible):
+        self.logs.setVisible(bool(visible))
         self.logs_toggle.setText(
             self.lang.get("startup_hide_logs", "Скрыть логи")
             if visible
             else self.lang.get("startup_show_logs", "Показать логи")
         )
+
+    def toggle_logs(self):
+        self.set_logs_visible(not self.logs.isVisible())
 
 class MainWindow(QMainWindow):
     THEME_STYLES = {
@@ -468,31 +486,6 @@ class MainWindow(QMainWindow):
             "progress_chunk_1": "#c26a3d",
             "progress_chunk_2": "#f0b46f",
         },
-        "neutral": {
-            "window_bg_1": "#d9ddd7",
-            "window_bg_2": "#c7cdc5",
-            "text": "#25302b",
-            "card_bg": "rgba(245, 247, 243, 0.95)",
-            "card_border": "#aab4ab",
-            "muted": "#5f6c64",
-            "table_bg": "#edf0ea",
-            "table_alt": "#e4e8e1",
-            "table_border": "#b5beb5",
-            "table_grid": "#bcc4bc",
-            "table_header": "#d7ddd5",
-            "table_text": "#24312b",
-            "input_bg": "#f6f8f3",
-            "input_border": "#aab4ab",
-            "button_bg": "#476c5c",
-            "button_hover": "#567d6c",
-            "button_pressed": "#3d5d50",
-            "button_disabled": "#b8c0b8",
-            "button_disabled_text": "#667169",
-            "progress_bg": "#e3e7e1",
-            "progress_border": "#aab4ab",
-            "progress_chunk_1": "#476c5c",
-            "progress_chunk_2": "#89a58f",
-        },
     }
 
     def __init__(self):
@@ -506,8 +499,6 @@ class MainWindow(QMainWindow):
         self._attach_browser_runtime(self.browser_runtime)
         self.open_account_ids = set()
         self.account_pending_actions = {}
-        self.overlays = {}
-        self.browser_bars = {}
         self.account_runtime_info = {}
         self.proxy_ping_state = {}
         self._proxy_ping_cycle_active = False
@@ -516,13 +507,15 @@ class MainWindow(QMainWindow):
         self._proxy_monitor_started = False
         self._startup_retry = None
         self._startup_overlay_active = False
+        self._startup_log_history = []
+        self._startup_logs_visible = False
         self.app_version = self._load_app_version()
         self._tray_icon = None
         self.current_theme = self.config.get_theme()
 
         self._init_app_icon()
 
-        self.setup_ui()
+        self.setup_ui(apply_geometry=True)
         self._setup_startup_overlay()
         self._begin_startup_sequence()
 
@@ -590,19 +583,19 @@ class MainWindow(QMainWindow):
             self.config.data["first_run"] = False
             self.config.save_config()
     
-    def setup_ui(self):
+    def setup_ui(self, apply_geometry=False):
         lang = self.config.lang
         theme = self.THEME_STYLES[self.current_theme]
-        
+
         self.setWindowTitle(lang.get("window_title", "Multiaccount"))
-        self.setMinimumSize(860, 560)
-        
+        self.setMinimumSize(900, 600)
+
         central = QWidget()
         central.setObjectName("central")
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(14)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
 
         self.setStyleSheet("""
             QMainWindow, QWidget#central {
@@ -632,6 +625,11 @@ class MainWindow(QMainWindow):
                 color: %(muted)s;
                 font-size: 12px;
             }
+            QLabel#fieldLabel {
+                color: %(muted)s;
+                font-size: 12px;
+                font-weight: 600;
+            }
             QProgressBar#browserProgress {
                 border: 1px solid %(progress_border)s;
                 border-radius: 8px;
@@ -656,7 +654,7 @@ class MainWindow(QMainWindow):
             }
             QTableWidget::item {
                 color: %(table_text)s;
-                padding: 4px;
+                padding: 4px 6px;
             }
             QHeaderView::section {
                 background: %(table_header)s;
@@ -672,6 +670,11 @@ class MainWindow(QMainWindow):
                 padding: 9px 14px;
                 color: #f8fbff;
                 font-weight: 600;
+            }
+            QPushButton[compact="true"] {
+                padding: 5px 10px;
+                border-radius: 8px;
+                font-size: 12px;
             }
             QPushButton:hover { background: %(button_hover)s; }
             QPushButton:pressed { background: %(button_pressed)s; }
@@ -720,13 +723,11 @@ class MainWindow(QMainWindow):
         top_layout = QHBoxLayout(top_card)
         top_layout.setContentsMargins(16, 14, 16, 14)
 
-        title_layout = QVBoxLayout()
         title = QLabel(lang.get("window_title", "Multiaccount"))
         title.setObjectName("title")
-        title_layout.addWidget(title)
-        top_layout.addLayout(title_layout)
-
+        top_layout.addWidget(title)
         top_layout.addStretch()
+
         self.browser_status = QLabel(lang.get("browser_status_init", "Browser initializing..."))
         self.browser_status.setObjectName("statusBadge")
         self.browser_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -758,14 +759,15 @@ class MainWindow(QMainWindow):
         controls_card.setObjectName("topCard")
         controls_layout = QVBoxLayout(controls_card)
         controls_layout.setContentsMargins(16, 12, 16, 12)
+        controls_layout.setSpacing(10)
 
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
-        
+
         self.add_btn = QPushButton(lang.get("add_account"))
         self.add_btn.clicked.connect(self.add_account)
         btn_layout.addWidget(self.add_btn)
-        
+
         self.logs_btn = QPushButton(lang.get("logs"))
         self.logs_btn.clicked.connect(self.logger.show_window)
         btn_layout.addWidget(self.logs_btn)
@@ -784,13 +786,50 @@ class MainWindow(QMainWindow):
         self.theme_select = QComboBox()
         self.theme_select.addItem(lang.get("theme_dark", "Dark"), "dark")
         self.theme_select.addItem(lang.get("theme_light", "Light"), "light")
-        self.theme_select.addItem(lang.get("theme_neutral", "Neutral"), "neutral")
         self.theme_select.setCurrentIndex(self.theme_select.findData(self.current_theme))
         self.theme_select.currentIndexChanged.connect(self._on_theme_changed)
         btn_layout.addWidget(self.theme_select)
-        
+
         btn_layout.addStretch()
         controls_layout.addLayout(btn_layout)
+
+        url_row = QHBoxLayout()
+        url_row.setSpacing(10)
+        default_url_label = QLabel(lang.get("default_launch_url", "Стартовый URL по умолчанию"))
+        default_url_label.setObjectName("fieldLabel")
+        url_row.addWidget(default_url_label)
+
+        self.default_url_input = QLineEdit()
+        self.default_url_input.setPlaceholderText("https://example.com")
+        self.default_url_input.setText(self.config.get_default_launch_url())
+        self.default_url_input.returnPressed.connect(self._save_default_launch_url)
+        url_row.addWidget(self.default_url_input, 1)
+
+        self.default_url_save_btn = QPushButton(lang.get("save_launch_url", "Сохранить URL"))
+        self.default_url_save_btn.setProperty("compact", True)
+        self.default_url_save_btn.clicked.connect(self._save_default_launch_url)
+        url_row.addWidget(self.default_url_save_btn)
+
+        self.default_url_clear_btn = QPushButton(lang.get("clear_launch_url", "Сбросить"))
+        self.default_url_clear_btn.setProperty("compact", True)
+        self.default_url_clear_btn.clicked.connect(self._clear_default_launch_url)
+        url_row.addWidget(self.default_url_clear_btn)
+
+        controls_layout.addLayout(url_row)
+
+        search_row = QHBoxLayout()
+        search_row.setSpacing(10)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText(lang.get("search_accounts", "Поиск по аккаунтам, домену, прокси"))
+        self.search_input.textChanged.connect(lambda _text: self.refresh_table())
+        search_row.addWidget(self.search_input, 1)
+
+        self.accounts_count_label = QLabel()
+        self.accounts_count_label.setObjectName("statusHint")
+        search_row.addWidget(self.accounts_count_label)
+
+        controls_layout.addLayout(search_row)
         layout.addWidget(controls_card)
 
         health_card = QFrame()
@@ -811,8 +850,7 @@ class MainWindow(QMainWindow):
         health_layout.addWidget(self.health_avg_ping)
         health_layout.addStretch()
         layout.addWidget(health_card)
-        
-        # Таблица аккаунтов
+
         table_card = QFrame()
         table_card.setObjectName("tableCard")
         table_layout = QVBoxLayout(table_card)
@@ -821,49 +859,53 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
+        self.table.setWordWrap(False)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.verticalHeader().setVisible(False)
-        self.table.verticalHeader().setDefaultSectionSize(58)
+        self.table.verticalHeader().setDefaultSectionSize(48)
         self.table.setHorizontalHeaderLabels([
-            "ID", 
-            lang.get("account_name"), 
+            "ID",
+            lang.get("account_name"),
             lang.get("domain"),
             lang.get("status_column", "Статус"),
             lang.get("proxy"),
             lang.get("timezone", "Тайм-зона"),
-            ""
+            "",
         ])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        self.table.setColumnWidth(0, 52)
-        self.table.setColumnWidth(1, 170)
-        self.table.setColumnWidth(2, 240)
-        self.table.setColumnWidth(3, 110)
-        self.table.setColumnWidth(4, 300)
-        self.table.setColumnWidth(5, 140)
-        self.table.setColumnWidth(6, 520)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setMinimumSectionSize(52)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         table_layout.addWidget(self.table)
         layout.addWidget(table_card, 1)
 
         footer = QHBoxLayout()
         footer.setContentsMargins(4, 0, 4, 0)
-        self.version_label = QLabel(
-            f"{lang.get('version_label', 'Version')}: {self.app_version}"
-        )
+        self.version_label = QLabel(f"{lang.get('version_label', 'Version')}: {self.app_version}")
         self.version_label.setObjectName("footerLabel")
         footer.addWidget(self.version_label)
         footer.addStretch()
         layout.addLayout(footer)
-        
-        self._apply_initial_window_geometry()
+
+        if apply_geometry:
+            self._apply_initial_window_geometry()
         self.refresh_table()
+        self._apply_table_metrics()
 
     def _setup_startup_overlay(self):
         central = self.centralWidget()
         if central is None:
             return
         self.startup_overlay = StartupOverlay(self.config.lang, central)
-        self.startup_overlay.logs_toggle.clicked.connect(self.startup_overlay.toggle_logs)
+        self.startup_overlay.logs_toggle.clicked.connect(self._toggle_startup_logs)
         self.startup_overlay.retry_btn.clicked.connect(self._retry_startup_action)
         self.startup_overlay.close_btn.clicked.connect(self.close)
+        self.startup_overlay.set_logs(self._startup_log_history)
+        self.startup_overlay.set_logs_visible(self._startup_logs_visible)
         self._reposition_startup_overlay()
         self.startup_overlay.show()
 
@@ -883,10 +925,54 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._reposition_startup_overlay()
+        self._apply_table_metrics()
+
+    def _apply_table_metrics(self):
+        if not hasattr(self, "table"):
+            return
+        viewport_width = max(760, self.table.viewport().width())
+        id_width = 58
+        status_width = 118
+        timezone_width = 150
+        actions_width = max(360, min(460, int(viewport_width * 0.34)))
+        content_width = max(360, viewport_width - id_width - status_width - timezone_width - actions_width - 32)
+        name_width = max(150, int(content_width * 0.26))
+        domain_width = max(220, int(content_width * 0.38))
+        proxy_width = max(210, content_width - name_width - domain_width)
+
+        self.table.setColumnWidth(0, id_width)
+        self.table.setColumnWidth(1, name_width)
+        self.table.setColumnWidth(2, domain_width)
+        self.table.setColumnWidth(3, status_width)
+        self.table.setColumnWidth(4, proxy_width)
+        self.table.setColumnWidth(5, timezone_width)
+        self.table.setColumnWidth(6, actions_width)
+
+    def _save_default_launch_url(self):
+        if not hasattr(self, "default_url_input"):
+            return
+        value = (self.default_url_input.text() or "").strip()
+        try:
+            self.config.set_default_launch_url(value)
+        except ValueError:
+            QMessageBox.warning(
+                self,
+                self.config.lang.get("default_launch_url", "Стартовый URL по умолчанию"),
+                self.config.lang.get("domain_invalid", "Введите корректный URL."),
+            )
+            return
+        self.default_url_input.setText(self.config.get_default_launch_url())
+
+    def _clear_default_launch_url(self):
+        self.config.set_default_launch_url("")
+        if hasattr(self, "default_url_input"):
+            self.default_url_input.clear()
 
     def _show_startup_overlay(self, title, subtitle, badge=None):
         self._startup_overlay_active = True
         self.startup_overlay.reset(title, subtitle, badge=badge)
+        self.startup_overlay.set_logs(self._startup_log_history)
+        self.startup_overlay.set_logs_visible(self._startup_logs_visible)
         self._reposition_startup_overlay()
         self.startup_overlay.show()
         self.startup_overlay.raise_()
@@ -905,9 +991,18 @@ class MainWindow(QMainWindow):
             callback()
 
     def _append_startup_log(self, message):
-        if not hasattr(self, "startup_overlay"):
+        if not message:
             return
-        self.startup_overlay.append_log(message)
+        self._startup_log_history.append(message)
+        if len(self._startup_log_history) > 500:
+            self._startup_log_history = self._startup_log_history[-300:]
+        if hasattr(self, "startup_overlay"):
+            self.startup_overlay.append_log(message)
+
+    def _toggle_startup_logs(self):
+        self._startup_logs_visible = not self._startup_logs_visible
+        if hasattr(self, "startup_overlay"):
+            self.startup_overlay.set_logs_visible(self._startup_logs_visible)
 
     def _set_startup_progress(self, value):
         if not hasattr(self, "startup_overlay") or not self._startup_overlay_active:
@@ -916,6 +1011,8 @@ class MainWindow(QMainWindow):
 
     def _begin_startup_sequence(self, skip_update_check=False):
         self.browser_ready = False
+        self._startup_log_history = []
+        self._startup_logs_visible = False
         self._show_startup_overlay(
             self.config.lang.get("startup_title", "Подготовка Multiaccount"),
             self.config.lang.get("startup_subtitle", "Подготавливаем браузерный runtime и проверяем обновления."),
@@ -1062,7 +1159,6 @@ class MainWindow(QMainWindow):
         self.account_pending_actions.clear()
         self.account_runtime_info.clear()
         self.proxy_ping_state.clear()
-        self._clear_overlays()
         self.browser_runtime = BrowserRuntime(self.config, self.logger)
         self._attach_browser_runtime(self.browser_runtime)
         self.browser_status.setText(self.config.lang.get("browser_status_init", "Browser initializing..."))
@@ -1111,13 +1207,20 @@ class MainWindow(QMainWindow):
         self._rebuild_ui()
 
     def _rebuild_ui(self):
+        geometry = self.geometry()
+        was_maximized = self.isMaximized()
+        overlay_active = self._startup_overlay_active
         central = self.centralWidget()
         if central is not None:
             central.deleteLater()
-        self.setup_ui()
+        self.setup_ui(apply_geometry=False)
         self._setup_startup_overlay()
-        if not self._startup_overlay_active:
+        if not overlay_active:
             self.startup_overlay.hide()
+        if was_maximized:
+            self.showMaximized()
+        else:
+            self.setGeometry(geometry)
 
     def _start_proxy_monitor(self):
         self.proxy_ping_timer = QTimer(self)
@@ -1160,6 +1263,12 @@ class MainWindow(QMainWindow):
         account["proxy_status"] = normalized
         if normalized.get("timezone") and normalized["timezone"] != "unknown":
             account["timezone"] = normalized["timezone"]
+        if normalized.get("ping_ms") is not None:
+            self.proxy_ping_state[account_id] = {
+                "alive": bool(normalized.get("alive")),
+                "ping_ms": normalized.get("ping_ms"),
+                "error": normalized.get("error", ""),
+            }
         self.account_manager.update_proxy_status(account_id, normalized)
         self.refresh_table()
 
@@ -1295,9 +1404,7 @@ class MainWindow(QMainWindow):
             indicator = self.config.lang.get("proxy_dead", "offline")
         else:
             indicator = self.config.lang.get("proxy_unknown", "unknown")
-        headline = f"{indicator}  {location}"
-        secondary = f"{self._short_proxy_label(proxy.get('server', '—'))}  {ping_text}"
-        text = f"{headline}\n{secondary}"
+        text = f"{indicator} • {location} • {ping_text}"
         item = QTableWidgetItem(text)
         item.setToolTip(
             f"source: {proxy_status.get('source', 'none')}\n"
@@ -1337,10 +1444,52 @@ class MainWindow(QMainWindow):
             self.health_avg_ping.setText(f"{self.config.lang.get('health_avg_ping', 'Avg ping')}: —")
         else:
             self.health_avg_ping.setText(f"{self.config.lang.get('health_avg_ping', 'Avg ping')}: {avg_ping} ms")
-    
+
+    def _make_row_action_button(self, text, handler, enabled=True):
+        button = QPushButton(text)
+        button.setProperty("compact", True)
+        button.setEnabled(enabled)
+        button.clicked.connect(handler)
+        return button
+
+    def _filtered_accounts(self):
+        accounts = list(self.account_manager.get_accounts())
+        query = ""
+        if hasattr(self, "search_input"):
+            query = (self.search_input.text() or "").strip().lower()
+        if not query:
+            return accounts
+
+        filtered = []
+        for account in accounts:
+            haystack = " ".join(
+                [
+                    str(account.get("id", "")),
+                    str(account.get("name", "")),
+                    str(account.get("domain", "")),
+                    str((account.get("proxy") or {}).get("server", "")),
+                    str(account.get("timezone", "")),
+                    str((account.get("proxy_status") or {}).get("ip", "")),
+                    str((account.get("proxy_status") or {}).get("city", "")),
+                    str((account.get("proxy_status") or {}).get("country", "")),
+                ]
+            ).lower()
+            if query in haystack:
+                filtered.append(account)
+        return filtered
+
     def refresh_table(self):
         lang = self.config.lang
-        accounts = self.account_manager.get_accounts()
+        all_accounts = self.account_manager.get_accounts()
+        accounts = self._filtered_accounts()
+
+        if hasattr(self, "accounts_count_label"):
+            self.accounts_count_label.setText(
+                lang.get("accounts_count", "Показано: {shown} из {total}").format(
+                    shown=len(accounts),
+                    total=len(all_accounts),
+                )
+            )
         
         self.table.setRowCount(len(accounts))
         
@@ -1383,38 +1532,51 @@ class MainWindow(QMainWindow):
             actions = QWidget()
             actions_layout = QHBoxLayout(actions)
             actions_layout.setContentsMargins(5, 0, 5, 0)
-            actions_layout.setSpacing(8)
+            actions_layout.setSpacing(6)
             is_busy = pending_action is not None
-            
-            open_btn = QPushButton(lang.get("open_account"))
-            open_btn.setEnabled(self.browser_ready and not is_open and not is_busy)
-            open_btn.clicked.connect(lambda _, a=acc: self.open_account(a))
 
-            close_btn = QPushButton(lang.get("close_account"))
-            close_btn.setEnabled(is_open and not is_busy)
-            close_btn.clicked.connect(lambda _, aid=acc["id"]: self.close_account(aid))
-            
-            edit_proxy_btn = QPushButton(lang.get("proxy"))
-            edit_proxy_btn.setEnabled(not is_busy and not is_open)
-            edit_proxy_btn.clicked.connect(lambda _, a=acc: self.edit_proxy(a))
+            open_btn = self._make_row_action_button(
+                lang.get("open_account"),
+                lambda _, a=acc: self.open_account(a),
+                enabled=self.browser_ready and not is_open and not is_busy,
+            )
+            close_btn = self._make_row_action_button(
+                lang.get("close_account"),
+                lambda _, aid=acc["id"]: self.close_account(aid),
+                enabled=is_open and not is_busy,
+            )
+            edit_url_btn = self._make_row_action_button(
+                lang.get("edit_launch_url", "URL"),
+                lambda _, a=acc: self.edit_account_domain(a),
+                enabled=not is_busy,
+            )
+            edit_proxy_btn = self._make_row_action_button(
+                lang.get("proxy"),
+                lambda _, a=acc: self.edit_proxy(a),
+                enabled=not is_busy and not is_open,
+            )
+            info_btn = self._make_row_action_button(
+                lang.get("account_info_short", "Инфо"),
+                lambda _, a=acc: self.show_account_info(a),
+                enabled=True,
+            )
+            delete_btn = self._make_row_action_button(
+                lang.get("delete_account"),
+                lambda _, a=acc: self.delete_account(a),
+                enabled=not is_busy,
+            )
 
-            info_btn = QPushButton(lang.get("account_info", "Информация\nпо аккаунту"))
-            info_btn.clicked.connect(lambda _, a=acc: self.show_account_info(a))
-
-            delete_btn = QPushButton(lang.get("delete_account"))
-            delete_btn.setEnabled(not is_busy)
-            delete_btn.clicked.connect(lambda _, a=acc: self.delete_account(a))
-            
             actions_layout.addWidget(open_btn)
             actions_layout.addWidget(close_btn)
+            actions_layout.addWidget(edit_url_btn)
             actions_layout.addWidget(edit_proxy_btn)
             actions_layout.addWidget(info_btn)
-            actions_layout.addSpacing(8)
             actions_layout.addWidget(delete_btn)
             actions_layout.addStretch()
             
             self.table.setCellWidget(i, 6, actions)
         self._update_health_panel()
+        self._apply_table_metrics()
     
     def add_account(self):
         lang = self.config.lang
@@ -1489,31 +1651,6 @@ class MainWindow(QMainWindow):
         ]
         dialog = AccountInfoDialog(self.config.lang, account["name"], details, self)
         dialog.exec()
-
-    def show_browser_bar(self, account):
-        account_id = account["id"]
-        if account_id not in self.open_account_ids:
-            return
-
-        existing = self.browser_bars.get(account_id)
-        if existing is not None:
-            try:
-                existing.raise_()
-                existing.activateWindow()
-            except Exception:
-                pass
-            return
-
-        dialog = BrowserBarDialog(
-            self.browser_runtime,
-            self.config.lang,
-            account_id,
-            account.get("name", "Account"),
-            parent=self,
-        )
-        self.browser_bars[account_id] = dialog
-        dialog.finished.connect(lambda _code, aid=account_id: self.browser_bars.pop(aid, None))
-        dialog.show()
 
     def regenerate_account_profile(self, account):
         if self._is_account_busy(account["id"]):
@@ -1653,9 +1790,27 @@ class MainWindow(QMainWindow):
             f"(alive: {status.get('alive', False)}, timezone: {account.get('timezone', 'unknown')})"
         )
 
+    def edit_account_domain(self, account):
+        if self._is_account_busy(account["id"]):
+            return
+        current_domain = (account.get("domain") or self.config.get_default_launch_url() or "").strip()
+        dialog = DomainDialog(
+            account["name"],
+            self.config.lang,
+            current_domain=current_domain,
+            parent=self,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        normalized_domain = dialog.get_domain()
+        self.account_manager.update_domain(account["id"], normalized_domain)
+        account["domain"] = normalized_domain
+        self.refresh_table()
+        self.logger.info(f"Updated launch URL for {account['name']}: {normalized_domain}")
+
     def _ensure_account_domain(self, account):
         normalized_domain = None
-        current_domain = (account.get("domain") or "").strip()
+        current_domain = (account.get("domain") or self.config.get_default_launch_url() or "").strip()
         if current_domain:
             try:
                 normalized_domain = normalize_target_url(current_domain)
@@ -1695,6 +1850,17 @@ class MainWindow(QMainWindow):
         self.logger.info(f"Opening account: {account['name']}")
         if account.get("proxy"):
             proxy_status = account.get("proxy_status") or {}
+            ping_state = self.proxy_ping_state.get(account["id"]) or {}
+            alive = ping_state.get("alive")
+            if alive is None:
+                alive = proxy_status.get("alive")
+            if alive is False:
+                QMessageBox.warning(
+                    self,
+                    self.config.lang.get("proxy", "Proxy"),
+                    self.config.lang.get("proxy_unreachable", "Прокси сохранен, но проверка не пройдена."),
+                )
+                return
             timezone = proxy_status.get("timezone")
             if timezone and timezone != "unknown":
                 account["timezone"] = timezone
@@ -1734,46 +1900,8 @@ class MainWindow(QMainWindow):
         self._clear_account_pending_action(account_id)
         self.open_account_ids.discard(account_id)
         self.account_runtime_info.pop(account_id, None)
-        bar = self.browser_bars.pop(account_id, None)
-        if bar is not None:
-            try:
-                bar.close()
-            except Exception:
-                pass
         self.refresh_table()
         self.logger.info(f"Account {account_id} closed by user")
-
-    def _overlay_details(self, overlay):
-        return [
-            (self.config.lang.get("overlay_ip", "IP"), overlay.get("ip", "unknown")),
-            (self.config.lang.get("overlay_timezone", "Timezone"), overlay.get("timezone", "unknown")),
-            (self.config.lang.get("overlay_location", "Location"), f"{overlay.get('city', 'unknown')}, {overlay.get('country', 'unknown')}"),
-            (self.config.lang.get("overlay_device", "Device"), overlay.get("device", "unknown")),
-            (self.config.lang.get("overlay_os", "OS"), overlay.get("os", "unknown")),
-            (self.config.lang.get("overlay_browser", "Browser"), overlay.get("browser", "unknown")),
-        ]
-
-    def _show_overlay(self, account_id, overlay):
-        self._close_overlay(account_id)
-        title = f"{overlay.get('account_name', 'Account')} #{account_id}"
-        widget = AccountOverlay(title, self._overlay_details(overlay), slot_index=len(self.overlays))
-        self.overlays[account_id] = widget
-        self._reposition_overlays()
-        widget.show()
-
-    def _close_overlay(self, account_id):
-        widget = self.overlays.pop(account_id, None)
-        if widget:
-            widget.close()
-        self._reposition_overlays()
-
-    def _clear_overlays(self):
-        for account_id in list(self.overlays.keys()):
-            self._close_overlay(account_id)
-
-    def _reposition_overlays(self):
-        for index, account_id in enumerate(sorted(self.overlays.keys())):
-            self.overlays[account_id].reposition(index)
 
     def _detect_timezone_for_dialog(self, dialog):
         try:

@@ -46,10 +46,11 @@ class AccountManager:
             self.config.save_accounts(self.accounts)
 
     def add_account(self, name):
+        default_launch_url = self.config.get_default_launch_url() or None
         account = {
             "id": self.next_id,
             "name": name,
-            "domain": None,
+            "domain": default_launch_url,
             "proxy": None,
             "proxy_status": {},
             "created_at": datetime.now().isoformat(),

@@ -253,9 +253,35 @@ class InstallerWindow(QWidget):
         self.close()
 
     def _create_desktop_shortcut(self):
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop", "Multiaccount.lnk")
+        candidates = []
+        public_dir = os.getenv("PUBLIC")
+        if public_dir:
+            candidates.append(os.path.join(public_dir, "Desktop"))
+        user_profile = os.getenv("USERPROFILE")
+        if user_profile:
+            candidates.append(os.path.join(user_profile, "Desktop"))
+        one_drive = os.getenv("OneDrive")
+        if one_drive:
+            candidates.append(os.path.join(one_drive, "Desktop"))
+        candidates.append(os.path.join(os.path.expanduser("~"), "Desktop"))
+
+        desktop_dir = next((path for path in candidates if os.path.isdir(path)), candidates[-1])
+        desktop = os.path.join(desktop_dir, "Multiaccount.lnk")
+        cleanup_commands = []
+        seen = {os.path.normcase(desktop)}
+        for path in candidates:
+            duplicate = os.path.join(path, "Multiaccount.lnk")
+            key = os.path.normcase(duplicate)
+            if key in seen:
+                continue
+            seen.add(key)
+            cleanup_commands.append(
+                f"if (Test-Path '{duplicate}') {{ Remove-Item -Force '{duplicate}' }}"
+            )
         powershell_script = (
-            "$WshShell = New-Object -ComObject WScript.Shell; "
+            "; ".join(cleanup_commands)
+            + ("; " if cleanup_commands else "")
+            + "$WshShell = New-Object -ComObject WScript.Shell; "
             f"$Shortcut = $WshShell.CreateShortcut('{desktop}'); "
             f"$Shortcut.TargetPath = '{APP_EXE}'; "
             f"$Shortcut.WorkingDirectory = '{APP_DIR}'; "

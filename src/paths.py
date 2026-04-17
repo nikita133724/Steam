@@ -4,6 +4,7 @@ import sys
 
 APP_NAME = "Multiaccount"
 EXE_NAME = "Multiaccount.exe"
+APP_ID = "Multiaccount.Desktop"
 
 
 def _local_appdata() -> Path:

@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 import os
+import re
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QTextEdit, QPushButton,
@@ -91,11 +92,16 @@ class LoggerWindow(QDialog):
         self.logs.clear()
         self.text_edit.clear()
 
+    def set_logs(self, entries):
+        self.logs = list(entries or [])
+        self.apply_filter()
+
 
 class Logger:
     _instance = None
     MAX_LOG_FILES = 12
     MAX_LOG_FILE_BYTES = 1_500_000
+    LOG_HISTORY_LIMIT = 3000
 
     @classmethod
     def get_instance(cls):
@@ -122,6 +128,8 @@ class Logger:
         if log_file.exists() and log_file.stat().st_size >= self.MAX_LOG_FILE_BYTES:
             timestamp = datetime.now().strftime("%H%M%S")
             log_file = logs_dir / f"{today}-{timestamp}.log"
+        self.log_file = log_file
+        self.history = []
 
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
         file_handler.setLevel(logging.DEBUG)
@@ -147,12 +155,47 @@ class Logger:
                 pass
 
     def _on_new_log(self, msg, tag):
+        self.history.append((msg, tag))
+        if len(self.history) > 5000:
+            self.history = self.history[-self.LOG_HISTORY_LIMIT:]
         if self.window:
             self.window.append_log(msg, tag)
 
+    def _load_recent_history_from_file(self):
+        if not self.log_file.exists():
+            return []
+
+        entries = []
+        current_lines = []
+        current_tag = "SYSTEM"
+
+        try:
+            with open(self.log_file, "r", encoding="utf-8", errors="replace") as handle:
+                for raw_line in handle.read().splitlines():
+                    if raw_line.startswith("["):
+                        if current_lines:
+                            entries.append(("\n".join(current_lines), current_tag))
+                        current_lines = [raw_line]
+                        match = re.search(r"\[([^\]]+)\]\s*$", raw_line)
+                        current_tag = match.group(1) if match else "SYSTEM"
+                    elif current_lines:
+                        current_lines.append(raw_line)
+                    else:
+                        current_lines = [raw_line]
+
+            if current_lines:
+                entries.append(("\n".join(current_lines), current_tag))
+        except OSError:
+            return []
+
+        return entries[-self.LOG_HISTORY_LIMIT:]
+
     def show_window(self):
+        if not self.history:
+            self.history = self._load_recent_history_from_file()
         if self.window is None:
             self.window = LoggerWindow()
+        self.window.set_logs(self.history)
 
         self.window.show()
         self.window.raise_()

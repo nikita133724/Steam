@@ -13,6 +13,7 @@ from src.update_manager import UpdateManager
 
 APPLY_UPDATE_ARG = "--apply-update"
 VCRUNTIME_FILES = ("vcruntime140.dll", "msvcp140.dll")
+STALE_INSTALL_PATTERNS = ("*.bak", "*.new", "*.part")
 
 
 def _is_frozen() -> bool:
@@ -21,6 +22,15 @@ def _is_frozen() -> bool:
 
 def _restart(exe: Path) -> None:
     subprocess.Popen([str(exe)], cwd=str(exe.parent))
+
+
+def _cleanup_stale_install_artifacts(install_dir: Path) -> None:
+    for pattern in STALE_INSTALL_PATTERNS:
+        for path in install_dir.glob(pattern):
+            try:
+                path.unlink()
+            except OSError:
+                pass
 
 
 def _desktop_dir_candidates() -> list[Path]:
@@ -196,6 +206,15 @@ def _ensure_desktop_shortcut(target_exe: Path) -> None:
         desired_workdir = str(target_exe.parent)
         desired_icon = str(target_exe)
 
+        for candidate in _desktop_dir_candidates():
+            duplicate_path = candidate / f"{APP_NAME}.lnk"
+            if duplicate_path == shortcut_path or not duplicate_path.exists():
+                continue
+            try:
+                duplicate_path.unlink()
+            except OSError:
+                pass
+
         if (
             str(current_target) != desired_target
             or str(current_workdir) != desired_workdir
@@ -249,6 +268,7 @@ def bootstrap_startup(argv: list[str] | None = None) -> int | None:
 
     current_exe = Path(sys.executable).resolve()
     installed_exe = get_installed_exe().resolve()
+    _cleanup_stale_install_artifacts(install_dir)
 
     if current_exe != installed_exe:
         shutil.copy2(current_exe, installed_exe)
