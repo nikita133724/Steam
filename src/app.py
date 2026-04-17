@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTableWidget, QTableWidgetItem, QDialog, QLineEdit,
     QLabel, QMessageBox, QComboBox, QFrame, QProgressBar, QSystemTrayIcon, QMenu,
-    QApplication, QFileDialog
+    QApplication, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 from PyQt6.QtGui import QIcon, QAction, QGuiApplication, QColor, QBrush
@@ -19,6 +19,7 @@ from src.logger import Logger
 from src.update_manager import UpdateManager
 from src.url_utils import normalize_target_url
 from src.browser_bar import BrowserBarDialog
+from src.launcher import launch_staged_update
 
 
 class LanguageDialog(QDialog):
@@ -319,6 +320,102 @@ class ProxyDialog(QDialog):
         proxy["raw"] = raw
         return proxy
 
+
+class StartupOverlay(QFrame):
+    def __init__(self, lang, parent=None):
+        super().__init__(parent)
+        self.lang = lang
+        self.setObjectName("startupOverlay")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(28, 28, 28, 28)
+        layout.setSpacing(14)
+
+        self.badge = QLabel(lang.get("startup_badge", "Подготовка"))
+        self.badge.setObjectName("startupBadge")
+        layout.addWidget(self.badge, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.title = QLabel(lang.get("startup_title", "Подготовка Multiaccount"))
+        self.title.setObjectName("startupTitle")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.title)
+
+        self.subtitle = QLabel(lang.get("startup_subtitle", "Подготавливаем браузерный runtime и проверяем обновления."))
+        self.subtitle.setObjectName("startupSubtitle")
+        self.subtitle.setWordWrap(True)
+        self.subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.subtitle)
+
+        self.status = QLabel(lang.get("browser_status_wait", "Preparing browser runtime..."))
+        self.status.setObjectName("startupStatus")
+        self.status.setWordWrap(True)
+        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.status)
+
+        self.progress = QProgressBar()
+        self.progress.setObjectName("browserProgress")
+        self.progress.setRange(0, 0)
+        self.progress.setTextVisible(True)
+        layout.addWidget(self.progress)
+
+        self.logs_toggle = QPushButton(lang.get("startup_show_logs", "Показать логи"))
+        layout.addWidget(self.logs_toggle, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.logs = QTextEdit()
+        self.logs.setReadOnly(True)
+        self.logs.setVisible(False)
+        self.logs.setMinimumHeight(160)
+        layout.addWidget(self.logs)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        self.retry_btn = QPushButton(lang.get("startup_retry", "Повторить"))
+        self.retry_btn.setVisible(False)
+        buttons.addWidget(self.retry_btn)
+        self.close_btn = QPushButton(lang.get("startup_close", "Закрыть"))
+        self.close_btn.setVisible(False)
+        buttons.addWidget(self.close_btn)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+
+    def reset(self, title, subtitle, badge=None):
+        self.badge.setText(badge or self.lang.get("startup_badge", "Подготовка"))
+        self.title.setText(title)
+        self.subtitle.setText(subtitle)
+        self.status.setText(subtitle)
+        self.progress.setRange(0, 0)
+        self.progress.setValue(0)
+        self.progress.setFormat("%p%")
+        self.logs.clear()
+        self.logs.setVisible(False)
+        self.logs_toggle.setText(self.lang.get("startup_show_logs", "Показать логи"))
+        self.retry_btn.setVisible(False)
+        self.close_btn.setVisible(False)
+
+    def set_status(self, message):
+        self.status.setText(message)
+
+    def set_progress(self, value):
+        if value is None or value < 0:
+            self.progress.setRange(0, 0)
+            return
+        self.progress.setRange(0, 100)
+        self.progress.setValue(max(0, min(100, int(value))))
+
+    def append_log(self, message):
+        if not message:
+            return
+        self.logs.append(message)
+
+    def toggle_logs(self):
+        visible = not self.logs.isVisible()
+        self.logs.setVisible(visible)
+        self.logs_toggle.setText(
+            self.lang.get("startup_hide_logs", "Скрыть логи")
+            if visible
+            else self.lang.get("startup_show_logs", "Показать логи")
+        )
+
 class MainWindow(QMainWindow):
     THEME_STYLES = {
         "dark": {
@@ -416,19 +513,18 @@ class MainWindow(QMainWindow):
         self._proxy_ping_cycle_active = False
         self._proxy_ping_pending = 0
         self._proxy_ping_dirty = False
+        self._proxy_monitor_started = False
+        self._startup_retry = None
+        self._startup_overlay_active = False
         self.app_version = self._load_app_version()
         self._tray_icon = None
         self.current_theme = self.config.get_theme()
 
         self._init_app_icon()
-        
-        if self.config.data.get("first_run", True):
-            self.show_language_dialog()
-        
+
         self.setup_ui()
-        self._start_proxy_monitor()
-        self._check_all_proxies_on_startup()
-        self.init_browser()
+        self._setup_startup_overlay()
+        self._begin_startup_sequence()
 
     def _init_app_icon(self) -> None:
         icon_path = self.config.resource_path("assets/icon.ico")
@@ -587,6 +683,36 @@ class MainWindow(QMainWindow):
                 padding: 7px;
                 color: %(text)s;
             }
+            QFrame#startupOverlay {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 %(window_bg_1)s,
+                    stop:1 %(window_bg_2)s);
+                border: 1px solid %(card_border)s;
+                border-radius: 18px;
+            }
+            QLabel#startupBadge {
+                background: %(button_bg)s;
+                color: #ffffff;
+                border-radius: 10px;
+                padding: 6px 12px;
+                font-weight: 700;
+            }
+            QLabel#startupTitle {
+                color: %(text)s;
+                font-size: 26px;
+                font-weight: 800;
+            }
+            QLabel#startupSubtitle, QLabel#startupStatus {
+                color: %(muted)s;
+                font-size: 14px;
+            }
+            QTextEdit {
+                background: %(input_bg)s;
+                border: 1px solid %(input_border)s;
+                border-radius: 10px;
+                color: %(text)s;
+                padding: 8px;
+            }
         """ % theme)
 
         top_card = QFrame()
@@ -643,14 +769,6 @@ class MainWindow(QMainWindow):
         self.logs_btn = QPushButton(lang.get("logs"))
         self.logs_btn.clicked.connect(self.logger.show_window)
         btn_layout.addWidget(self.logs_btn)
-
-        self.export_btn = QPushButton(lang.get("export_accounts", "Экспорт"))
-        self.export_btn.clicked.connect(self.export_accounts)
-        btn_layout.addWidget(self.export_btn)
-
-        self.import_btn = QPushButton(lang.get("import_accounts", "Импорт"))
-        self.import_btn.clicked.connect(self.import_accounts)
-        btn_layout.addWidget(self.import_btn)
 
         self.cleanup_btn = QPushButton(lang.get("cleanup_data"))
         self.cleanup_btn.clicked.connect(self.cleanup_data)
@@ -721,6 +839,7 @@ class MainWindow(QMainWindow):
         self.table.setColumnWidth(3, 110)
         self.table.setColumnWidth(4, 300)
         self.table.setColumnWidth(5, 140)
+        self.table.setColumnWidth(6, 520)
         table_layout.addWidget(self.table)
         layout.addWidget(table_card, 1)
 
@@ -736,8 +855,152 @@ class MainWindow(QMainWindow):
         
         self._apply_initial_window_geometry()
         self.refresh_table()
+
+    def _setup_startup_overlay(self):
+        central = self.centralWidget()
+        if central is None:
+            return
+        self.startup_overlay = StartupOverlay(self.config.lang, central)
+        self.startup_overlay.logs_toggle.clicked.connect(self.startup_overlay.toggle_logs)
+        self.startup_overlay.retry_btn.clicked.connect(self._retry_startup_action)
+        self.startup_overlay.close_btn.clicked.connect(self.close)
+        self._reposition_startup_overlay()
+        self.startup_overlay.show()
+
+    def _reposition_startup_overlay(self):
+        central = self.centralWidget()
+        if central is None or not hasattr(self, "startup_overlay"):
+            return
+        margin = 16
+        self.startup_overlay.setGeometry(
+            margin,
+            margin,
+            max(320, central.width() - margin * 2),
+            max(220, central.height() - margin * 2),
+        )
+        self.startup_overlay.raise_()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._reposition_startup_overlay()
+
+    def _show_startup_overlay(self, title, subtitle, badge=None):
+        self._startup_overlay_active = True
+        self.startup_overlay.reset(title, subtitle, badge=badge)
+        self._reposition_startup_overlay()
+        self.startup_overlay.show()
+        self.startup_overlay.raise_()
+
+    def _show_startup_error(self, title, message, retry_action=None):
+        self._show_startup_overlay(title, message, badge=self.config.lang.get("startup_error_badge", "Ошибка"))
+        self.startup_overlay.set_status(message)
+        self.startup_overlay.retry_btn.setVisible(retry_action is not None)
+        self.startup_overlay.close_btn.setVisible(True)
+        self._startup_retry = retry_action
+
+    def _retry_startup_action(self):
+        callback = self._startup_retry
+        self._startup_retry = None
+        if callback:
+            callback()
+
+    def _append_startup_log(self, message):
+        if not hasattr(self, "startup_overlay"):
+            return
+        self.startup_overlay.append_log(message)
+
+    def _set_startup_progress(self, value):
+        if not hasattr(self, "startup_overlay") or not self._startup_overlay_active:
+            return
+        self.startup_overlay.set_progress(value)
+
+    def _begin_startup_sequence(self, skip_update_check=False):
+        self.browser_ready = False
+        self._show_startup_overlay(
+            self.config.lang.get("startup_title", "Подготовка Multiaccount"),
+            self.config.lang.get("startup_subtitle", "Подготавливаем браузерный runtime и проверяем обновления."),
+            badge=self.config.lang.get("startup_badge", "Подготовка"),
+        )
+        self._startup_retry = None
+        if skip_update_check or not self._should_check_for_updates():
+            self.init_browser()
+            return
+        self.browser_runtime.check_for_update(
+            sys.executable,
+            on_success=self._on_update_check_result,
+            on_error=self._on_update_check_error,
+        )
+
+    def _should_check_for_updates(self):
+        return sys.platform == "win32" and bool(getattr(sys, "frozen", False))
+
+    def _on_update_check_result(self, result):
+        if result and result.get("update_available"):
+            version = result.get("latest_version", "")
+            self._show_startup_overlay(
+                self.config.lang.get("update_title", "Доступно обновление"),
+                self.config.lang.get("update_subtitle", "Скачиваем новую версию приложения."),
+                badge=self.config.lang.get("update_badge", "Обновление"),
+            )
+            self.browser_runtime.download_update(
+                sys.executable,
+                result["manifest"],
+                on_success=self._on_update_download_done,
+                on_error=self._on_update_download_error,
+            )
+            self._append_startup_log(
+                self.config.lang.get("update_found_log", "Найдена новая версия: {version}").format(version=version)
+            )
+            return
+        self.init_browser()
+
+    def _on_update_check_error(self, message):
+        self._append_startup_log(message)
+        self.init_browser()
+
+    def _on_update_download_done(self, result):
+        if not result or not result.get("success"):
+            self._show_startup_error(
+                self.config.lang.get("update_error_title", "Ошибка обновления"),
+                self.config.lang.get("update_error_text", "Не удалось скачать обновление."),
+                retry_action=self._begin_startup_sequence,
+            )
+            return
+        self.startup_overlay.set_status(self.config.lang.get("update_status_finish", "Завершение обновления..."))
+        self.startup_overlay.set_progress(100)
+        if launch_staged_update(Path(sys.executable)):
+            QTimer.singleShot(150, QApplication.instance().quit)
+            return
+        self._show_startup_error(
+            self.config.lang.get("update_error_title", "Ошибка обновления"),
+            self.config.lang.get("update_restart_failed", "Не удалось запустить обновление."),
+            retry_action=self._begin_startup_sequence,
+        )
+
+    def _on_update_download_error(self, message):
+        self._show_startup_error(
+            self.config.lang.get("update_error_title", "Ошибка обновления"),
+            message,
+            retry_action=self._begin_startup_sequence,
+        )
+
+    def _finish_startup(self):
+        self._startup_overlay_active = False
+        self.startup_overlay.hide()
+        if self.config.data.get("first_run", True):
+            self.config.data["first_run"] = False
+            self.config.save_config()
+        if not self._proxy_monitor_started:
+            self._start_proxy_monitor()
+            self._proxy_monitor_started = True
+        self._check_all_proxies_on_startup()
     
     def init_browser(self):
+        self._show_startup_overlay(
+            self.config.lang.get("startup_title", "Подготовка Multiaccount"),
+            self.config.lang.get("browser_status_init", "Браузер инициализируется..."),
+            badge=self.config.lang.get("startup_badge", "Подготовка"),
+        )
         self._set_browser_busy(True, self.config.lang.get("browser_status_init", "Browser initializing..."))
         self.browser_runtime.initialize(
             on_success=self._on_init_browser_done,
@@ -752,7 +1015,11 @@ class MainWindow(QMainWindow):
             self.browser_status_hint.setText(result["error"])
             self.browser_status_hint.setVisible(True)
             self._set_browser_busy(False)
-            QMessageBox.warning(self, "Browser", result["error"])
+            self._show_startup_error(
+                self.config.lang.get("startup_error_title", "Ошибка подготовки"),
+                result["error"],
+                retry_action=lambda: self._begin_startup_sequence(skip_update_check=True),
+            )
             self.refresh_table()
             return
         self.browser_ready = bool(result and result.get("ready"))
@@ -769,6 +1036,8 @@ class MainWindow(QMainWindow):
             self.browser_status.setVisible(True)
             self.browser_status_hint.setVisible(True)
         self._set_browser_busy(False)
+        if self.browser_ready:
+            self._finish_startup()
         self.refresh_table()
 
     def cleanup_data(self):
@@ -801,95 +1070,24 @@ class MainWindow(QMainWindow):
         self.browser_status_hint.setText(self.config.lang.get("browser_status_wait", "Preparing browser runtime..."))
         self.browser_status_hint.setVisible(False)
         self.refresh_table()
-        self.init_browser()
+        self._begin_startup_sequence(skip_update_check=True)
         QMessageBox.information(
             self,
             self.config.lang.get("cleanup_data"),
             self.config.lang.get("cleanup_done")
         )
 
-    def export_accounts(self):
-        lang = self.config.lang
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            lang.get("export_accounts", "Экспорт аккаунтов"),
-            "accounts-export.json",
-            "JSON Files (*.json)",
-        )
-        if not path:
-            return
-        try:
-            self.account_manager.export_accounts(path)
-            QMessageBox.information(
-                self,
-                lang.get("export_accounts", "Экспорт аккаунтов"),
-                lang.get("export_done", "Аккаунты экспортированы."),
-            )
-        except Exception as exc:
-            QMessageBox.critical(
-                self,
-                lang.get("export_accounts", "Экспорт аккаунтов"),
-                f"{lang.get('export_failed', 'Не удалось экспортировать аккаунты.')}\n\n{exc}",
-            )
-
-    def import_accounts(self):
-        if self.open_account_ids or self.account_pending_actions:
-            QMessageBox.information(
-                self,
-                self.config.lang.get("import_accounts", "Импорт аккаунтов"),
-                self.config.lang.get(
-                    "import_busy",
-                    "Сначала закройте все аккаунты и дождитесь завершения фоновых действий.",
-                ),
-            )
-            return
-
-        lang = self.config.lang
-        path, _ = QFileDialog.getOpenFileName(
-            self,
-            lang.get("import_accounts", "Импорт аккаунтов"),
-            "",
-            "JSON Files (*.json)",
-        )
-        if not path:
-            return
-
-        reply = QMessageBox.question(
-            self,
-            lang.get("import_accounts", "Импорт аккаунтов"),
-            lang.get(
-                "import_confirm",
-                "Импорт заменит текущий список аккаунтов. Продолжить?",
-            ),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        try:
-            count = self.account_manager.import_accounts(path)
-            self.account_runtime_info.clear()
-            self.proxy_ping_state.clear()
-            self.account_pending_actions.clear()
-            self.refresh_table()
-            self._check_all_proxies_on_startup()
-            QMessageBox.information(
-                self,
-                lang.get("import_accounts", "Импорт аккаунтов"),
-                lang.get("import_done", "Аккаунты импортированы.").format(count=count),
-            )
-        except Exception as exc:
-            QMessageBox.critical(
-                self,
-                lang.get("import_accounts", "Импорт аккаунтов"),
-                f"{lang.get('import_failed', 'Не удалось импортировать аккаунты.')}\n\n{exc}",
-            )
-
     def _on_async_error(self, message):
         self.logger.error(f"Async worker failed: {message}")
         self.browser_status_hint.setText(message)
         self.browser_status_hint.setVisible(True)
         self._set_browser_busy(False)
+        if self._startup_overlay_active:
+            self._show_startup_error(
+                self.config.lang.get("startup_error_title", "Ошибка подготовки"),
+                message,
+                retry_action=lambda: self._begin_startup_sequence(skip_update_check=True),
+            )
 
     def _on_language_changed(self):
         if not hasattr(self, "language_select"):
@@ -917,6 +1115,9 @@ class MainWindow(QMainWindow):
         if central is not None:
             central.deleteLater()
         self.setup_ui()
+        self._setup_startup_overlay()
+        if not self._startup_overlay_active:
+            self.startup_overlay.hide()
 
     def _start_proxy_monitor(self):
         self.proxy_ping_timer = QTimer(self)
@@ -1197,16 +1398,8 @@ class MainWindow(QMainWindow):
             edit_proxy_btn.setEnabled(not is_busy and not is_open)
             edit_proxy_btn.clicked.connect(lambda _, a=acc: self.edit_proxy(a))
 
-            profile_btn = QPushButton(lang.get("regenerate_profile", "Обновить\nпрофиль"))
-            profile_btn.setEnabled(not is_busy and not is_open)
-            profile_btn.clicked.connect(lambda _, a=acc: self.regenerate_account_profile(a))
-
             info_btn = QPushButton(lang.get("account_info", "Информация\nпо аккаунту"))
             info_btn.clicked.connect(lambda _, a=acc: self.show_account_info(a))
-
-            bar_btn = QPushButton(lang.get("browser_bar", "Панель\nбраузера"))
-            bar_btn.setEnabled(is_open and not is_busy)
-            bar_btn.clicked.connect(lambda _, a=acc: self.show_browser_bar(a))
 
             delete_btn = QPushButton(lang.get("delete_account"))
             delete_btn.setEnabled(not is_busy)
@@ -1215,9 +1408,7 @@ class MainWindow(QMainWindow):
             actions_layout.addWidget(open_btn)
             actions_layout.addWidget(close_btn)
             actions_layout.addWidget(edit_proxy_btn)
-            actions_layout.addWidget(profile_btn)
             actions_layout.addWidget(info_btn)
-            actions_layout.addWidget(bar_btn)
             actions_layout.addSpacing(8)
             actions_layout.addWidget(delete_btn)
             actions_layout.addStretch()
@@ -1626,13 +1817,23 @@ class MainWindow(QMainWindow):
         runtime.browser_closed.connect(self.on_browser_close)
         runtime.browser_status.connect(self._on_browser_runtime_status)
         runtime.browser_installing.connect(self._on_browser_installing_changed)
+        runtime.browser_progress.connect(self._on_browser_runtime_progress)
+        runtime.browser_log.connect(self._on_browser_runtime_log)
 
     def _on_browser_runtime_status(self, message):
         self.browser_status_hint.setText(message)
         self.browser_status_hint.setVisible(bool(message))
+        if self._startup_overlay_active and message:
+            self.startup_overlay.set_status(message)
 
     def _on_browser_installing_changed(self, installing):
         self._set_browser_busy(installing, self.browser_status_hint.text())
+
+    def _on_browser_runtime_progress(self, value):
+        self._set_startup_progress(value)
+
+    def _on_browser_runtime_log(self, message):
+        self._append_startup_log(message)
 
     def _set_browser_busy(self, busy, message=None):
         if message:

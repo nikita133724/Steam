@@ -5,9 +5,11 @@ import io
 import json
 import os
 import socket
+import subprocess
 import sys
 from pathlib import Path
 import time
+import re
 from urllib.parse import quote, urlparse
 
 import requests
@@ -645,16 +647,47 @@ class BrowserEngine:
             self.logger.warning(f"Chromium check failed: {exc}")
             return False
 
-    async def install_chromium(self, status_callback=None):
+    def _extract_percent(self, message):
+        match = re.search(r"(\d{1,3})%", message or "")
+        if not match:
+            return None
+        try:
+            value = int(match.group(1))
+        except ValueError:
+            return None
+        return max(0, min(100, value))
+
+    def _friendly_install_status(self, message):
+        lower = (message or "").lower()
+        if "chrome for testing" in lower or "downloading chromium" in lower:
+            return "Downloading browser..."
+        if "ffmpeg" in lower:
+            return "Downloading media dependencies..."
+        if "headless shell" in lower:
+            return "Downloading browser components..."
+        if "downloaded to" in lower:
+            return "Verifying downloaded files..."
+        return message
+
+    async def install_chromium(self, status_callback=None, progress_callback=None, log_callback=None):
         self.logger.info("Installing Chromium...")
         self._emit_install_status(status_callback, "Installing Chromium...")
+        if progress_callback:
+            progress_callback(0)
 
         for attempt in range(1, 4):
             self._emit_install_status(status_callback, f"Installing Chromium (attempt {attempt}/3)...")
-            stderr = await asyncio.to_thread(self._run_playwright_install, status_callback)
+            stderr = await asyncio.to_thread(
+                self._run_playwright_install,
+                status_callback,
+                progress_callback,
+                log_callback,
+            )
             if stderr is None:
                 self.logger.info("Chromium installed")
                 self._emit_install_status(status_callback, "Chromium installed")
+                if progress_callback:
+                    progress_callback(100)
                 return True
 
             self.logger.warning(
@@ -670,11 +703,11 @@ class BrowserEngine:
         self._emit_install_status(status_callback, "Chromium install failed after 3 attempts")
         return False
 
-    def _run_playwright_install(self, status_callback=None):
+    def _run_playwright_install(self, status_callback=None, progress_callback=None, log_callback=None):
         class _StreamRelay(io.TextIOBase):
-            def __init__(self, emit):
+            def __init__(self, handle_line):
                 super().__init__()
-                self._emit = emit
+                self._handle_line = handle_line
                 self._buffer = ""
 
             def write(self, text):
@@ -687,20 +720,43 @@ class BrowserEngine:
                 for part in parts:
                     message = part.strip()
                     if message:
-                        self._emit(message)
+                        self._handle_line(message)
                 return len(text)
 
             def flush(self):
                 if self._buffer.strip():
-                    self._emit(self._buffer.strip())
+                    self._handle_line(self._buffer.strip())
                 self._buffer = ""
 
         old_argv = sys.argv[:]
         old_env = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(self.config.browsers_dir)
-        relay = _StreamRelay(lambda message: self._emit_install_status(status_callback, message))
+        original_popen = subprocess.Popen
+
+        def _handle_message(message):
+            if log_callback:
+                try:
+                    log_callback(message)
+                except Exception:
+                    pass
+            friendly = self._friendly_install_status(message)
+            self._emit_install_status(status_callback, friendly)
+            percent = self._extract_percent(message)
+            if percent is not None and progress_callback:
+                try:
+                    progress_callback(percent)
+                except Exception:
+                    pass
+
+        def _popen_no_console(*args, **kwargs):
+            if sys.platform == "win32":
+                kwargs["creationflags"] = kwargs.get("creationflags", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            return original_popen(*args, **kwargs)
+
+        relay = _StreamRelay(_handle_message)
         try:
             sys.argv = ["playwright", "install", "chromium"]
+            subprocess.Popen = _popen_no_console
             with contextlib.redirect_stdout(relay), contextlib.redirect_stderr(relay):
                 try:
                     playwright_cli_main()
@@ -715,6 +771,7 @@ class BrowserEngine:
             relay.flush()
             return str(exc)
         finally:
+            subprocess.Popen = original_popen
             sys.argv = old_argv
             if old_env is None:
                 os.environ.pop("PLAYWRIGHT_BROWSERS_PATH", None)

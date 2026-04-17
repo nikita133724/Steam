@@ -125,6 +125,22 @@ def _launch_update_helper(current_exe: Path, installed_exe: Path, staged_exe: Pa
     )
 
 
+def launch_staged_update(current_exe: Path | None = None) -> bool:
+    if sys.platform != "win32" or not _is_frozen():
+        return False
+
+    running_exe = Path(current_exe or sys.executable).resolve()
+    installed_exe = get_installed_exe().resolve()
+    manager = UpdateManager(current_exe=installed_exe)
+    pending = manager.read_pending_update()
+    staged_exe = manager.get_staged_exe()
+    version = str(pending.get("version") or "")
+    if not version or not staged_exe.exists():
+        return False
+    _launch_update_helper(running_exe, installed_exe, staged_exe, version)
+    return True
+
+
 def _apply_staged_update(target_exe: Path, staged_exe: Path) -> bool:
     backup = target_exe.with_suffix(target_exe.suffix + ".bak")
     for _ in range(120):
@@ -240,23 +256,7 @@ def bootstrap_startup(argv: list[str] | None = None) -> int | None:
         return 0
 
     manager = UpdateManager(current_exe=installed_exe)
-    pending = manager.read_pending_update()
-    staged_exe = manager.get_staged_exe()
-    if pending.get("version") and staged_exe.exists():
-        _launch_update_helper(current_exe, installed_exe, staged_exe, str(pending["version"]))
-        return 0
-
-    try:
-        manifest = manager.fetch_manifest(timeout=8)
-        manager.sync_current_with_manifest(manifest)
-        if manager.stage_update(manifest, timeout=30):
-            pending = manager.read_pending_update()
-            if pending.get("version"):
-                _launch_update_helper(current_exe, installed_exe, manager.get_staged_exe(), str(pending["version"]))
-                return 0
-    except Exception:
-        # Сетевые/релизные проблемы не должны блокировать запуск UI.
-        pass
-
     _ensure_desktop_shortcut(installed_exe)
+    if manager.has_pending_update():
+        manager.clear_pending_update()
     return None

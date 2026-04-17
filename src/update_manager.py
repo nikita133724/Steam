@@ -95,6 +95,27 @@ class UpdateManager:
         response.raise_for_status()
         return response.json()
 
+    def check_for_update(self, timeout: int = 8) -> dict:
+        manifest = self.fetch_manifest(timeout=timeout)
+        self.sync_current_with_manifest(manifest)
+        latest_version = str(manifest.get("version") or "")
+        current_version = self.read_local_version()
+        if not latest_version or latest_version == current_version:
+            self.clear_pending_update()
+            self.get_staged_exe().unlink(missing_ok=True)
+            return {
+                "update_available": False,
+                "current_version": current_version,
+                "latest_version": latest_version or current_version,
+                "manifest": manifest,
+            }
+        return {
+            "update_available": True,
+            "current_version": current_version,
+            "latest_version": latest_version,
+            "manifest": manifest,
+        }
+
     def _hash_file(self, path: Path) -> str:
         h = hashlib.sha256()
         with path.open("rb") as f:
@@ -122,6 +143,16 @@ class UpdateManager:
         return True
 
     def stage_update(self, manifest: dict, timeout: int = 30) -> bool:
+        return self.download_update(manifest, timeout=timeout)
+
+    def download_update(
+        self,
+        manifest: dict,
+        timeout: int = 30,
+        progress_callback=None,
+        status_callback=None,
+        log_callback=None,
+    ) -> bool:
         version = str(manifest.get("version") or "")
         url = manifest.get("url")
         expected_hash = str(manifest.get("sha256") or "").lower()
@@ -143,20 +174,37 @@ class UpdateManager:
                 target_new.unlink(missing_ok=True)
                 self.clear_pending_update()
             else:
+                if progress_callback:
+                    progress_callback(100)
                 return True
         else:
             target_new.unlink(missing_ok=True)
 
+        if status_callback:
+            status_callback("Downloading update...")
+        if progress_callback:
+            progress_callback(0)
         with requests.get(url, stream=True, timeout=timeout) as response:
             response.raise_for_status()
+            total = int(response.headers.get("content-length") or 0)
+            downloaded = 0
             with target_new.open("wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
+                        downloaded += len(chunk)
+                        if total > 0 and progress_callback:
+                            progress_callback(min(100, int(downloaded * 100 / total)))
 
+        if status_callback:
+            status_callback("Verifying update...")
         if expected_hash and self._hash_file(target_new) != expected_hash:
             target_new.unlink(missing_ok=True)
             raise ValueError("Downloaded update hash mismatch")
 
         self.write_pending_update(version, expected_hash)
+        if progress_callback:
+            progress_callback(100)
+        if log_callback:
+            log_callback(f"Update {version} downloaded to {target_new}")
         return True

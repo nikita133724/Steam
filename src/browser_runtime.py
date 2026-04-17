@@ -3,10 +3,12 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import TimeoutError
 import threading
+from pathlib import Path
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 from src.browser_engine import BrowserEngine
+from src.update_manager import UpdateManager
 
 
 class TaskRelay(QObject):
@@ -18,6 +20,8 @@ class BrowserRuntime(QThread):
     browser_closed = pyqtSignal(int)
     browser_status = pyqtSignal(str)
     browser_installing = pyqtSignal(bool)
+    browser_progress = pyqtSignal(int)
+    browser_log = pyqtSignal(str)
 
     def __init__(self, config, logger):
         super().__init__()
@@ -83,6 +87,7 @@ class BrowserRuntime(QThread):
     def initialize(self, on_success=None, on_error=None):
         async def setup():
             self.browser_status.emit(self._lang("browser_status_wait", "Preparing browser runtime..."))
+            self.browser_progress.emit(-1)
             await self.engine.init()
             if not self.engine or not self.engine._ensure_ready():
                 return {
@@ -99,6 +104,8 @@ class BrowserRuntime(QThread):
                 self.browser_installing.emit(True)
                 installed = await self.engine.install_chromium(
                     status_callback=self.browser_status.emit,
+                    progress_callback=self.browser_progress.emit,
+                    log_callback=self.browser_log.emit,
                 )
                 self.browser_installing.emit(False)
                 if not installed:
@@ -113,6 +120,7 @@ class BrowserRuntime(QThread):
                         "ready": False,
                     }
             self.logger.info("Browser engine ready")
+            self.browser_progress.emit(100)
             self.browser_status.emit("")
             return {"success": True, "ready": True}
 
@@ -194,6 +202,32 @@ class BrowserRuntime(QThread):
             on_success=on_success,
             on_error=on_error,
         )
+
+    def check_for_update(self, current_exe, on_success=None, on_error=None):
+        async def task():
+            manager = UpdateManager(current_exe=Path(current_exe))
+            self.browser_status.emit(self._lang("update_status_check", "Checking for updates..."))
+            self.browser_progress.emit(-1)
+            return await asyncio.to_thread(manager.check_for_update, 8)
+
+        return self.submit(task(), on_success=on_success, on_error=on_error)
+
+    def download_update(self, current_exe, manifest, on_success=None, on_error=None):
+        async def task():
+            manager = UpdateManager(current_exe=Path(current_exe))
+            self.browser_status.emit(self._lang("update_status_download", "Downloading update..."))
+            self.browser_progress.emit(0)
+            result = await asyncio.to_thread(
+                manager.download_update,
+                manifest,
+                60,
+                self.browser_progress.emit,
+                self.browser_status.emit,
+                self.browser_log.emit,
+            )
+            return {"success": bool(result), "version": manifest.get("version")}
+
+        return self.submit(task(), on_success=on_success, on_error=on_error)
 
     def shutdown_sync(self, timeout: float = 15.0):
         if not self.isRunning():
